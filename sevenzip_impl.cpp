@@ -74,11 +74,11 @@ namespace sevenzip {
     static HRESULT getIntValue(NWindows::NCOM::CPropVariant& prop, UInt32& propValue) {
         if (prop.vt == VT_EMPTY)
             return S_FALSE;
-        if (prop.vt == VT_UI1 || prop.vt == VT_UI1 || prop.vt == VT_I1)
+        if (prop.vt == VT_UI1 || prop.vt == VT_I1)
             propValue = prop.bVal;
-        if (prop.vt == VT_UI2 || prop.vt == VT_I2)
+        else if (prop.vt == VT_UI2 || prop.vt == VT_I2)
             propValue = prop.uiVal;
-        if (prop.vt == VT_UI4 || prop.vt == VT_I4)
+        else if (prop.vt == VT_UI4 || prop.vt == VT_I4)
             propValue = prop.ulVal;
         else
             return E_FAIL;

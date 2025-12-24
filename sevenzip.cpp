@@ -111,7 +111,7 @@ namespace sevenzip {
     const wchar_t* Iarchive::getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
         return pimpl->getPropertyInfo(propIndex, propId, propType);
     }
-    ;
+
     HRESULT Iarchive::getStringProperty(PROPID propId, const wchar_t*& propValue) {
         return pimpl->getStringProperty(propId, propValue);
     };
@@ -135,7 +135,7 @@ namespace sevenzip {
     const wchar_t* Iarchive::getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
         return pimpl->getItemPropertyInfo(propIndex, propId, propType);
     }
-    ;
+
     HRESULT Iarchive::getStringItemProperty(int index, PROPID propId, const wchar_t*& propValue) {
         return pimpl->getStringItemProperty(index, propId, propValue);
     };
