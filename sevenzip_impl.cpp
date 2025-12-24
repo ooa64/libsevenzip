@@ -1,0 +1,1209 @@
+#include "CPP/Common/MyWindows.h"
+#include "CPP/Common/MyInitGuid.h"
+
+#include "sevenzip_impl.h"
+
+#include "CPP/Common/StringConvert.h"
+#include "CPP/Windows/PropVariant.h"
+#include "CPP/Windows/TimeUtils.h"
+#include "CPP/Windows/ErrorMsg.h"
+
+#ifndef _WIN32
+#include <dlfcn.h>
+#endif
+
+#if defined(DEBUG_IMPL)
+#   include <iostream>
+#   define DEBUGLOG(_x_) (std::wcerr << "DEBUG: " << _x_ << "\n")
+#else
+#   define DEBUGLOG(_x_)
+#endif
+
+
+namespace sevenzip {
+
+    HRESULT getResult(bool noerror) {
+        if (noerror)
+            return S_OK;
+        DWORD error = ::GetLastError();
+        if (error == 0)
+            return E_FAIL;
+        return HRESULT_FROM_WIN32(error);
+    }
+
+    wchar_t* getMessage(HRESULT hr) {
+        static wchar_t lastMessage[128] = { L'\0' };
+        COPYWCHARS(lastMessage, NWindows::NError::MyFormatMessage(hr));
+        return lastMessage;
+    }
+
+    UInt32 getVersion() {
+        return ((MY_VER_MAJOR << 16) | MY_VER_MINOR);
+    }
+
+    static UString getFilenameExt(const wchar_t* filename) {
+        if (!filename)
+            return L"";
+        UString n(filename);
+        int dot = n.ReverseFind_Dot();
+        if (dot > n.ReverseFind_PathSepar())
+            return n.Ptr((unsigned)(dot + 1));
+        return L"";
+    }
+
+    static HRESULT getStringValue(NWindows::NCOM::CPropVariant& prop, UString& propValue) {
+        if (prop.vt == VT_EMPTY)
+            return S_FALSE;
+        if (prop.vt == VT_BSTR)
+            propValue = prop.bstrVal;
+        else
+            return E_FAIL;
+        return S_OK;
+    };
+
+    static HRESULT getBoolValue(NWindows::NCOM::CPropVariant& prop, bool& propValue) {
+        if (prop.vt == VT_EMPTY)
+            return S_FALSE;
+        if (prop.vt == VT_BOOL)
+            propValue = prop.boolVal != VARIANT_FALSE;
+        else
+            return E_FAIL;
+        return S_OK;
+    };
+
+    static HRESULT getIntValue(NWindows::NCOM::CPropVariant& prop, UInt32& propValue) {
+        if (prop.vt == VT_EMPTY)
+            return S_FALSE;
+        if (prop.vt == VT_UI1 || prop.vt == VT_UI1 || prop.vt == VT_I1)
+            propValue = prop.bVal;
+        if (prop.vt == VT_UI2 || prop.vt == VT_I2)
+            propValue = prop.uiVal;
+        if (prop.vt == VT_UI4 || prop.vt == VT_I4)
+            propValue = prop.ulVal;
+        else
+            return E_FAIL;
+        return S_OK;
+    };
+
+    static HRESULT getWideValue(NWindows::NCOM::CPropVariant& prop, UInt64& propValue) {
+        if (prop.vt == VT_EMPTY)
+            return S_FALSE;
+        if (prop.vt == VT_UI8 || prop.vt == VT_I8)
+            propValue = prop.uhVal.QuadPart;
+        else
+            return E_FAIL;
+        return S_OK;
+    };
+
+    static HRESULT getTimeValue(NWindows::NCOM::CPropVariant& prop, UInt32& propValue) {
+        if (prop.vt == VT_EMPTY)
+            return S_FALSE;
+        else if (prop.vt == VT_FILETIME)
+            return NWindows::NTime::FileTime_To_UnixTime(prop.filetime, propValue) ? S_OK : S_FALSE;
+        else
+            return E_FAIL;
+    };
+
+    static HRESULT getArchiveStringItemProperty(IInArchive* archive, int index, PROPID propId, UString& propValue) {
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = archive->GetProperty(index, propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getStringValue(prop, propValue);
+    }
+
+    static HRESULT getArchiveTimeItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = archive->GetProperty(index, propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getTimeValue(prop, propValue);
+    }
+
+    static HRESULT getArchiveWideItemProperty(IInArchive* archive, int index, PROPID propId, UInt64& propValue) {
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = archive->GetProperty(index, propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getWideValue(prop, propValue);
+    }
+
+    static HRESULT getArchiveIntItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = archive->GetProperty(index, propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getIntValue(prop, propValue);
+    }
+
+    static HRESULT getArchiveBoolItemProperty(IInArchive* archive, int index, PROPID propId, bool& propValue) {
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = archive->GetProperty(index, propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        if (prop.vt == VT_BOOL)
+            propValue = prop.boolVal != VARIANT_FALSE;
+        else if (prop.vt == VT_EMPTY)
+            return S_FALSE;
+        else
+            return E_FAIL;
+        return S_OK;
+    }
+
+    // streams
+
+    CInStream::CInStream(Istream* istream): istream(istream) {
+        DEBUGLOG(this << " CInStream " << istream);
+    };
+
+    CInStream::~CInStream() {
+        DEBUGLOG(this << " ~CInStream");
+        if (istream)
+            delete istream;
+    };
+
+    STDMETHODIMP CInStream::Read(void* data, UInt32 size, UInt32* processedSize) throw() {
+        DEBUGLOG(this << " CInStream::Read " << size);
+        return istream ? istream->Read(data, size, processedSize) : S_FALSE;
+    };
+
+    STDMETHODIMP CInStream::Seek(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) throw() {
+        DEBUGLOG(this << " CInStream::Seek " << offset << "/" << seekOrigin);
+        return istream ? istream->Seek(offset, seekOrigin, newPosition) : S_FALSE;
+    }
+
+    HRESULT CInStream::Open(const wchar_t* path) {
+        DEBUGLOG(this << " CInStream::Open " << path);
+        return istream ? istream->Open(path) : S_FALSE;
+    }
+
+    void CInStream::Close() {
+        DEBUGLOG(this << " CInStream::Close");
+        if (istream) istream->Close();
+    }
+
+    const wchar_t* CInStream::Path() {
+        DEBUGLOG(this << " CInStream::Path");
+        return istream ? istream->Path() : L"";
+    }
+
+    bool CInStream::IsDir(const wchar_t* pathname) {
+        DEBUGLOG(this << " CInStream::IsDir " << pathname);
+        return istream ? istream->IsDir(pathname) : false;
+    }
+
+    //UInt64 CInStream::GetSize(const wchar_t* pathname) {
+    //    DEBUGLOG(this << " CInStream::GetFileSize " << pathname);
+    //    return istream ? istream->GetFileSize(pathname) : 1;
+    //}
+
+    UInt32 CInStream::GetTime(const wchar_t* pathname) {
+        DEBUGLOG(this << " CInStream::GetFileTime " << pathname);
+        return istream ? istream->GetTime(pathname) : 0;
+    }
+
+    UInt32 CInStream::GetMode(const wchar_t* pathname) {
+        DEBUGLOG(this << " CInStream::GetFileMode " << pathname);
+        return istream ? istream->GetMode(pathname) : 0;
+    }
+
+    //CInStream* CInStream::Clone() {
+    //    DEBUGLOG(this << " CInStream::Clone");
+    //    return istream ? new CInStream(istream->Clone()) : nullptr;
+    //}
+
+    COutStream::COutStream(Ostream* ostream): ostream(ostream) {
+        DEBUGLOG(this << " COutStream");
+    };
+
+    COutStream::~COutStream() {
+        DEBUGLOG(this << " ~COutStream");
+        if (ostream)
+            delete ostream;
+    };
+
+    STDMETHODIMP COutStream::Write(const void* data, UInt32 size, UInt32* processedSize) throw() {
+        DEBUGLOG(this << " COutStream::Write " << size);
+        return ostream ? ostream->Write(data, size, processedSize) : S_FALSE;
+    };
+
+    STDMETHODIMP COutStream::Seek(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) throw() {
+        DEBUGLOG(this << " COutStream::Seek " << offset << "/" << seekOrigin);
+        return ostream ? ostream->Seek(offset, seekOrigin, newPosition) : S_FALSE;
+    }
+
+    STDMETHODIMP COutStream::SetSize(UInt64 size) throw() {
+        DEBUGLOG(this << " COutStream::SetSize " << size);
+        return ostream ? ostream->SetSize(size) : S_FALSE;
+    }
+
+    HRESULT COutStream::Mkdir(const wchar_t* dirname) {
+        DEBUGLOG(this << " COutStream::Mkdir " << dirname);
+        return ostream ? ostream->Mkdir(dirname) : S_FALSE;
+    }
+    
+    HRESULT COutStream::SetMode(const wchar_t* pathname, UInt32 mode) {
+        DEBUGLOG(this << " COutStream::SetMode " << pathname << " " << std::oct << mode);
+        return ostream ? ostream->SetMode(pathname, mode) : S_FALSE;
+    }
+    
+    HRESULT COutStream::SetTime(const wchar_t* pathname, UInt32 time) {
+        DEBUGLOG(this << " COutStream::SetTime " << pathname << " " << time);
+        return ostream ? ostream->SetTime(pathname, time) : S_FALSE;
+    }
+
+    HRESULT COutStream::Open(const wchar_t* filename) {
+        DEBUGLOG(this << " COutStream::Open " << filename);
+        return ostream ? ostream->Open(filename) : S_FALSE;
+    }
+
+    void COutStream::Close() {
+        DEBUGLOG(this << " COutStream::Close");
+        if (ostream) ostream->Close();
+    }
+
+    // callbacks
+
+    COpenCallback::COpenCallback(Istream* istream, const wchar_t* password) :
+        istream(istream),
+        password(password),
+        subarchivename(L""),
+        subarchivemode(false) {
+        DEBUGLOG(this << " COpenCallback " << istream << " " << password << "\n");
+    };
+
+    COpenCallback::~COpenCallback() {
+        DEBUGLOG(this << " ~COpenCallback\n");
+    };
+
+    STDMETHODIMP COpenCallback::SetTotal(const UInt64* files, const UInt64* bytes)  throw() {
+        DEBUGLOG(this << " COpenCallback::SetTotal " << (files ? *files : -1) << "/" << (bytes ? *bytes : -1));
+        return S_OK;
+    };
+
+    STDMETHODIMP COpenCallback::SetCompleted(const UInt64* files, const UInt64* bytes) throw() {
+        DEBUGLOG(this << " COpenCallback::SetCompleted " << (files ? *files : -1) << "/" << (bytes ? *bytes : -1));
+        return S_OK;
+    };
+
+    STDMETHODIMP COpenCallback::GetProperty(PROPID propID, PROPVARIANT* value) throw() {
+        DEBUGLOG(this << " COpenCallback::GetProperty " << propID);
+        NWindows::NCOM::CPropVariant prop;
+        if (subarchivemode && propID == kpidName) {
+            prop = subarchivename;
+        }
+        else {
+            if (!istream)
+                return S_FALSE;
+            switch (propID) {
+            case kpidPath: prop = istream->Path(); break;
+            case kpidName: prop = istream->Path(); break;
+            case kpidIsDir: prop = istream->IsDir(istream->Path()); break;
+            case kpidSize: prop = (UInt64)1 /*istream->GetFileSize(istream->Path())*/; break;
+            case kpidCTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(istream->Path())); break;
+            case kpidATime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(istream->Path())); break;
+            case kpidMTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(istream->Path())); break;
+            case kpidAttrib: prop = ((istream->GetMode(istream->Path()) & 0xffff) << 16) | 0x8000; break;
+            case kpidPosixAttrib: prop = istream->GetMode(istream->Path()); break;
+            default: return S_FALSE;
+            }
+        }
+        prop.Detach(value);
+
+        return S_OK;
+    };
+
+    STDMETHODIMP COpenCallback::GetStream(const wchar_t* name, IInStream** inStream)  throw() {
+        DEBUGLOG(this << " COpenCallback::GetStream " << name << "/" << *inStream);
+        *inStream = nullptr;
+
+        if (subarchivemode)
+            return S_FALSE;
+        if (!istream)
+            return E_FAIL;
+
+        auto newIstream = istream->Clone();
+        if (!newIstream)
+            return E_FAIL;
+
+        CMyComPtr<IInStream> instream(new CInStream(newIstream));
+        *inStream = instream.Detach();
+
+        HRESULT hr = newIstream->Open(name);
+
+        // NOTE: suppress FILE_NOT_FOUND so there is no fail after the last multivolume file
+        // DEBUGLOG(this << " COpenCallback::GetStream " << std::hex << hr << " vs " << std::hex << HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND));
+        // return  hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ? S_FALSE : hr;
+        return (hr & 0xffff) == ERROR_FILE_NOT_FOUND ? S_FALSE : hr;
+    }
+
+    STDMETHODIMP COpenCallback::SetSubArchiveName(const wchar_t* name) throw() {
+        DEBUGLOG(this << " COpenCallback::SetSubArchiveName " << name);
+        subarchivemode = true;
+        subarchivename = name;
+        return S_OK;
+    }
+
+    STDMETHODIMP COpenCallback::CryptoGetTextPassword(BSTR* password)  throw() {
+        DEBUGLOG(this << " COpenCallback::CryptoGetTextPassword(");
+        *password = NULL;
+        if (this->password.IsEmpty())
+            return E_NOTIMPL;
+        return StringToBstr(this->password, password);
+    };
+
+    CExtractCallback::CExtractCallback(Ostream* ostream, IInArchive* archive,
+                const wchar_t* directory, const wchar_t* password) :
+            outstream(new COutStream(ostream)),
+            archive(archive),
+            directory(directory),
+            password(password),
+            index(-1) {
+        DEBUGLOG(this << " CExtractCallback::CExtractCallback " << archive << " " << directory << " " << password);
+    };
+
+    CExtractCallback::~CExtractCallback() {
+        DEBUGLOG(this << " CExtractCallback::~CExtractCallback");
+    };
+
+    STDMETHODIMP CExtractCallback::SetTotal(UInt64 size) throw() {
+        DEBUGLOG(this << " CExtractCallback::SetTotal " << size);
+        return S_OK;
+    };
+
+    STDMETHODIMP CExtractCallback::SetCompleted(const UInt64* completeValue) throw() {
+        DEBUGLOG(this << " CExtractCallback::SetCompleted " << (completeValue ? *completeValue : -1));
+        return S_OK;
+    };
+
+    STDMETHODIMP CExtractCallback::GetStream(UInt32 index, ISequentialOutStream** outStream, Int32 askExtractMode) throw() {
+        DEBUGLOG(this << " CExtractCallback::GetStream " << index << "/" << *outStream << "/" << askExtractMode);
+        *outStream = nullptr;
+        this->index = -1;
+
+        if (!outstream)
+            return E_FAIL;
+
+        HRESULT hr;
+        UString pathname = L"[Content]";
+        hr = getArchiveStringItemProperty(archive, index, kpidPath, pathname);
+        if (FAILED(hr))
+            return hr;
+        if (!directory.IsEmpty())
+            pathname = directory + L"/" + pathname;
+
+        bool isdir = false;
+        hr = getArchiveBoolItemProperty(archive, index, kpidIsDir, isdir);
+        if (FAILED(hr))
+            return hr;
+
+        this->index = index;
+        if (isdir)
+            return COUTSTREAM(outstream)->Mkdir(pathname);
+
+        *outStream = outstream;
+        outstream->AddRef();
+        return COUTSTREAM(outstream)->Open(pathname);
+    }
+
+    STDMETHODIMP CExtractCallback::PrepareOperation(Int32 askExtractMode) throw() {
+        DEBUGLOG(this << " CExtractCallback::PrepareOperation " << askExtractMode);
+        return S_OK;
+    }
+
+    STDMETHODIMP CExtractCallback::SetOperationResult(Int32 operationResult) throw() {
+        DEBUGLOG(this << " CExtractCallback::SetOperationResult " << operationResult << " item " << index);
+        if (operationResult == NArchive::NExtract::NOperationResult::kOK)
+            if (outstream) {
+                COUTSTREAM(outstream)->Close();
+
+                UString pathname = L"[Content]";
+                if (getArchiveStringItemProperty(archive, index, kpidPath, pathname) == S_OK) {
+                    if (!directory.IsEmpty())
+                        pathname = directory + L"/" + pathname;
+
+                    bool isdir = false;
+                    getArchiveBoolItemProperty(archive, index, kpidIsDir, isdir);
+
+                    UInt32 time = 0;
+                    if (getArchiveTimeItemProperty(archive, index, kpidMTime, time) == S_OK)
+                        COUTSTREAM(outstream)->SetTime(pathname, time);
+                    
+                    UInt32 mode = 0700;
+                    if (getArchiveTimeItemProperty(archive, index, kpidPosixAttrib, mode) == S_OK)
+                        mode |= (isdir ? 0700 : 0);
+                    else if (getArchiveTimeItemProperty(archive, index, kpidAttrib, mode) == S_OK)
+                        if (mode & 0x8000)
+                            mode = (mode >> 16) | (isdir ? 0700 : 0);
+                    COUTSTREAM(outstream)->SetMode(pathname, mode);
+
+                    DEBUGLOG(this << " CExtractCallback::SetOperationResult set " << pathname.Ptr()
+                            << " time " << time << " mode " << std::oct << mode);
+                }
+            }
+        return S_OK;
+    }
+
+    STDMETHODIMP CExtractCallback::CryptoGetTextPassword(BSTR* password) throw() {
+        DEBUGLOG(this << " CExtractCallback::CryptoGetTextPassword " << (password ? *password : L""));
+		*password = NULL;
+        if (this->password.IsEmpty())
+            return E_NOTIMPL;
+        return StringToBstr(this->password, password);
+    };
+
+
+    CUpdateCallback::CUpdateCallback(Istream* istream, const wchar_t* password) :
+        	instream(new CInStream(istream)),
+        	password(password) {
+        DEBUGLOG(this << " CUpdateCallback " << istream << " " << password);
+    }
+
+    CUpdateCallback::~CUpdateCallback() {
+        DEBUGLOG(this << " ~CUpdateCallback");
+    }
+
+    STDMETHODIMP CUpdateCallback::SetTotal(UInt64 size) throw() {
+        DEBUGLOG(this << " CUpdateCallback::SetTotal " << size);
+        return S_OK;
+    }
+
+    STDMETHODIMP CUpdateCallback::SetCompleted(const UInt64* completeValue) throw() {
+        DEBUGLOG(this << " CUpdateCallback::SetCompleted " << (completeValue ? *completeValue : 0));
+        return S_OK;
+    }
+
+    STDMETHODIMP CUpdateCallback::GetUpdateItemInfo(UInt32 index,
+            Int32* newData, Int32* newProperties, UInt32* indexInArchive) throw() {
+        DEBUGLOG(this << " CUpdateCallback::GetUpdateItemInfo " << index);
+
+        if (newData)
+            *newData = BoolToInt(true);
+        if (newProperties)
+            *newProperties = BoolToInt(true);
+        if (indexInArchive)
+            *indexInArchive = (UInt32)(Int32)-1;
+
+        return S_OK;
+    }
+
+    STDMETHODIMP CUpdateCallback::GetProperty(UInt32 index, PROPID propID, PROPVARIANT* value) throw() {
+        DEBUGLOG(this << " CUpdateCallback::GetProperty " << index << " id " << propID);
+
+        // if (propID == kpidIsAnti) {
+        //     NWindows::NCOM::PropVarEm_Set_Bool(value, false);
+        // } else {
+        //     switch (propID) {
+        //     // case kpidPath: value = (BSTR)items[index]; break;
+        //     case kpidIsDir: NWindows::NCOM::PropVarEm_Set_Bool(value, false); break;
+        //     case kpidSize: NWindows::NCOM::PropVarEm_Set_UInt64(value, 0); break;
+        //     case kpidCTime: NWindows::NCOM::PropVarEm_Set_FileTime64_Prec(value, 0, 0); break;
+        //     case kpidATime: NWindows::NCOM::PropVarEm_Set_FileTime64_Prec(value, 0, 0); break;
+        //     case kpidMTime: NWindows::NCOM::PropVarEm_Set_FileTime64_Prec(value, 0, 0); break;
+        //     case kpidAttrib: NWindows::NCOM::PropVarEm_Set_UInt32(value, 32); break;
+        //     case kpidPosixAttrib: NWindows::NCOM::PropVarEm_Set_UInt32(value, 0x816d); break;
+        //     default: return S_FALSE;
+        //     }
+        // }
+
+        NWindows::NCOM::CPropVariant prop;
+        if (propID == kpidIsAnti) {
+            prop = false;
+        }
+        else {
+            if (!instream)
+                return E_FAIL;
+            switch (propID) {
+            case kpidPath: prop = items[index]; break;
+            case kpidIsDir: prop = CINSTREAM(instream)->IsDir(items[index]); break;
+            case kpidSize: prop = (UInt64)1 /*CINSTREAM(instream)->GetSize(items[index])*/; break;
+            case kpidCTime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
+            case kpidATime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
+            case kpidMTime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
+            case kpidAttrib: prop = ((CINSTREAM(instream)->GetMode(items[index]) & 0xffff) << 16) | 0x8000; break;
+            case kpidPosixAttrib: prop = CINSTREAM(instream)->GetMode(items[index]); break;
+            default: return S_FALSE;
+            }
+        }
+        prop.Detach(value);
+
+        return S_OK;
+    }
+
+    STDMETHODIMP CUpdateCallback::GetStream(UInt32 index, ISequentialInStream** inStream) throw() {
+        DEBUGLOG(this << " CUpdateCallback::GetStream " << index);
+
+        *inStream = nullptr;
+
+        if (!instream)
+            return E_FAIL;
+
+        *inStream = instream;
+        instream->AddRef();
+        CINSTREAM(instream)->Close();
+        return CINSTREAM(instream)->Open(items[index]);
+    }
+
+    STDMETHODIMP CUpdateCallback::SetOperationResult(Int32 operationResult) throw() {
+        DEBUGLOG(this << " CUpdateCallback::SetOperationResult " << operationResult);
+        return S_OK;
+    }
+
+    STDMETHODIMP CUpdateCallback::GetVolumeSize(UInt32 index, UInt64* /*size*/) throw() {
+        DEBUGLOG(this << " CUpdateCallback::GetVolumeSize " << index);
+        return S_FALSE;
+    }
+
+    STDMETHODIMP CUpdateCallback::GetVolumeStream(UInt32 index, ISequentialOutStream** /*volumeStream*/) throw() {
+        DEBUGLOG(this << " CUpdateCallback::GetVolumeStream " << index);
+        return S_FALSE;
+    };
+
+    STDMETHODIMP CUpdateCallback::CryptoGetTextPassword2(Int32* passwordIsDefined, BSTR* password) throw() {
+        DEBUGLOG(this << " CUpdateCallback::CryptoGetTextPassword2 " << this->password);
+        *password = NULL;
+        *passwordIsDefined = BoolToInt(false);
+        if (this->password.IsEmpty())
+            return S_OK;
+        *passwordIsDefined = BoolToInt(true);
+        return StringToBstr(this->password, password);
+    };
+
+    // archives
+
+    Iarchive::Impl::Impl(Lib& lib) : libimpl(lib.pimpl) {
+        DEBUGLOG(this << " Iarchive::Impl::Impl");
+    }
+
+    Iarchive::Impl::~Impl() {
+        DEBUGLOG(this << " Iarchive::Impl::~Impl");
+    }
+
+    // formatIndex >  -1 : force format by index 
+    // formatIndex == -1 : detect format by extension and then by signature 
+    // formatIndex <  -1 : detect format by signature
+
+    HRESULT Iarchive::Impl::open(Istream* istream,
+        const wchar_t* path, const wchar_t* password, int formatIndex) {
+        DEBUGLOG(this << " Iarchive::open " << formatIndex);
+
+        if (!libimpl || !libimpl->CreateObjectFunc)
+            return S_FALSE;
+        if (!istream)
+            return S_FALSE;
+
+        HRESULT hr = S_OK;
+        hr = istream->Open(path);
+        if (FAILED(hr))
+            return hr;
+        hr = istream->Seek(0, SZ_SEEK_SET, nullptr);
+        if (FAILED(hr))
+            return hr;
+
+        close();
+
+        instream = new CInStream(istream);
+        opencallback = new COpenCallback(istream, (password ? password : L""));
+
+        UString name = path ? path : L"";
+        const UInt64 scan = 1 << 23;
+        while (true) {
+
+            if (formatIndex == -1)
+                formatIndex = libimpl->getFormatByExtension(getFilenameExt(name));
+            if (formatIndex < 0)
+                formatIndex = libimpl->getFormatBySignature(*istream);
+            if (formatIndex < 0)
+                return E_NOTIMPL;
+
+            this->formatIndex = formatIndex;
+
+            // DEBUGLOG(this << " arc name " << name.Ptr() << " formatIndex " << formatIndex
+            //         << L" (" << libimpl->getStringProp(formatIndex, NArchive::NHandlerPropID::kName) << L")");
+
+            GUID guid = libimpl->getFormatGUID(formatIndex);
+            inarchive = nullptr; // input stream leak w/o this assignment
+            DEBUGLOG(this << " Iarchive::Impl::open CreateObjectFunc guid " << guid.Data1 << "-" << guid.Data2 << "-" << guid.Data3);
+            hr = libimpl->CreateObjectFunc(&guid, &IID_IInArchive, (void**)&inarchive);
+            if (hr != S_OK)
+                return hr;
+
+            DEBUGLOG(this << " Iarchive::Impl::open inarchive->Open");
+            hr = inarchive->Open(instream, &scan, opencallback);
+            if (hr != S_OK)
+                return hr;
+
+            DEBUGLOG(this << " Iarchive::Impl::open inarchive->GetNumberOfItems");
+            UInt32 nitems = 0;
+            hr = inarchive->GetNumberOfItems(&nitems);
+            if (hr != S_OK)
+                return hr;
+
+            // DEBUGLOG(this << " arc nitems " << nitems);
+
+            DEBUGLOG(this << " Iarchive::Impl::open getIntProperty kpidMainSubfile");
+            UInt32 mainsubfile = (UInt32)(Int32)- 1;
+            hr = getIntProperty(kpidMainSubfile, mainsubfile);
+            if (hr == S_FALSE)
+                return S_OK; // no more subfiles
+            if (hr != S_OK)
+                return hr;
+
+            // DEBUGLOG(this << " arc mainsubfile " << mainsubfile);
+
+            DEBUGLOG(this << " Iarchive::Impl::open getArchiveStringItemProperty kpidPath");
+            hr = getArchiveStringItemProperty(inarchive, mainsubfile, kpidPath, name);
+            if (hr != S_OK)
+                return hr;
+
+            DEBUGLOG(this << " Iarchive::Impl::open QueryInterface IID_IInArchiveGetStream");
+            CMyComPtr<IInArchiveGetStream> getStream = nullptr;
+            hr = inarchive->QueryInterface(IID_IInArchiveGetStream, (void**)&getStream);
+            if (hr != S_OK)
+                return hr;
+            if (!getStream)
+                return S_FALSE;
+
+            DEBUGLOG(this << " Iarchive::Impl::open getStream->GetStream");
+            CMyComPtr<ISequentialInStream> insubstream = nullptr;
+            hr = getStream->GetStream(mainsubfile, &insubstream);
+            if (hr != S_OK)
+                return hr;
+            if (!insubstream)
+                return S_FALSE;
+
+            DEBUGLOG(this << " Iarchive::Impl::open insubstream->QueryInterface IID_IInStream");
+            instream = nullptr;
+            hr = insubstream.QueryInterface(IID_IInStream, &instream);
+            if (hr != S_OK)
+                return hr;
+            if (!instream)
+                return S_FALSE;
+
+            DEBUGLOG(this << " Iarchive::Impl::open QueryInterface IID_IArchiveOpenSetSubArchiveName");
+            CMyComPtr<IArchiveOpenSetSubArchiveName> insetsubname;
+            hr = opencallback->QueryInterface(IID_IArchiveOpenSetSubArchiveName, (void**)&insetsubname);
+            if (hr != S_OK)
+                return hr;
+            if (!insetsubname)
+                return S_FALSE;
+
+            insetsubname->SetSubArchiveName(name);
+
+            formatIndex = -1;
+        }
+    };
+
+    HRESULT Iarchive::Impl::extract(Ostream* ostream, const wchar_t* directory, const wchar_t* password, int index) {
+        if (!inarchive)
+            return E_FAIL;
+
+        CMyComPtr<IArchiveExtractCallback> extractcallback =
+            new CExtractCallback(ostream, inarchive, directory ? directory : L"", password ? password : L"");
+
+        if (index < 0) {
+            return inarchive->Extract(nullptr, (UInt32)(Int32)(-1), false, extractcallback);
+        } else {
+            return inarchive->Extract((UInt32*)&index, 1, false, extractcallback);
+        }
+    }
+
+    void Iarchive::Impl::close() {
+        DEBUGLOG(this << " Iarchive::close");
+        instream = nullptr;
+        inarchive = nullptr;
+        opencallback = nullptr;
+        formatIndex = -1;
+    }
+
+    int Iarchive::Impl::getNumberOfItems() {
+        UInt32 n;
+        if (inarchive && inarchive->GetNumberOfItems(&n) == S_OK)
+            return n;
+        return 0;
+    };
+
+    const wchar_t* Iarchive::Impl::getItemPath(int index) {
+        UString path;
+        if (!inarchive || getArchiveStringItemProperty(inarchive, index, kpidPath, path) != S_OK)
+            return L"";
+        return COPYWCHARS(lastItemPath, path.Ptr());
+    };
+
+    UInt64 Iarchive::Impl::getItemSize(int index) {
+        if (!inarchive)
+            return 0;
+        UInt64 size64;
+        if (getArchiveWideItemProperty(inarchive, index, kpidSize, size64) == S_OK)
+            return size64;
+        UInt32 size32;
+        if (getArchiveIntItemProperty(inarchive, index, kpidSize, size32) == S_OK)
+            return size32;
+        return 0;
+    };
+
+    UInt32 Iarchive::Impl::getItemMode(int index) {
+        UInt32 mode;
+        if (getArchiveIntItemProperty(inarchive, index, kpidPosixAttrib, mode) == S_OK)
+            return mode;
+        if (getArchiveIntItemProperty(inarchive, index, kpidAttrib, mode) == S_OK)
+            if (mode & 0x8000)
+                return mode >> 16; // p7zip posix feature
+        return 0;
+    };
+
+    Int64 Iarchive::Impl::getItemTime(int index) {
+        UInt32 time;
+        if (getArchiveTimeItemProperty(inarchive, index, kpidMTime, time) == S_OK)
+            return time;
+        return 0;
+    };
+
+    bool Iarchive::Impl::getItemIsDir(int index) {
+        bool isdir;
+        if (!inarchive || getArchiveBoolItemProperty(inarchive, index, kpidIsDir, isdir) != S_OK)
+            return false;
+        return isdir;
+    };
+
+    int Iarchive::Impl::getNumberOfProperties() {
+        UInt32 n;
+        if (inarchive && inarchive->GetNumberOfArchiveProperties(&n) == S_OK)
+            return n;
+        return 0;
+    };
+
+    const wchar_t* Iarchive::Impl::getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
+        CMyComBSTR name;
+        if (inarchive && inarchive->GetArchivePropertyInfo(propIndex, &name, &propId, &propType) == S_OK)
+            return COPYWCHARS(lastPropertyInfo, name);
+        return nullptr;
+    };
+
+    HRESULT Iarchive::Impl::getStringProperty(PROPID propId, const wchar_t*& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = inarchive->GetArchiveProperty(propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        if (prop.vt == VT_EMPTY)
+            return S_FALSE;
+        if (prop.vt == VT_BSTR)
+            propValue = COPYWCHARS(lastStringProperty, prop.bstrVal);
+        else
+            return E_FAIL;
+        return S_OK;
+        //UString us;
+        //if (getStringValue(prop, us) >= S_OK)
+        //    propValue = COPYWCHARS(lastStringProperty, us.Ptr());
+        //return hr;
+    };
+
+    HRESULT Iarchive::Impl::getBoolProperty(PROPID propId, bool& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = inarchive->GetArchiveProperty(propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getBoolValue(prop, propValue);
+    };
+
+    HRESULT Iarchive::Impl::getIntProperty(PROPID propId, UInt32& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = inarchive->GetArchiveProperty(propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getIntValue(prop, propValue);
+    };
+
+    HRESULT Iarchive::Impl::getWideProperty(PROPID propId, UInt64& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = inarchive->GetArchiveProperty(propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getWideValue(prop, propValue);
+    };
+
+    HRESULT Iarchive::Impl::getTimeProperty(PROPID propId, UInt32& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = inarchive->GetArchiveProperty(propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getTimeValue(prop, propValue);
+    }
+
+    int Iarchive::Impl::getNumberOfItemProperties() {
+        UInt32 n;
+        if (inarchive && inarchive->GetNumberOfProperties(&n) == S_OK)
+            return n;
+        return 0;
+    };
+
+    const wchar_t* Iarchive::Impl::getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
+        CMyComBSTR name;
+        if (inarchive && inarchive->GetPropertyInfo(propIndex, &name, &propId, &propType) == S_OK)
+            return COPYWCHARS(lastPropertyInfo, name);
+        return nullptr;
+    };
+
+    HRESULT Iarchive::Impl::getStringItemProperty(int index, PROPID propId, const wchar_t*& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = inarchive->GetProperty(index, propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        if (prop.vt == VT_EMPTY)
+            return S_FALSE;
+        if (prop.vt == VT_BSTR)
+            propValue = COPYWCHARS(lastStringProperty, prop.bstrVal);
+        else
+            return E_FAIL;
+        return S_OK;
+        //UString us;
+        //HRESULT hr = getArchiveStringItemProperty(inarchive, index, propId, us);
+        //if (hr >= S_OK)
+        //    propValue = COPYWCHARS(lastStringProperty, us.Ptr());
+        //return hr;
+    };
+
+    HRESULT Iarchive::Impl::getBoolItemProperty(int index, PROPID propId, bool& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        return getArchiveBoolItemProperty(inarchive, index, propId, propValue);
+    };
+
+    HRESULT Iarchive::Impl::getIntItemProperty(int index, PROPID propId, UInt32& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        return getArchiveIntItemProperty(inarchive, index, propId, propValue);
+    };
+
+    HRESULT Iarchive::Impl::getWideItemProperty(int index, PROPID propId, UInt64& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        return getArchiveWideItemProperty(inarchive, index, propId, propValue);
+    };
+
+    HRESULT Iarchive::Impl::getTimeItemProperty(int index, PROPID propId, UInt32& propValue) {
+        if (!inarchive)
+            return E_FAIL;
+        return getArchiveTimeItemProperty(inarchive, index, propId, propValue);
+    };
+
+    Oarchive::Impl::Impl(Lib& lib) : libimpl(lib.pimpl) {
+        DEBUGLOG(this << " Oarchive::Impl::Impl");
+    }
+
+    Oarchive::Impl::~Impl() {
+        DEBUGLOG(this << " Oarchive::Impl::~Impl");
+    }
+
+    HRESULT Oarchive::Impl::open(Istream* istream, Ostream* ostream,
+        const wchar_t* filename, const wchar_t* password, int formatIndex) {
+        DEBUGLOG(this << " Oarchive::open " << istream << " " << ostream << " "
+            << filename << " " << formatIndex);
+
+        if (!libimpl || !libimpl->CreateObjectFunc)
+            return S_FALSE;
+        if (!istream)
+            return S_FALSE;
+        if (!ostream)
+            return S_FALSE;
+
+        HRESULT hr = ostream->Open(filename);
+        if (hr != S_OK)
+            return hr;
+
+        close();
+
+        if (formatIndex < 0)
+            formatIndex = libimpl->getFormatByExtension(getFilenameExt(filename));
+        if (formatIndex < 0)
+            formatIndex = libimpl->getFormatByExtension(L"7z");
+        if (formatIndex < 0)
+            return E_NOTIMPL;
+
+        this->formatIndex = formatIndex;
+
+        GUID guid = libimpl->getFormatGUID(formatIndex);
+
+        updatecallback = new CUpdateCallback(istream, (password ? password : L""));
+        outstream = new COutStream(ostream);
+        return libimpl->CreateObjectFunc(&guid, &IID_IOutArchive, (void**)&outarchive);
+    }
+
+    HRESULT Oarchive::Impl::update() {
+        DEBUGLOG(this << " Oarchive::update");
+
+        if (!outstream)
+            return S_FALSE;
+        if (!outarchive)
+            return S_FALSE;
+        if (!updatecallback)
+            return S_FALSE;
+
+        return outarchive->UpdateItems(outstream,
+                CUPDATECALLBACK(updatecallback)->items.Size(), updatecallback);
+    }
+
+    void Oarchive::Impl::addItem(const wchar_t* pathname) {
+        DEBUGLOG(this << " Oarchive::addItem " << pathname);
+        if (updatecallback)
+            CUPDATECALLBACK(updatecallback)->items.Add(pathname);
+    }
+
+    void Oarchive::Impl::close() {
+        DEBUGLOG(this << " Oarchive::close");
+        outstream = nullptr;
+        outarchive = nullptr;
+        updatecallback = nullptr;
+        formatIndex = -1;
+    }
+
+    // library
+
+    Lib::Impl::Impl() {
+        DEBUGLOG(this << " Lib::Impl::Impl");
+    }
+
+    Lib::Impl::~Impl() {
+        DEBUGLOG(this << " Lib::Impl::~Impl");
+    }
+
+    bool Lib::Impl::load(const wchar_t* dllname) {
+        do {
+            if (!lib.Load(us2fs(dllname)))
+                break;
+            GetModuleProp = (Func_GetModuleProp)GETPROCADDRESS(lib, "GetModuleProp");
+            if (!checkInterfaceType()) {
+                COPYACHARS(loadMessage, "Library interface type mismatch");
+                return false;
+            }
+            CreateObjectFunc = (Func_CreateObject)GETPROCADDRESS(lib, "CreateObject");
+            if (!CreateObjectFunc)
+                break;
+            GetNumberOfMethods = (Func_GetNumberOfMethods)GETPROCADDRESS(lib, "GetNumberOfMethods");
+            if (!GetNumberOfMethods)
+                break;
+            GetNumberOfFormats = (Func_GetNumberOfFormats)GETPROCADDRESS(lib, "GetNumberOfFormats");
+            if (!GetNumberOfFormats)
+                break;
+            GetHandlerProperty = (Func_GetHandlerProperty)GETPROCADDRESS(lib, "GetHandlerProperty");
+            if (!GetHandlerProperty)
+                break;
+            GetHandlerProperty2 = (Func_GetHandlerProperty2)GETPROCADDRESS(lib, "GetHandlerProperty2");
+            if (!GetHandlerProperty2)
+                break;
+            loadMessage[0] = '\0';
+            return true;
+        } while (0);
+#ifdef _WIN32
+        COPYWCHARS(loadMessage, NWindows::NError::MyFormatMessage(GetLastError()).Ptr());
+#else
+        COPYACHARS(loadMessage, dlerror());
+#endif        
+        // GetModuleProp = nullptr;
+        // CreateObjectFunc = nullptr;
+        // GetNumberOfMethods = nullptr;
+        // GetNumberOfFormats = nullptr;
+        // GetHandlerProperty = nullptr;
+        // GetHandlerProperty2 = nullptr;
+        lib.Free();
+        return false;
+    }
+
+    bool Lib::Impl::isLoaded() {
+        // return lib.IsLoaded();
+        // return lib.Get_HMODULE() != nullptr;
+        return GetHandlerProperty2 != nullptr;
+    }
+
+    wchar_t* Lib::Impl::getLoadMessage() {
+        return loadMessage;
+    }
+
+    unsigned int Lib::Impl::getVersion() {
+        NWindows::NCOM::CPropVariant prop;
+        if (!GetModuleProp)
+            return 0;
+        if (GetModuleProp(NModulePropID::kVersion, &prop) != S_OK)
+            return 0;
+        if (prop.vt != VT_UI4)
+            return 0;
+        return prop.ulVal;
+    }
+
+    int Lib::Impl::getNumberOfFormats() {
+        UInt32 n = 1;
+        if (!GetNumberOfFormats)
+            return 0;
+        if (GetNumberOfFormats(&n) != S_OK)
+            return 0;
+        return n;
+    };
+
+    wchar_t* Lib::Impl::getFormatExtensions(int index) {
+        lastFormatExtensions[0] = L'\0';
+        NWindows::NCOM::CPropVariant prop;
+        if (!GetHandlerProperty2)
+            return lastFormatExtensions;
+        if (GetHandlerProperty2(index, NArchive::NHandlerPropID::kExtension, &prop) != S_OK)
+            return lastFormatExtensions;
+        if (prop.vt != VT_BSTR)
+            return lastFormatExtensions;
+        COPYWCHARS(lastFormatExtensions, prop.bstrVal);
+        return lastFormatExtensions;
+    }
+
+    wchar_t* Lib::Impl::getFormatName(int index) {
+        lastFormatName[0] = L'\0';
+        NWindows::NCOM::CPropVariant prop;
+        if (!GetHandlerProperty2)
+            return lastFormatName;
+        if (GetHandlerProperty2(index, NArchive::NHandlerPropID::kName, &prop) != S_OK)
+            return lastFormatName;
+        if (prop.vt != VT_BSTR)
+            return lastFormatName;
+        COPYWCHARS(lastFormatName, prop.bstrVal);
+        return lastFormatName;
+    }
+
+    bool Lib::Impl::getFormatUpdatable(int index) {
+        NWindows::NCOM::CPropVariant prop;
+        if (!GetHandlerProperty2)
+            return false;
+        if (GetHandlerProperty2(index, NArchive::NHandlerPropID::kUpdate, &prop) != S_OK)
+            return false;
+        if (prop.vt != VT_BOOL)
+            return false;
+        return prop.boolVal;
+    }
+
+    int Lib::Impl::getFormatByExtension(const wchar_t* ext) {
+        for (int i = 0; i < getNumberOfFormats(); i++) {
+            UString exts = getStringProperty(i, NArchive::NHandlerPropID::kExtension);
+            if (exts.Len() == 0)
+                continue;
+            size_t len = wcslen(ext);
+            int pos = exts.Find(ext);
+            if (pos < 0)
+                continue;
+            if ((pos > 0) && (exts[pos - 1] != L' '))
+                continue;
+            if ((pos + len < exts.Len()) && (exts[pos + len] != L' '))
+                continue;
+            return i;
+        }
+        return -1;
+    }
+
+    // FIXME: iso, udf and others with signature outside first 1024 bytes
+    int Lib::Impl::getFormatBySignature(Istream& stream) {
+        if (!GetHandlerProperty2)
+            return -1;
+        UInt64 pos = 0;
+        UInt32 bufsize = 1024;
+        CByteBuffer buf(bufsize);
+        if (stream.Seek(0, SZ_SEEK_CUR, &pos) != S_OK)
+            return -1;
+        if (stream.Seek(0, SZ_SEEK_SET, nullptr) != S_OK)
+            return -1;
+        if (stream.Read(buf, bufsize, &bufsize) != S_OK)
+            return -1;
+        if (stream.Seek(pos, SZ_SEEK_SET, &pos) != S_OK)
+            return -1;
+
+        for (int i = 0; i < getNumberOfFormats(); i++) {
+            NWindows::NCOM::CPropVariant prop, prop1, prop2;
+            UINT len1 = 0, len2 = 0;
+            ULONG offs = 0;
+
+            if (GetHandlerProperty2(i, NArchive::NHandlerPropID::kSignatureOffset, &prop) == S_OK)
+                if (prop.vt == VT_UI4)
+                    offs = prop.ulVal;
+            if (GetHandlerProperty2(i, NArchive::NHandlerPropID::kSignature, &prop1) == S_OK)
+                if (prop1.vt == VT_BSTR)
+                    len1 = SysStringByteLen(prop1.bstrVal);
+            if (GetHandlerProperty2(i, NArchive::NHandlerPropID::kMultiSignature, &prop2) == S_OK)
+                if (prop2.vt == VT_BSTR)
+                    len2 = SysStringByteLen(prop2.bstrVal);
+
+            // DEBUGLOG(this << "::getFormatBySignature " << i << ". " << offs << "/" << len1 << "/" <<  len2);
+
+            if (len1 > 0 && offs + len1 <= bufsize) {
+                if (memcmp(prop1.bstrVal, buf + offs, len1) == 0)
+                    return i;
+            }
+            if (len2 > 0 && offs + len2 <= bufsize) {
+                auto sign = reinterpret_cast<const Byte*>(prop2.bstrVal);
+                auto rest = len2;
+                while (rest > 0) {
+                    const unsigned len = *sign++;
+                    rest--;
+                    if (len > rest)
+                        break;
+                    if (len > 0 && memcmp(sign, buf + offs, len) == 0)
+                        return i;
+                    sign += len;
+                    rest -= len;
+                }
+            }
+        }
+        return -1;
+    }
+
+    GUID Lib::Impl::getFormatGUID(int index) {
+        NWindows::NCOM::CPropVariant prop;
+        if (!GetHandlerProperty2)
+            return IID_IUnknown;
+        if (GetHandlerProperty2(index, NArchive::NHandlerPropID::kClassID, &prop) != S_OK)
+            return IID_IUnknown;
+        if (prop.vt != VT_BSTR)
+            return IID_IUnknown;
+        if (SysStringByteLen(prop.bstrVal) != sizeof(GUID))
+            return IID_IUnknown;
+        return *(const GUID*)(const void*)prop.bstrVal;
+    }
+
+    UString Lib::Impl::getStringProperty(int propIndex, PROPID propID) {
+        NWindows::NCOM::CPropVariant prop;
+        if (!GetHandlerProperty2)
+            return L"";
+        if (GetHandlerProperty2(propIndex, propID, &prop) != S_OK)
+            return L"";
+        if (prop.vt != VT_BSTR)
+            return L"";
+        return (UString)prop.bstrVal;
+    }
+
+    bool Lib::Impl::checkInterfaceType() const {
+        UInt32 flags =
+#ifdef _WIN32
+            NModuleInterfaceType::k_IUnknown_VirtDestructor_No;
+#else
+            NModuleInterfaceType::k_IUnknown_VirtDestructor_Yes;
+#endif
+        if (GetModuleProp) {
+            NWindows::NCOM::CPropVariant prop;
+            if (GetModuleProp(NModulePropID::kInterfaceType, &prop) == S_OK)
+            {
+                if (prop.vt == VT_UI4)
+                    flags = prop.ulVal;
+            }
+        }
+        DEBUGLOG(this << " interface flags "
+            << NModuleInterfaceType::k_IUnknown_VirtDestructor_ThisModule
+            << " vs " << flags);
+        return flags == NModuleInterfaceType::k_IUnknown_VirtDestructor_ThisModule;
+    }
+
+}

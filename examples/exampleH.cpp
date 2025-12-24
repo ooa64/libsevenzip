@@ -1,0 +1,214 @@
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <codecvt>
+#include "sevenzip.h"
+
+using namespace std;
+using namespace sevenzip;
+
+struct inputstream: public Istream, public std::ifstream {
+
+    virtual HRESULT Open(const wchar_t* filename) override {
+	    filesystem::path fn(filename);
+        this->filename = filename;
+        open(fn, ios::binary);
+        return getResult(is_open());
+    }
+
+    virtual void Close() override {
+        filename.clear();
+        close();
+    }
+
+    virtual HRESULT Read(void* data, UInt32 size, UInt32* processed) override {
+        read((char*)data, size);
+        if (processed)
+            *processed = (unsigned)gcount();
+        return getResult(is_open() && !bad());
+    };
+
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+        clear();
+        seekg(offset, static_cast<ios_base::seekdir>(origin));
+        if (position)
+            *position = tellg();
+        return getResult(is_open() && !bad());
+    };
+
+    virtual Istream* Clone() const override {
+        return new inputstream();
+    };
+
+    virtual const wchar_t* Path() const override {
+        return filename.c_str();
+    };
+
+    protected: std::wstring filename;      
+};
+
+struct compressstream: public inputstream {
+
+    virtual HRESULT Open(const wchar_t* filename) override {
+        wcout << "Compressing " << filename << "\n";
+        return inputstream::Open(filename);
+    };
+
+    virtual Istream* Clone() const override {
+        return new compressstream();
+    };
+
+    virtual bool IsDir(const wchar_t* pathname) const override {
+	    filesystem::path pn(pathname);
+        return filesystem::is_directory(pn);
+    };
+
+    virtual UInt32 GetMode(const wchar_t* pathname) const override {
+        // TODO: implement file mode conversion to POSIX
+        filesystem::path pn(pathname);
+        auto perm = filesystem::status(pn).permissions();
+        // wcout << "Getting perm for " << pathname << " : " << perm << "\n";
+        return 0;
+    };
+
+    virtual UInt32 GetTime(const wchar_t* pathname) const override {
+        // TODO: implement file time comversion to POSIX
+	    filesystem::path pn(pathname);
+        auto mtime = std::filesystem::last_write_time(pn);
+        // wcout << "Getting mtime for " << pathname << " : " << mtime << "\n";
+        return 0;
+    };
+};
+
+struct outputstream: public Ostream, public std::ofstream {
+
+    virtual HRESULT Open(const wchar_t* filename) override {
+        filesystem::path fn(filename);
+        open(fn, ios::binary);
+        return getResult(is_open());
+    };
+
+    virtual void Close() override {
+        close();
+    };
+
+    virtual HRESULT Write(const void* data, UInt32 size, UInt32* processed) override {
+        write((const char*)data, size);
+        if (processed)
+            *processed = size;
+        return getResult(is_open() && !bad());
+    };
+
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+        clear();
+        seekp(offset, static_cast<ios_base::seekdir>(origin));
+        if (position)
+            *position = tellp();
+        return getResult(is_open() && !bad());
+    };
+};
+
+struct extractstream: public outputstream {
+
+    virtual HRESULT Open(const wchar_t* filename) override {
+        wcout << "Extracting " << filename << "\n";
+        return outputstream::Open(filename);
+    };
+
+    virtual HRESULT Mkdir(const wchar_t* dirname) override {
+        wcout << "Creating " << dirname << "\n";
+	    filesystem::path dn(dirname);
+        filesystem::create_directories(dn);
+        return S_OK;
+    };
+
+    virtual HRESULT SetMode(const wchar_t* pathname, UInt32 mode) override {
+        // TODO: implement file mode conversion from POSIX
+	    filesystem::path pn(pathname);
+        filesystem::perms perm = filesystem::perms::owner_read
+                | filesystem::perms::owner_write
+                | filesystem::perms::group_read
+                | filesystem::perms::others_read;
+        filesystem::permissions(pn, perm, filesystem::perm_options::replace);
+        return S_OK; 
+    };
+    
+    virtual HRESULT SetTime(const wchar_t* pathname, UInt32 time) override {
+        // TODO: implement file time conversion from POSIX
+        const filesystem::file_time_type mtime = filesystem::file_time_type::clock::now(); 
+	    filesystem::path pn(pathname);
+        filesystem::last_write_time(pn, mtime);
+        return S_OK;
+    };
+};
+
+std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
+
+static const wchar_t * const usage =
+L"7-Zip example application\n\n"
+L"Usage: example.exe [a | l | x] archive.ext [fileName ...]\n"
+L"Examples:\n"
+L"  example.exe a archive.7z f1.txt f2.txt  : Add two files to archive.7z\n"
+L"  example.exe x archive.7z dir  : eXtract files from archive.7z\n"
+L"  example.exe l archive.7z   : List contents of archive.7z\n";
+
+int main(int argc, char** argv) {
+    setlocale(LC_ALL, "");
+
+    if (argc < 3) {
+        wcout << "\n" << usage;
+        return 1;
+    }
+
+    Lib l;
+    if (!l.load(SEVENZIPDLL)) {
+        wcout  << "\n" << l.getLoadMessage() << "\n";
+        return 1;
+    }
+
+    wcout << "7-Zip " << (getVersion() >> 16) << "." << (getVersion() & 0xffff) << " example "
+            << "(" SEVENZIPDLL " " << (l.getVersion() >> 16) << "." << (l.getVersion() & 0xffff) << ")\n\n";
+
+    HRESULT hr;
+    switch (argv[1][0]) {
+
+        case 'a': {
+            Oarchive a(l);
+            hr = a.open(new compressstream(), new outputstream(), convert.from_bytes(argv[2]).c_str());
+            if (hr == S_OK) {
+                for (int i = 3; i < argc; i++) {
+                    a.addItem(convert.from_bytes(argv[i]).c_str());
+                }
+                hr = a.update();
+            }
+            break;
+        }
+
+        case 'l': {
+            Iarchive a(l);
+            hr = a.open(new inputstream(), convert.from_bytes(argv[2]).c_str());
+            if (hr == S_OK) {
+                int n = a.getNumberOfItems();
+                for (int i = 0; i < n; i++) {
+                    wcout << a.getItemSize(i) << "  " << a.getItemPath(i) << "\n";
+                }
+            }
+            break;
+        }
+
+        case 'x': {
+            Iarchive a(l);
+            hr = a.open(new inputstream(), convert.from_bytes(argv[2]).c_str());
+            if (hr == S_OK) {
+                hr = a.extract(new extractstream(), argc > 3 ? convert.from_bytes(argv[3]).c_str() : nullptr);
+            }
+            break;
+        }
+
+        default:
+            wcout << usage;
+            return 1;
+    }
+    wcout << "\nHRESULT " << hex << hr << " : " << getMessage(hr) << "\n\n";
+    return 0;
+}
