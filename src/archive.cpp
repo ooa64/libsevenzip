@@ -11,10 +11,15 @@
 #include "libsevenzip/archive.hpp"
 #include "libsevenzip/exceptions.hpp"
 #include <fstream>
-#include <cstring>
-#include <sys/stat.h>
 
 namespace sevenzip {
+
+namespace {
+    // Constants for progress simulation in placeholder implementation
+    constexpr uint64_t PROGRESS_TOTAL = 100;
+    constexpr uint64_t PROGRESS_STEP = 10;
+    constexpr uint64_t PROGRESS_HALFWAY = 50;
+}
 
 // Private implementation class (PIMPL pattern)
 class Archive::Impl {
@@ -122,10 +127,10 @@ public:
         
         if (callback) {
             // Simulate progress callback
-            if (!callback(50, 100)) {
+            if (!callback(PROGRESS_HALFWAY, PROGRESS_TOTAL)) {
                 throw CancelledException("Extraction cancelled by user");
             }
-            callback(100, 100);
+            callback(PROGRESS_TOTAL, PROGRESS_TOTAL);
         }
     }
     
@@ -139,8 +144,8 @@ public:
         
         if (callback) {
             // Simulate progress callback
-            for (uint64_t i = 0; i <= 100; i += 10) {
-                if (!callback(i, 100)) {
+            for (uint64_t i = 0; i <= PROGRESS_TOTAL; i += PROGRESS_STEP) {
+                if (!callback(i, PROGRESS_TOTAL)) {
                     throw CancelledException("Extraction cancelled by user");
                 }
             }
@@ -227,8 +232,8 @@ void Archive::create(const std::string& archive_path,
     
     if (callback) {
         // Simulate progress callback
-        for (uint64_t i = 0; i <= 100; i += 10) {
-            if (!callback(i, 100)) {
+        for (uint64_t i = 0; i <= PROGRESS_TOTAL; i += PROGRESS_STEP) {
+            if (!callback(i, PROGRESS_TOTAL)) {
                 throw CancelledException("Compression cancelled by user");
             }
         }
