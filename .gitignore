@@ -39,3 +39,15 @@
 
 # debug information files
 *.dwo
+
+# local
+*.cmd
+*.sh
+*.lst
+*.log
+*.sublime*
+.vs
+.vscode
+externals
+outputs
+temps
