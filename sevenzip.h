@@ -123,8 +123,8 @@ namespace sevenzip {
         Int64 getItemTime(int index);
         bool getItemIsDir(int index);
 
-        HRESULT extract(Ostream* ostream, const wchar_t* directory, int index = -1);
-        HRESULT extract(Ostream* ostream, const wchar_t* directory, const wchar_t* password, int index = -1);
+        HRESULT extract(Ostream* ostream, int index = -1);
+        HRESULT extract(Ostream* ostream, const wchar_t* password, int index = -1);
 
         // lowlevel routines, CPP/7zip/PropID.h and CPP/Common/MyWindows.h can be useful
 

@@ -352,14 +352,12 @@ namespace sevenzip {
         return StringToBstr(this->password, password);
     };
 
-    CExtractCallback::CExtractCallback(Ostream* ostream, IInArchive* archive,
-                const wchar_t* directory, const wchar_t* password) :
+    CExtractCallback::CExtractCallback(Ostream* ostream, IInArchive* archive, const wchar_t* password) :
             outstream(new COutStream(ostream)),
             archive(archive),
-            directory(directory),
             password(password),
             index(-1) {
-        DEBUGLOG(this << " CExtractCallback::CExtractCallback " << archive << " " << directory << " " << password);
+        DEBUGLOG(this << " CExtractCallback::CExtractCallback " << archive << " " << password);
     };
 
     CExtractCallback::~CExtractCallback() {
@@ -389,8 +387,6 @@ namespace sevenzip {
         hr = getArchiveStringItemProperty(archive, index, kpidPath, pathname);
         if (FAILED(hr))
             return hr;
-        if (!directory.IsEmpty())
-            pathname = directory + L"/" + pathname;
 
         bool isdir = false;
         hr = getArchiveBoolItemProperty(archive, index, kpidIsDir, isdir);
@@ -419,8 +415,6 @@ namespace sevenzip {
 
                 UString pathname = L"[Content]";
                 if (getArchiveStringItemProperty(archive, index, kpidPath, pathname) == S_OK) {
-                    if (!directory.IsEmpty())
-                        pathname = directory + L"/" + pathname;
 
                     bool isdir = false;
                     getArchiveBoolItemProperty(archive, index, kpidIsDir, isdir);
@@ -694,12 +688,12 @@ namespace sevenzip {
         }
     };
 
-    HRESULT Iarchive::Impl::extract(Ostream* ostream, const wchar_t* directory, const wchar_t* password, int index) {
+    HRESULT Iarchive::Impl::extract(Ostream* ostream, const wchar_t* password, int index) {
         if (!inarchive)
             return E_FAIL;
 
         CMyComPtr<IArchiveExtractCallback> extractcallback =
-            new CExtractCallback(ostream, inarchive, directory ? directory : L"", password ? password : L"");
+            new CExtractCallback(ostream, inarchive, password ? password : L"");
 
         if (index < 0) {
             return inarchive->Extract(nullptr, (UInt32)(Int32)(-1), false, extractcallback);

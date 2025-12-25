@@ -66,14 +66,12 @@ namespace sevenzip {
         return pimpl->open(istream, path, password, formatIndex);
     };
 
-    HRESULT Iarchive::extract(Ostream* ostream, const wchar_t* directory,
-            int itemIndex) {
-        return pimpl->extract(ostream, directory, nullptr, itemIndex);
+    HRESULT Iarchive::extract(Ostream* ostream, int itemIndex) {
+        return pimpl->extract(ostream, nullptr, itemIndex);
     }
 
-    HRESULT Iarchive::extract(Ostream* ostream, const wchar_t* directory,
-            const wchar_t* password, int itemIndex) {
-        return pimpl->extract(ostream, directory, password, itemIndex);
+    HRESULT Iarchive::extract(Ostream* ostream, const wchar_t* password, int itemIndex) {
+        return pimpl->extract(ostream, password, itemIndex);
     }
 
     void Iarchive::close() {

@@ -142,19 +142,21 @@ struct outputstream: public Ostream {
 
 struct extractstream: public outputstream {
 
+    extractstream(const wchar_t* basepath) : basepath(basepath) {};
+
     virtual HRESULT Open(const wchar_t* filename) override {
         wcout << "Extracting " << filename << "\n";
-        return outputstream::Open(filename);
+        return outputstream::Open(fullname(filename).c_str());
     };
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {
         wcout << "Creating " << dirname << "\n";
-        (void)MKDIR(dirname, 0755);
+        (void)MKDIR(fullname(dirname).c_str(), 0755);
         return S_OK;
     };
 
     virtual HRESULT SetMode(const wchar_t* pathname, UInt32 mode) override {
-        (void)CHMOD(pathname, mode);
+        (void)CHMOD(fullname(pathname).c_str(), mode);
         return S_OK; 
     };
     
@@ -162,9 +164,17 @@ struct extractstream: public outputstream {
         STRUCT_UTIMBUF t;
         t.actime = 0;
         t.modtime = time;
-        UTIME(pathname, &t);
+        UTIME(fullname(pathname).c_str(), &t);
         return S_OK;
     };
+
+private:
+
+    wstring fullname(const wchar_t* filename) const {
+        return basepath.empty() ? filename : basepath + L"/" + filename;
+    };
+
+    wstring basepath;
 };
 
 static const wchar_t * const usage =
@@ -223,7 +233,7 @@ int MAIN(argc, argv) {
             Iarchive a(l);
             hr = a.open(new inputstream(), F2U(argv[2]));
             if (hr == S_OK) {
-                hr = a.extract(new extractstream(), argc > 3 ? F2U(argv[3]) : nullptr);
+                hr = a.extract(new extractstream(argc > 3 ? F2U(argv[3]) : L""));
             }
             break;
         }

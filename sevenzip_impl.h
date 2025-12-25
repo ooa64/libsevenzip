@@ -139,14 +139,13 @@ namespace sevenzip {
 
         STDMETHOD(CryptoGetTextPassword) (BSTR* password) throw() Z7_override Z7_final;
 
-        CExtractCallback(Ostream* ostream, IInArchive* archive, const wchar_t* directory, const wchar_t* password);
+        CExtractCallback(Ostream* ostream, IInArchive* archive, const wchar_t* password);
         virtual ~CExtractCallback();
 
     private:
 
         CMyComPtr<ISequentialOutStream> outstream;
         IInArchive* archive;
-        UString directory;
         UString password;
         int index;
     };
@@ -249,7 +248,7 @@ namespace sevenzip {
         Int64 getItemTime(int index);
         bool getItemIsDir(int index);
 
-        HRESULT extract(Ostream* ostream, const wchar_t* directory, const wchar_t* password, int index);
+        HRESULT extract(Ostream* ostream, const wchar_t* password, int index);
 
         int getNumberOfProperties();
         const wchar_t* getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);

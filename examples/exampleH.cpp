@@ -110,21 +110,23 @@ struct outputstream: public Ostream, public std::ofstream {
 
 struct extractstream: public outputstream {
 
+    extractstream(const wchar_t* basepath) : basepath(basepath) {};
+
     virtual HRESULT Open(const wchar_t* filename) override {
         wcout << "Extracting " << filename << "\n";
-        return outputstream::Open(filename);
+        return outputstream::Open(fullname(filename).c_str());
     };
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {
         wcout << "Creating " << dirname << "\n";
-	    filesystem::path dn(dirname);
+	    filesystem::path dn(fullname(dirname));
         filesystem::create_directories(dn);
         return S_OK;
     };
 
     virtual HRESULT SetMode(const wchar_t* pathname, UInt32 mode) override {
         // TODO: implement file mode conversion from POSIX
-	    filesystem::path pn(pathname);
+	    filesystem::path pn(fullname(pathname));
         filesystem::perms perm = filesystem::perms::owner_read
                 | filesystem::perms::owner_write
                 | filesystem::perms::group_read
@@ -136,10 +138,18 @@ struct extractstream: public outputstream {
     virtual HRESULT SetTime(const wchar_t* pathname, UInt32 time) override {
         // TODO: implement file time conversion from POSIX
         const filesystem::file_time_type mtime = filesystem::file_time_type::clock::now(); 
-	    filesystem::path pn(pathname);
+	    filesystem::path pn(fullname(pathname));
         filesystem::last_write_time(pn, mtime);
         return S_OK;
     };
+
+private:
+
+    wstring fullname(const wchar_t* filename) const {
+        return basepath.empty() ? filename : basepath + L"/" + filename;
+    };
+
+    wstring basepath;
 };
 
 std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
@@ -200,7 +210,7 @@ int main(int argc, char** argv) {
             Iarchive a(l);
             hr = a.open(new inputstream(), convert.from_bytes(argv[2]).c_str());
             if (hr == S_OK) {
-                hr = a.extract(new extractstream(), argc > 3 ? convert.from_bytes(argv[3]).c_str() : nullptr);
+                hr = a.extract(new extractstream(argc > 3 ? convert.from_bytes(argv[3]).c_str() : L""));
             }
             break;
         }

@@ -45,8 +45,10 @@ struct inputstream: public Istream, private std::ifstream {
 
 struct outputstream: public Ostream, private std::ofstream {
 
-    virtual HRESULT Open(const wchar_t* path) override {
-        open(U2F(path), ios::binary);
+    outputstream(const wchar_t* basepath): basepath(basepath) {};
+
+    virtual HRESULT Open(const wchar_t* filename) override {
+        open(U2F(fullname(filename).c_str()), ios::binary);
         return getResult(is_open());
     };
 
@@ -60,6 +62,14 @@ struct outputstream: public Ostream, private std::ofstream {
             *processed = size;
         return getResult(is_open() && !bad());
     };
+
+private:
+    
+    wstring fullname(const wchar_t* filename) const {
+        return basepath.empty() ? filename : basepath + L"/" + filename;
+    };
+
+    wstring basepath;
 };
 
 int main() {
@@ -79,7 +89,7 @@ int main() {
     for (int i = 0; i < a.getNumberOfItems(); i++) {
         wcout << i+1 << " : " << a.getItemPath(i) << "\n";
     }
-    hr = a.extract(new outputstream(), L"temps");
+    hr = a.extract(new outputstream(L"temps"));
     wcout << "extract: " << hr << " " << getMessage(hr) << "\n";    
     a.close();
 
