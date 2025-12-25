@@ -4,6 +4,7 @@
 #include "sevenzip_impl.h"
 
 #include "CPP/Common/StringConvert.h"
+#include "CPP/Windows/NtCheck.h"
 #include "CPP/Windows/PropVariant.h"
 #include "CPP/Windows/TimeUtils.h"
 #include "CPP/Windows/ErrorMsg.h"
