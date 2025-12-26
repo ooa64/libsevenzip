@@ -7,7 +7,7 @@
 using namespace std;
 using namespace sevenzip;
 
-struct inputstream: public Istream, public std::ifstream {
+struct Inputstream: public Istream, public std::ifstream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
 	    filesystem::path fn(filename);
@@ -21,23 +21,21 @@ struct inputstream: public Istream, public std::ifstream {
         close();
     }
 
-    virtual HRESULT Read(void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
         read((char*)data, size);
-        if (processed)
-            *processed = (unsigned)gcount();
+        processed = (unsigned)gcount();
         return getResult(is_open() && !bad());
     };
 
-    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
         clear();
         seekg(offset, static_cast<ios_base::seekdir>(origin));
-        if (position)
-            *position = tellg();
+        position = tellg();
         return getResult(is_open() && !bad());
     };
 
     virtual Istream* Clone() const override {
-        return new inputstream();
+        return new Inputstream();
     };
 
     virtual const wchar_t* Path() const override {
@@ -47,15 +45,15 @@ struct inputstream: public Istream, public std::ifstream {
     protected: std::wstring filename;      
 };
 
-struct compressstream: public inputstream {
+struct Compressstream: public Inputstream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
         wcout << "Compressing " << filename << "\n";
-        return inputstream::Open(filename);
+        return Inputstream::Open(filename);
     };
 
     virtual Istream* Clone() const override {
-        return new compressstream();
+        return new Compressstream();
     };
 
     virtual bool IsDir(const wchar_t* pathname) const override {
@@ -80,7 +78,7 @@ struct compressstream: public inputstream {
     };
 };
 
-struct outputstream: public Ostream, public std::ofstream {
+struct Outputstream: public Ostream, public std::ofstream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
         filesystem::path fn(filename);
@@ -92,29 +90,27 @@ struct outputstream: public Ostream, public std::ofstream {
         close();
     };
 
-    virtual HRESULT Write(const void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
         write((const char*)data, size);
-        if (processed)
-            *processed = size;
+        processed = size;
         return getResult(is_open() && !bad());
     };
 
-    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
         clear();
         seekp(offset, static_cast<ios_base::seekdir>(origin));
-        if (position)
-            *position = tellp();
+        position = tellp();
         return getResult(is_open() && !bad());
     };
 };
 
-struct extractstream: public outputstream {
+struct Extractstream: public Outputstream {
 
-    extractstream(const wchar_t* basepath) : basepath(basepath) {};
+    Extractstream(const wchar_t* basepath) : basepath(basepath) {};
 
     virtual HRESULT Open(const wchar_t* filename) override {
         wcout << "Extracting " << filename << "\n";
-        return outputstream::Open(fullname(filename).c_str());
+        return Outputstream::Open(fullname(filename).c_str());
     };
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {
@@ -184,9 +180,9 @@ int main(int argc, char** argv) {
 
         case 'a': {
             Oarchive a(l);
-            compressstream s;
-            outputstream o;
-            hr = a.open(s, o, convert.from_bytes(argv[2]).c_str());
+            Compressstream c;
+            Outputstream o;
+            hr = a.open(c, o, convert.from_bytes(argv[2]).c_str());
             if (hr == S_OK) {
                 for (int i = 3; i < argc; i++) {
                     a.addItem(convert.from_bytes(argv[i]).c_str());
@@ -198,7 +194,7 @@ int main(int argc, char** argv) {
 
         case 'l': {
             Iarchive a(l);
-            inputstream s;
+            Inputstream s;
             hr = a.open(s, convert.from_bytes(argv[2]).c_str());
             if (hr == S_OK) {
                 int n = a.getNumberOfItems();
@@ -211,10 +207,10 @@ int main(int argc, char** argv) {
 
         case 'x': {
             Iarchive a(l);
-            inputstream s;
+            Inputstream s;
             hr = a.open(s, convert.from_bytes(argv[2]).c_str());
             if (hr == S_OK) {
-                extractstream e(argc > 3 ? convert.from_bytes(argv[3]).c_str() : L"");
+                Extractstream e(argc > 3 ? convert.from_bytes(argv[3]).c_str() : L"");
                 hr = a.extract(e);
             }
             break;

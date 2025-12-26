@@ -38,7 +38,7 @@ std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 using namespace std;
 using namespace sevenzip;
 
-struct inputstream: public Istream {
+struct Inputstream: public Istream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
         this->path = filename;
@@ -48,26 +48,24 @@ struct inputstream: public Istream {
     virtual void Close() override {
         if (this->file)
             fclose(this->file);
-        this->file = nullptr;
+        //this->file = nullptr;
         path.clear();
     }
 
-    virtual HRESULT Read(void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
 		size_t count = fread(data, 1, size, this->file);
-        if (processed)
-            *processed = (UInt32)count;
+        processed = (UInt32)count;
         return getResult(count >= 0);
     };
 
-    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
 		int result = fseek(this->file, (long)offset, origin);
-        if (position)
-            *position = ftell(this->file);
+        position = ftell(this->file);
         return getResult(result == 0);
     };
 
     virtual Istream* Clone() const override {
-        return new inputstream();
+        return new Inputstream();
     };
 
     virtual const wchar_t* Path() const override {
@@ -78,15 +76,15 @@ struct inputstream: public Istream {
     FILE* file = nullptr;
 };
 
-struct compressstream: public inputstream {
+struct Compressstream: public Inputstream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
         wcout << "Compressing " << filename << "\n";
-        return inputstream::Open(filename);
+        return Inputstream::Open(filename);
     };
 
     virtual Istream* Clone() const override {
-        return new compressstream();
+        return new Compressstream();
     };
 
     virtual bool IsDir(const wchar_t* pathname) const override {
@@ -111,7 +109,7 @@ struct compressstream: public inputstream {
     };
 };
 
-struct outputstream: public Ostream {
+struct Outputstream: public Ostream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
         return getResult(FOPEN(&this->file, filename, L"wb") == 0);
@@ -120,33 +118,31 @@ struct outputstream: public Ostream {
     virtual void Close() override {
         if (this->file)
             fclose(this->file);
-        this->file = nullptr;
+        //this->file = nullptr;
     };
 
-    virtual HRESULT Write(const void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
         size_t count = fwrite(data, 1, size, this->file);
-        if (processed)
-            *processed = (UInt32)count;
+        processed = (UInt32)count;
         return getResult(count >= 0);
     };
 
-    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
 		int result = fseek(this->file, (long)offset, origin);
-        if (position)
-            *position = ftell(this->file);
+        position = ftell(this->file);
         return getResult(result == 0);
     };
     
     FILE* file = nullptr;
 };
 
-struct extractstream: public outputstream {
+struct Extractstream: public Outputstream {
 
-    extractstream(const wchar_t* basepath) : basepath(basepath) {};
+    Extractstream(const wchar_t* basepath) : basepath(basepath) {};
 
     virtual HRESULT Open(const wchar_t* filename) override {
         wcout << "Extracting " << filename << "\n";
-        return outputstream::Open(fullname(filename).c_str());
+        return Outputstream::Open(fullname(filename).c_str());
     };
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {
@@ -207,9 +203,9 @@ int MAIN(argc, argv) {
 
         case 'a': {
             Oarchive a(l);
-            compressstream s;
-            outputstream o;
-            hr = a.open(s, o, F2U(argv[2]));
+            Compressstream c;
+            Outputstream o;
+            hr = a.open(c, o, F2U(argv[2]));
             if (hr == S_OK) {
                 for (int i = 3; i < argc; i++) {
                     a.addItem(F2U(argv[i]));
@@ -221,7 +217,7 @@ int MAIN(argc, argv) {
 
         case 'l': {
             Iarchive a(l);
-            inputstream s;
+            Inputstream s;
             hr = a.open(s, F2U(argv[2]));
             if (hr == S_OK) {
                 int n = a.getNumberOfItems();
@@ -234,10 +230,10 @@ int MAIN(argc, argv) {
 
         case 'x': {
             Iarchive a(l);
-            inputstream s;
+            Inputstream s;
             hr = a.open(s, F2U(argv[2]));
             if (hr == S_OK) {
-                extractstream e(argc > 3 ? F2U(argv[3]) : L"");
+                Extractstream e(argc > 3 ? F2U(argv[3]) : L"");
                 hr = a.extract(e);
             }
             break;

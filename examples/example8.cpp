@@ -17,7 +17,7 @@ std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 using namespace std;
 using namespace sevenzip;
 
-struct itemsstream: public Istream, private std::ifstream {
+struct Compressstream: public Istream, private std::ifstream {
 
     virtual HRESULT Open(const wchar_t* path) override {
         open(U2F(path), ios::binary);
@@ -28,75 +28,69 @@ struct itemsstream: public Istream, private std::ifstream {
         close();
     } 
 
-    virtual HRESULT Read(void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
         read((char*)data, size);
-        if (processed)
-            *processed = (unsigned)gcount();
+        processed = (UInt32)gcount();
         return getResult(is_open() && !bad());
     };
 };
 
-struct outputstream_preopen: public Ostream {
+struct Outputstream_preopen: public Ostream {
 
-    outputstream_preopen(ofstream& stream) : stream(&stream) {}
+    Outputstream_preopen(ofstream& stream) : stream(&stream) {}
 
     virtual HRESULT Open(const wchar_t* /*path*/) override { return S_OK; };
     virtual void Close() override {};
 
-    virtual HRESULT Write(const void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
         stream->write((const char*)data, size);
-        if (processed)
-            *processed = size;
+        processed = size;
         return getResult(stream->is_open() && !stream->bad());
     };
 
-    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
         stream->clear();
         stream->seekp(offset, static_cast<ios_base::seekdir>(origin));
-        if (position)
-            *position = stream->tellp();
+        position = stream->tellp();
         return getResult(stream->is_open() && !stream->bad());
     };
 
     ofstream* stream;
 };
 
-struct inputstream_preopen : public Istream {
+struct Inputstream_preopen : public Istream {
 
-    inputstream_preopen(ifstream& stream) : stream(&stream) {}
+    Inputstream_preopen(ifstream& stream) : stream(&stream) {}
 
-    virtual HRESULT Open(const wchar_t* /*path*/) override { return S_FALSE; };
+    virtual HRESULT Open(const wchar_t* /*path*/) override { return S_OK; };
     virtual void Close() override {};
 
-    virtual HRESULT Read(void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
         stream->read((char*)data, size);
-        if (processed)
-            *processed = size;
+        processed = size;
         return getResult(stream->is_open() && !stream->bad());
     };
 
-    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
         stream->clear();
         stream->seekg(offset, static_cast<ios_base::seekdir>(origin));
-        if (position)
-            *position = stream->tellg();
+        position = stream->tellg();
         return getResult(stream->is_open() && !stream->bad());
     };
 
     ifstream* stream;
 };
 
-struct extractstream_preopen : public Ostream {
+struct Extractstream_preopen : public Ostream {
 
-    extractstream_preopen(ostream& stream) : stream(&stream) {}
+    Extractstream_preopen(ostream& stream) : stream(&stream) {}
 
     virtual HRESULT Open(const wchar_t* /*path*/) override { return S_OK; };
     virtual void Close() override {};
 
-    virtual HRESULT Write(const void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
         stream->write((const char*)data, size);
-        if (processed)
-            *processed = size;
+        processed = size;
         return getResult(!stream->bad());
     };
 
@@ -121,10 +115,10 @@ int main() {
             expected = st.st_size;
     }
     {
-        Oarchive a(l);
         ofstream fstream(L"temps/example8.7z", ios::binary);
-        itemsstream s;
-        outputstream_preopen o(fstream);
+        Oarchive a(l);
+        Compressstream s;
+        Outputstream_preopen o(fstream);
         hr = a.open(s, o, nullptr);
         wcout << "open : " << getMessage(hr) << "\n";
         a.addItem(L"temps/example8.txt");
@@ -135,11 +129,11 @@ int main() {
     if (hr != S_OK)
         return 1;
     {
-        Iarchive a(l);
         stringstream sstream;
         ifstream fstream(L"temps/example8.7z", ios::binary);
-        inputstream_preopen s(fstream);
-        extractstream_preopen x(sstream);
+        Iarchive a(l);
+        Inputstream_preopen s(fstream);
+        Extractstream_preopen x(sstream);
         hr = a.open(s, nullptr);
         wcout << "open : " << getMessage(hr) << "\n";
         hr = a.extract(x, 0);

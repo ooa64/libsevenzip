@@ -30,14 +30,14 @@ namespace sevenzip {
 
     struct Istream {
 
-        virtual ~Istream() = default;
-    
-        virtual HRESULT Open(const wchar_t* filename) = 0;
-        virtual HRESULT Read(void* data, UInt32 size, UInt32* processed) = 0;
-        virtual void Close() = 0;
+        virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) = 0;
+
+        // Not used in the case of preopen streams
+        virtual HRESULT Open(const wchar_t* /*filename*/) { return S_OK; };
+        virtual void Close() {};
 
         // Used by the open handler
-        virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64* /*position*/) { return S_FALSE; };
+        virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64& /*position*/) { return S_FALSE; };
 
         // Used by open multivolume handler
         virtual Istream* Clone() const { return nullptr; };
@@ -48,24 +48,28 @@ namespace sevenzip {
         //virtual UInt64 GetSize(const wchar_t* /*filename*/) const { return 1; };
         virtual UInt32 GetMode(const wchar_t* /*filename*/) const { return 0; };
         virtual UInt32 GetTime(const wchar_t* /*filename*/) const { return 0; };
+
+        virtual ~Istream() = default;
     };
 
     struct Ostream {
 
-        virtual ~Ostream() = default;
+        virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) = 0;
 
-        virtual HRESULT Open(const wchar_t* filename) = 0;
-        virtual HRESULT Write(const void* data, UInt32 size, UInt32* processed) = 0;
+        // Not used in the case of preopen streams
+        virtual HRESULT Open(const wchar_t* /*filename*/) { return S_OK; };
         virtual void Close() = 0;
 
         // Used by update handler
-        virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64* /*position*/) { return S_FALSE; };
+        virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64& /*position*/) { return S_FALSE; };
         virtual HRESULT SetSize(UInt64 /*size*/) { return S_FALSE; };
 
         // Used by extract handler
         virtual HRESULT Mkdir(const wchar_t* /*dirname*/) { return S_FALSE; };
         virtual HRESULT SetMode(const wchar_t* /*path*/, UInt32 /*mode*/) { return S_FALSE; };
         virtual HRESULT SetTime(const wchar_t* /*filename*/, UInt32 /*time*/) { return S_FALSE; };
+
+        virtual ~Ostream() = default;
     };
 };
 
@@ -109,6 +113,9 @@ namespace sevenzip {
         Iarchive(Lib& lib);
         ~Iarchive();
 
+		// istream can be preopened in the case of singlevolume archives
+		// filename will be ignored in that case
+
         // formatIndex >  -1 : force format
         // formatIndex == -1 : detect format by extension and then by signature
         // formatIndex <  -1 : detect format by signature
@@ -126,6 +133,8 @@ namespace sevenzip {
         UInt32 getItemMode(int index);
         Int64 getItemTime(int index);
         bool getItemIsDir(int index);
+
+		// ostream can be preopened in the case of single item extraction (index > -1)
 
         HRESULT extract(Ostream& ostream, int index = -1);
         HRESULT extract(Ostream& ostream, const wchar_t* password, int index = -1);
@@ -160,6 +169,9 @@ namespace sevenzip {
         Oarchive() = delete;
         Oarchive(Lib& lib);
         ~Oarchive();
+
+        // ostream can be preopened
+        // filename will be ignored in that case
 
         HRESULT open(Istream& istream, Ostream& ostream,
                 const wchar_t* filename, int formatIndex = -1);

@@ -165,12 +165,14 @@ namespace sevenzip {
 
     STDMETHODIMP CInStream::Read(void* data, UInt32 size, UInt32* processedSize) throw() {
         DEBUGLOG(this << " CInStream::Read " << size);
-        return istream ? istream->Read(data, size, processedSize) : S_FALSE;
+        UInt32 dummy = 0;
+        return istream ? istream->Read(data, size, processedSize ? *processedSize : dummy) : S_FALSE;
     };
 
     STDMETHODIMP CInStream::Seek(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) throw() {
         DEBUGLOG(this << " CInStream::Seek " << offset << "/" << seekOrigin);
-        return istream ? istream->Seek(offset, seekOrigin, newPosition) : S_FALSE;
+        UInt64 dummy = 0;
+        return istream ? istream->Seek(offset, seekOrigin, newPosition ? *newPosition : dummy) : S_FALSE;
     }
 
     HRESULT CInStream::Open(const wchar_t* path) {
@@ -223,12 +225,14 @@ namespace sevenzip {
 
     STDMETHODIMP COutStream::Write(const void* data, UInt32 size, UInt32* processedSize) throw() {
         DEBUGLOG(this << " COutStream::Write " << size);
-        return ostream ? ostream->Write(data, size, processedSize) : S_FALSE;
+		UInt32 dummy = 0;
+        return ostream ? ostream->Write(data, size, processedSize ? *processedSize : dummy) : S_FALSE;
     };
 
     STDMETHODIMP COutStream::Seek(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) throw() {
         DEBUGLOG(this << " COutStream::Seek " << offset << "/" << seekOrigin);
-        return ostream ? ostream->Seek(offset, seekOrigin, newPosition) : S_FALSE;
+		UInt64 dummy = 0;
+        return ostream ? ostream->Seek(offset, seekOrigin, newPosition ? *newPosition : dummy) : S_FALSE;
     }
 
     STDMETHODIMP COutStream::SetSize(UInt64 size) throw() {
@@ -580,7 +584,7 @@ namespace sevenzip {
             if (FAILED(hr))
                 return hr;
         }
-        hr = istream->Seek(0, SZ_SEEK_SET, nullptr);
+        //hr = istream->Seek(0, SZ_SEEK_SET, nullptr);
         if (FAILED(hr))
             return hr;
 
@@ -1093,16 +1097,16 @@ namespace sevenzip {
     int Lib::Impl::getFormatBySignature(Istream* stream) {
         if (!GetHandlerProperty2)
             return -1;
-        UInt64 pos = 0;
+        UInt64 pos = 0, dummy;
         UInt32 bufsize = 1024;
         CByteBuffer buf(bufsize);
-        if (stream->Seek(0, SZ_SEEK_CUR, &pos) != S_OK)
+        if (stream->Seek(0, SZ_SEEK_CUR, pos) != S_OK)
             return -1;
-        if (stream->Seek(0, SZ_SEEK_SET, nullptr) != S_OK)
+        if (stream->Seek(0, SZ_SEEK_SET, dummy) != S_OK)
             return -1;
-        if (stream->Read(buf, bufsize, &bufsize) != S_OK)
+        if (stream->Read(buf, bufsize, bufsize) != S_OK)
             return -1;
-        if (stream->Seek(pos, SZ_SEEK_SET, &pos) != S_OK)
+        if (stream->Seek(pos, SZ_SEEK_SET, dummy) != S_OK)
             return -1;
 
         for (int i = 0; i < getNumberOfFormats(); i++) {

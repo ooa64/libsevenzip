@@ -16,7 +16,7 @@ std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 using namespace std;
 using namespace sevenzip;
 
-struct inputstream: public Istream, private std::ifstream {
+struct Inputstream: public Istream, private std::ifstream {
 
     virtual HRESULT Open(const wchar_t* path) override {
         open(U2F(path), ios::binary);
@@ -27,19 +27,14 @@ struct inputstream: public Istream, private std::ifstream {
         close();
     } 
 
-    virtual HRESULT Read(void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
         read((char*)data, size);
-        if (processed)
-            *processed = (unsigned)gcount();
+        processed = (UInt32)gcount();
         return getResult(is_open() && !bad());
-    };
-
-    virtual Istream* Clone() const override {
-        return new inputstream();
     };
 };
 
-struct outputstream: public Ostream, private std::ofstream {
+struct Outputstream: public Ostream, private std::ofstream {
 
     virtual HRESULT Open(const wchar_t* path) override {
         open(U2F(path), ios::binary);
@@ -50,18 +45,16 @@ struct outputstream: public Ostream, private std::ofstream {
         close();
     };
 
-    virtual HRESULT Write(const void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
         write((const char*)data, size);
-        if (processed)
-            *processed = size;
+        processed = size;
         return getResult(is_open() && !bad());
     };
 
-    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
         clear();
         seekp(offset, static_cast<ios_base::seekdir>(origin));
-        if (position)
-            *position = tellp();
+        position = tellp();
         return getResult(is_open() && !bad());
     };
 };
@@ -76,8 +69,8 @@ int main() {
     }
 
     Oarchive a(l);
-    inputstream i;
-	outputstream o;
+    Inputstream i;
+	Outputstream o;
     HRESULT hr = a.open(i, o, L"temps/example6.7z");
     wcout << "open : " << getMessage(hr) << "\n";
     a.addItem(L"temps/example6.txt");

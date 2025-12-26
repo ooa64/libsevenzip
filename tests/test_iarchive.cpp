@@ -12,16 +12,16 @@ static void CHECK(bool cond, const char* msg) {
 struct FakeIstream : public sevenzip::Istream {
     bool open_ok = true;
     bool seek_ok = true;
-
+    bool read_ok = true;
     virtual HRESULT Open(const wchar_t* /*filename*/) override {
         return open_ok ? S_OK : S_FALSE;
     }
-    virtual HRESULT Read(void* /*data*/, UInt32 /*size*/, UInt32* processed) override {
-        if (processed) *processed = 0;
-        return S_OK;
+    virtual HRESULT Read(void* /*data*/, UInt32 /*size*/, UInt32& processed) override {
+		processed = 0;
+        return read_ok ? S_OK : S_FALSE;
     }
     virtual void Close() override {}
-    virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64* /*position*/) override {
+    virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64& /*position*/) override {
         return seek_ok ? S_OK : S_FALSE;
     }
 };
@@ -29,12 +29,13 @@ struct FakeIstream : public sevenzip::Istream {
 // Minimal fake Ostream
 struct FakeOstream : public sevenzip::Ostream {
     bool open_ok = true;
+    bool write_ok = true;
     virtual HRESULT Open(const wchar_t* /*filename*/) override {
         return open_ok ? S_OK : S_FALSE;
     }
-    virtual HRESULT Write(const void* /*data*/, UInt32 /*size*/, UInt32* processed) override {
-        if (processed) *processed = 0;
-        return S_OK;
+    virtual HRESULT Write(const void* /*data*/, UInt32 /*size*/, UInt32& processed) override {
+        processed = 0;
+        return write_ok ? S_OK : S_FALSE;
     }
     virtual void Close() override {}
 };

@@ -5,23 +5,21 @@
 using namespace std;
 using namespace sevenzip;
 
-struct inputstream: public Istream, public std::ifstream {
+struct Inputstream: public Istream, public std::ifstream {
 
     virtual HRESULT Open(const wchar_t*) {return S_FALSE;}
     virtual void Close() {}
 
-    virtual HRESULT Read(void* data, UInt32 size, UInt32* processed) {
+    virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) {
         read((char*)data, size);
-        if (processed)
-            *processed = (unsigned)gcount();
+        processed = (UInt32)gcount();
         return getResult(!bad());
     };
 
-    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) {
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) {
         clear();
         seekg(offset, static_cast<ios_base::seekdir>(origin));
-        if (position)
-            *position = tellg();
+        position = tellg();
         return getResult(!bad());
     };
 }; 
@@ -38,7 +36,7 @@ int main() {
     int f1 = l.getFormatByExtension(L"7z");
     wcout << "format by ext : " << l.getFormatName(f1) << "\n";
 
-    inputstream i;
+    Inputstream i;
     i.open("temps/example1.7z", ios::binary);
     int f2 = l.getFormatBySignature(i);
     i.close();

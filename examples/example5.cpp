@@ -16,7 +16,7 @@ std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 using namespace std;
 using namespace sevenzip;
 
-struct inputstream: public Istream, private std::ifstream {
+struct Inputstream: public Istream, private std::ifstream {
 
     virtual HRESULT Open(const wchar_t* path) override {
         open(U2F(path), ios::binary);
@@ -27,18 +27,16 @@ struct inputstream: public Istream, private std::ifstream {
         close();
     } 
 
-    virtual HRESULT Read(void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
         read((char*)data, size);
-        if (processed)
-            *processed = (unsigned)gcount();
+        processed = (UInt32)gcount();
         return getResult(is_open() && !bad());
     };
 
-    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64* position) override {
+    virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
         clear();
         seekg(offset, static_cast<ios_base::seekdir>(origin));
-        if (position)
-            *position = tellg();
+        position = tellg();
         return getResult(is_open() && !bad());
     };
 };
@@ -56,10 +54,9 @@ struct outputstream: public Ostream, private std::ofstream {
         close();
     };
 
-    virtual HRESULT Write(const void* data, UInt32 size, UInt32* processed) override {
+    virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
         write((const char*)data, size);
-        if (processed)
-            *processed = size;
+        processed = size;
         return getResult(is_open() && !bad());
     };
 
@@ -82,7 +79,7 @@ int main() {
     }
 
     Iarchive a(l);
-	inputstream s;
+	Inputstream s;
     HRESULT hr = a.open(s, L"temps/example5.7z");
     wcout << "open : " << getMessage(hr) << "\n";
     wcout << "items :\n";
