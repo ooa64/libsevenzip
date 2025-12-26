@@ -7,11 +7,13 @@
 
 #ifdef _WIN32
 #define U2F(_s_) (_s_)
+#define F2U(_s_) (_s_)
 #else
 #include <locale>
 #include <codecvt>
 std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 #define U2F(_s_) (convert.to_bytes(_s_).c_str())
+#define F2U(_s_) (convert.from_bytes(_s_).c_str())
 #endif
 
 using namespace std;
@@ -124,7 +126,7 @@ int main() {
         a.addItem(L"temps/example8.txt");
         hr = a.update();
         wcout << "update: " << hr << " " << getMessage(hr) << "\n";
-		fstream.close();
+        fstream.close();
     }
     if (hr != S_OK)
         return 1;
@@ -137,16 +139,16 @@ int main() {
         hr = a.open(s, nullptr);
         wcout << "open : " << getMessage(hr) << "\n";
         hr = a.extract(x, 0);
-        wcout << "extract: " << hr << " " << getMessage(hr) << "\n";
-		cout << "extracted size: " << sstream.str().size() << "\n";
-		cout << "extracted data: " << sstream.str().substr(0,16) << "\n";
         result = (int)sstream.str().size();
+        wcout << "extract: " << hr << " " << getMessage(hr) << "\n";
+        wcout << "extracted size: " << result << " expected " << expected<< "\n";
+        wcout << "extracted data: " << F2U(sstream.str().substr(0,16)) << "\n";
     }
     if (hr != S_OK)
         return 1;
 
     if (result == expected) {
-        cout << "TEST PASSED\n";
+        wcout << "TEST PASSED\n";
     }
     return 0;
 }
