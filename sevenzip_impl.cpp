@@ -268,7 +268,7 @@ namespace sevenzip {
         password(password),
         subarchivename(L""),
         subarchivemode(false) {
-        DEBUGLOG(this << " COpenCallback " << istream << " " << password << "\n");
+        DEBUGLOG(this << " COpenCallback " << istream << " " << (password ? password : L"NULL") << "\n");
     };
 
     COpenCallback::~COpenCallback() {
@@ -352,7 +352,8 @@ namespace sevenzip {
             archive(archive),
             password(password),
             index(-1) {
-        DEBUGLOG(this << " CExtractCallback::CExtractCallback " << archive << " " << password);
+        DEBUGLOG(this << " CExtractCallback::CExtractCallback " << archive << " "
+                << (password ? password : L"NULL"));
     };
 
     CExtractCallback::~CExtractCallback() {
@@ -435,7 +436,7 @@ namespace sevenzip {
 
     STDMETHODIMP CExtractCallback::CryptoGetTextPassword(BSTR* password) throw() {
         DEBUGLOG(this << " CExtractCallback::CryptoGetTextPassword " << (password ? *password : L""));
-		*password = NULL;
+        *password = NULL;
         if (this->password.IsEmpty())
             return E_NOTIMPL;
         return StringToBstr(this->password, password);
@@ -443,9 +444,9 @@ namespace sevenzip {
 
 
     CUpdateCallback::CUpdateCallback(Istream* istream, const wchar_t* password) :
-        	instream(new CInStream(istream)),
-        	password(password) {
-        DEBUGLOG(this << " CUpdateCallback " << istream << " " << password);
+            instream(new CInStream(istream)),
+            password(password) {
+        DEBUGLOG(this << " CUpdateCallback " << istream << " " << (password ? password : L"NULL"));
     }
 
     CUpdateCallback::~CUpdateCallback() {
