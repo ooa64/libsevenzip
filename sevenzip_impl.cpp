@@ -522,20 +522,15 @@ namespace sevenzip {
 
     STDMETHODIMP CUpdateCallback::GetStream(UInt32 index, ISequentialInStream** inStream) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetStream " << index);
-
         *inStream = nullptr;
-
-        if (!instream)
-            return E_FAIL;
-
         *inStream = instream;
         instream->AddRef();
-        CINSTREAM(instream)->Close();
         return CINSTREAM(instream)->Open(items[index]);
     }
 
     STDMETHODIMP CUpdateCallback::SetOperationResult(Int32 operationResult) throw() {
         DEBUGLOG(this << " CUpdateCallback::SetOperationResult " << operationResult);
+        CINSTREAM(instream)->Close();
         return S_OK;
     }
 
