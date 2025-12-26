@@ -5,10 +5,10 @@ O = outputs
 L = sevenzip.lib
 
 !ifndef SEVENZIPSRC
-#SEVENZIPSRC = p7zip
-#SEVENZIPSRC = 7-Zip-zstd 
-#SEVENZIPSRC = lzma2501
-SEVENZIPSRC = 7zip
+#SEVENZIPSRC = externals/p7zip
+#SEVENZIPSRC = externals/7-Zip-zstd 
+#SEVENZIPSRC = externals/lzma2501
+SEVENZIPSRC = externals/7zip
 !endif
 
 !ifdef UNICODE
