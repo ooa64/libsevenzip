@@ -207,7 +207,7 @@ namespace sevenzip {
         wchar_t* getFormatName(int index);
         bool getFormatUpdatable(int index);
         int getFormatByExtension(const wchar_t* ext);
-        int getFormatBySignature(Istream& stream);
+        int getFormatBySignature(Istream* stream);
 
         // for internal use
         GUID getFormatGUID(int index);

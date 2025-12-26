@@ -37,7 +37,7 @@ namespace sevenzip {
     }
 
     int Lib::getFormatBySignature(Istream& stream) {
-        return pimpl->getFormatBySignature(stream);
+        return pimpl->getFormatBySignature(&stream);
     }
 
     wchar_t* Lib::getFormatName(int index) {

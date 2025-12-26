@@ -1096,19 +1096,19 @@ namespace sevenzip {
     }
 
     // FIXME: iso, udf and others with signature outside first 1024 bytes
-    int Lib::Impl::getFormatBySignature(Istream& stream) {
+    int Lib::Impl::getFormatBySignature(Istream* stream) {
         if (!GetHandlerProperty2)
             return -1;
         UInt64 pos = 0;
         UInt32 bufsize = 1024;
         CByteBuffer buf(bufsize);
-        if (stream.Seek(0, SZ_SEEK_CUR, &pos) != S_OK)
+        if (stream->Seek(0, SZ_SEEK_CUR, &pos) != S_OK)
             return -1;
-        if (stream.Seek(0, SZ_SEEK_SET, nullptr) != S_OK)
+        if (stream->Seek(0, SZ_SEEK_SET, nullptr) != S_OK)
             return -1;
-        if (stream.Read(buf, bufsize, &bufsize) != S_OK)
+        if (stream->Read(buf, bufsize, &bufsize) != S_OK)
             return -1;
-        if (stream.Seek(pos, SZ_SEEK_SET, &pos) != S_OK)
+        if (stream->Seek(pos, SZ_SEEK_SET, &pos) != S_OK)
             return -1;
 
         for (int i = 0; i < getNumberOfFormats(); i++) {
