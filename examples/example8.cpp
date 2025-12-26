@@ -115,7 +115,7 @@ int main() {
             expected = st.st_size;
     }
     {
-        ofstream fstream(L"temps/example8.7z", ios::binary);
+        ofstream fstream("temps/example8.7z", ios::binary);
         Oarchive a(l);
         Compressstream s;
         Outputstream_preopen o(fstream);
@@ -130,7 +130,7 @@ int main() {
         return 1;
     {
         stringstream sstream;
-        ifstream fstream(L"temps/example8.7z", ios::binary);
+        ifstream fstream("temps/example8.7z", ios::binary);
         Iarchive a(l);
         Inputstream_preopen s(fstream);
         Extractstream_preopen x(sstream);

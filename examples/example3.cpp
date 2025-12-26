@@ -18,12 +18,12 @@ using namespace sevenzip;
 
 struct Inputstream: public Istream, private std::ifstream {
 
-    virtual HRESULT Open(const wchar_t* path) {
+    virtual HRESULT Open(const wchar_t* path) override {
         open(U2F(path), ios::binary);
         return getResult(is_open());
     }
 
-    virtual void Close() {
+    virtual void Close() override {
         close();
     } 
 

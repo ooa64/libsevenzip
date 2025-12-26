@@ -26,7 +26,7 @@ std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 #define SETLOCALE (setlocale(LC_ALL, ""))
 #define U2F(_s_) (convert.to_bytes(_s_).c_str())
 #define F2U(_s_) (convert.from_bytes(_s_).c_str())
-#define FOPEN(_h_,_f_,_m_) (fopen_s((_h_),U2F(_f_),U2F(_m_)))
+#define FOPEN(_f_,_m_) (fopen(U2F(_f_),U2F(_m_)))
 #define MKDIR(_d_,_m_) (mkdir(U2F(_d_),(_m_)))
 #define CHMOD(_f_,_m_) (chmod(U2F(_f_),(_m_)))
 #define STAT(_p_,_b_) (stat(U2F(_p_),(_b_)))
