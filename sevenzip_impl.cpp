@@ -564,23 +564,22 @@ namespace sevenzip {
         DEBUGLOG(this << " Iarchive::Impl::~Impl");
     }
 
-    // formatIndex >  -1 : force format by index 
-    // formatIndex == -1 : detect format by extension and then by signature 
-    // formatIndex <  -1 : detect format by signature
-
     HRESULT Iarchive::Impl::open(Istream* istream,
-        const wchar_t* path, const wchar_t* password, int formatIndex) {
-        DEBUGLOG(this << " Iarchive::open " << formatIndex);
+        const wchar_t* filename, const wchar_t* password, int formatIndex) {
+        DEBUGLOG(this << " Iarchive::open "
+                << (filename ? filename : L"NULL") << " "
+                << (password ? password : L"NULL") << " "
+                << formatIndex);
 
         if (!libimpl || !libimpl->CreateObjectFunc)
             return S_FALSE;
-        if (!istream)
-            return S_FALSE;
 
         HRESULT hr = S_OK;
-        hr = istream->Open(path);
-        if (FAILED(hr))
-            return hr;
+        if (filename) {
+            hr = istream->Open(filename);
+            if (FAILED(hr))
+                return hr;
+        }
         hr = istream->Seek(0, SZ_SEEK_SET, nullptr);
         if (FAILED(hr))
             return hr;
@@ -588,16 +587,16 @@ namespace sevenzip {
         close();
 
         instream = new CInStream(istream);
-        opencallback = new COpenCallback(istream, (password ? password : L""));
+        opencallback = new COpenCallback(istream, password ? password : L"");
 
-        UString name = path ? path : L"";
-        const UInt64 scan = 1 << 23;
+        UString name = filename ? filename : L"";
+        const UInt64 scan = (UInt64)1 << 23;
         while (true) {
 
             if (formatIndex == -1)
                 formatIndex = libimpl->getFormatByExtension(getFilenameExt(name));
             if (formatIndex < 0)
-                formatIndex = libimpl->getFormatBySignature(*istream);
+                formatIndex = libimpl->getFormatBySignature(istream);
             if (formatIndex < 0)
                 return E_NOTIMPL;
 
@@ -892,21 +891,20 @@ namespace sevenzip {
         DEBUGLOG(this << " Oarchive::Impl::~Impl");
     }
 
+
     HRESULT Oarchive::Impl::open(Istream* istream, Ostream* ostream,
-        const wchar_t* filename, const wchar_t* password, int formatIndex) {
+            const wchar_t* filename, const wchar_t* password, int formatIndex) {
         DEBUGLOG(this << " Oarchive::open " << istream << " " << ostream << " "
-            << filename << " " << formatIndex);
+                << (filename ? filename : L"NULL") << " " << formatIndex);
 
         if (!libimpl || !libimpl->CreateObjectFunc)
             return S_FALSE;
-        if (!istream)
-            return S_FALSE;
-        if (!ostream)
-            return S_FALSE;
 
-        HRESULT hr = ostream->Open(filename);
-        if (hr != S_OK)
-            return hr;
+        if (filename) {
+            HRESULT hr = ostream->Open(filename);
+            if (hr != S_OK)
+                return hr;
+        }
 
         close();
 
