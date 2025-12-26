@@ -1,37 +1,43 @@
 # makefile.vc
 
-!if "$(SEVENZIPSRC)" == ""
+I = install
+O = outputs
+L = sevenzip.lib
+
+!ifndef SEVENZIPSRC
 #SEVENZIPSRC = p7zip
 #SEVENZIPSRC = 7-Zip-zstd 
 #SEVENZIPSRC = lzma2501
 SEVENZIPSRC = 7zip
 !endif
 
-TARGET = $L
-EXAMPLES = $O\example0.exe $O\example1.exe $O\example2.exe $O\example3.exe $O\example4.exe $O\example5.exe $O\example6.exe $O\example7.exe
+!ifdef UNICODE
+CFLAGS = $(CFLAGS) -DUNICODE -D_UNICODE
+!endif
 
-I = install
-O = outputs
-
-L = sevenzip.lib
-
-CFLAGS = $(CFLAGS) -nologo -Fo$O\ -W4 -EHsc -Gy -GR- -GF -GS- -Zc:forScope -Zc:wchar_t
-#CFLAGS = $(CFLAGS) -D__STDC_WANT_LIB_EXT1__=1 -DUNICODE -D_UNICODE -D_CONSOLE -I$(SEVENZIPSRC) -I.
-CFLAGS = $(CFLAGS) -D__STDC_WANT_LIB_EXT1__=1 -I$(SEVENZIPSRC) -I.
-CXXFLAGS = $(CXXFLAGS) $(CFLAGS)
-LFLAGS = $(LFLAGS) -nologo -OPT:REF -OPT:ICF
-LIBS = $L User32.lib OleAut32.lib
+!ifdef ASAN
+CFLAGS = $(CFLAGS) -fsanitize=address -Zi
+!endif
 
 !ifdef DEBUG
 L = sevenzipd.lib
 O = $O\Debug
-CFLAGS = $(CFLAGS) -MDd -DDEBUG_IMPL
-#CFLAGS = $(CFLAGS) -fsanitize=address -Zi
+CFLAGS = $(CFLAGS) -MDd
 LFLAGS = $(LFLAGS) /DEBUG
 !else
 O = $O\Release
 CFLAGS = $(CFLAGS) -MD -D_CRT_SECURE_NO_WARNINGS=1
 !endif
+
+!ifdef DEBUG_IMPL
+CFLAGS = $(CFLAGS) -DDEBUG_IMPL
+!endif
+
+CFLAGS = $(CFLAGS) -nologo -Fo$O\ -W4 -EHsc -Gy -GR- -GF -GS- -Zc:forScope -Zc:wchar_t
+CFLAGS = $(CFLAGS) -D__STDC_WANT_LIB_EXT1__=1 -I$(SEVENZIPSRC) -I.
+CXXFLAGS = $(CXXFLAGS) $(CFLAGS)
+LFLAGS = $(LFLAGS) -nologo -OPT:REF -OPT:ICF
+LIBS = $L User32.lib OleAut32.lib
 
 OBJS = \
 	$O\sevenzip.obj \
@@ -45,6 +51,9 @@ OBJS = \
 	$O\TimeUtils.obj \
 	$O\ErrorMsg.obj \
 	$O\DLL.obj
+
+TARGET = $L
+EXAMPLES = $O\example0.exe $O\example1.exe $O\example2.exe $O\example3.exe $O\example4.exe $O\example5.exe $O\example6.exe $O\example7.exe $O\example8.exe
 
 all: prepare $(TARGET)
 
@@ -71,6 +80,7 @@ $L: $(OBJS)
 	lib -nologo -out:$@ $**	
 
 example: $O\example.exe
+exampleH: $O\exampleH.exe
 
 examples: $(EXAMPLES) temps_dir
 	@echo Test examples ...
@@ -90,6 +100,7 @@ temps_dir:
 	@(cd temps & 7z a example5.7z example.txt >> NUL)
 	@(cd temps & copy example.txt example6.txt >> NUL)
 	@(cd temps & copy example.txt example7.txt >> NUL)
+	@(cd temps & copy example.txt example8.txt >> NUL)
 	@(cd temps & del example.txt >> NUL)
 
 $O\tests.exe: tests\tests.cpp tests\test_*.cpp
@@ -103,7 +114,10 @@ $O\example4.exe: examples\example4.cpp sevenzip.h $L
 $O\example5.exe: examples\example5.cpp sevenzip.h $L
 $O\example6.exe: examples\example6.cpp sevenzip.h $L
 $O\example7.exe: examples\example7.cpp sevenzip.h $L
+$O\example8.exe: examples\example8.cpp sevenzip.h $L
+
 $O\exampleH.exe: examples\exampleH.cpp sevenzip.h $L
+	$(CXX) $(CXXFLAGS) -D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING -std:c++17 -Fe$O\ examples\exampleH.cpp $(LIBS)
 
 $O\sevenzip_impl.obj: sevenzip_impl.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h
 $O\sevenzip.obj: sevenzip.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h

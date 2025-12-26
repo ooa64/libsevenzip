@@ -9,8 +9,9 @@ if(NOT SEVENZIPSRC)
     set(SEVENZIPSRC "7zip")
 endif()
 
-# add_compile_definitions(_UNICODE UNICODE)
+# add_compile_definitions(UNICODE _UNICODE)
 # add_compile_definitions(DEBUG_IMPL)
+# add_compile_options(-fsanitize=address -Zi)
 
 add_library(sevenzip STATIC "sevenzip.cpp" "sevenzip_impl.cpp"
     "${SEVENZIPSRC}/CPP/Common/MyWindows.cpp"
