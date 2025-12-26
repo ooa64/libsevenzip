@@ -10,7 +10,7 @@
 #define SETLOCALE
 #define U2F(_s_) (_s_)
 #define F2U(_s_) (_s_)
-#define FOPEN(_h_,_f_,_m_) (_wfopen_s((_h_),(_f_),(_m_)))
+#define FOPEN(_f_,_m_) (_wfopen((_f_),(_m_)))
 #define MKDIR(_d_,_m_) (_wmkdir(_d_))
 #define CHMOD(_f_,_m_) (_wchmod((_f_),(_m_)))
 #define STAT(_p_,_b_) (_wstat((_p_),(_b_)))
@@ -42,7 +42,8 @@ struct Inputstream: public Istream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
         this->path = filename;
-        return getResult(FOPEN(&this->file, filename, L"rb") == 0);
+        this->file = FOPEN(filename, L"rb");
+        return getResult(this->file);
     }
 
     virtual void Close() override {
@@ -112,7 +113,8 @@ struct Compressstream: public Inputstream {
 struct Outputstream: public Ostream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
-        return getResult(FOPEN(&this->file, filename, L"wb") == 0);
+        this->file = FOPEN(filename, L"wb");
+        return getResult(this->file);
     };
 
     virtual void Close() override {
