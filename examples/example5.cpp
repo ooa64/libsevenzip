@@ -82,14 +82,15 @@ int main() {
     }
 
     Iarchive a(l);
-    HRESULT hr;
-    hr = a.open(new inputstream(), L"temps/example5.7z");
+	inputstream s;
+    HRESULT hr = a.open(s, L"temps/example5.7z");
     wcout << "open : " << getMessage(hr) << "\n";
     wcout << "items :\n";
     for (int i = 0; i < a.getNumberOfItems(); i++) {
         wcout << i+1 << " : " << a.getItemPath(i) << "\n";
     }
-    hr = a.extract(new outputstream(L"temps"));
+    outputstream o(L"temps");
+    hr = a.extract(o);
     wcout << "extract: " << hr << " " << getMessage(hr) << "\n";    
     a.close();
 

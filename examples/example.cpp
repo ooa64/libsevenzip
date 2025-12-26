@@ -207,7 +207,9 @@ int MAIN(argc, argv) {
 
         case 'a': {
             Oarchive a(l);
-            hr = a.open(new compressstream(), new outputstream(), F2U(argv[2]));
+            compressstream s;
+            outputstream o;
+            hr = a.open(s, o, F2U(argv[2]));
             if (hr == S_OK) {
                 for (int i = 3; i < argc; i++) {
                     a.addItem(F2U(argv[i]));
@@ -219,7 +221,8 @@ int MAIN(argc, argv) {
 
         case 'l': {
             Iarchive a(l);
-            hr = a.open(new inputstream(), F2U(argv[2]));
+            inputstream s;
+            hr = a.open(s, F2U(argv[2]));
             if (hr == S_OK) {
                 int n = a.getNumberOfItems();
                 for (int i = 0; i < n; i++) {
@@ -231,9 +234,11 @@ int MAIN(argc, argv) {
 
         case 'x': {
             Iarchive a(l);
-            hr = a.open(new inputstream(), F2U(argv[2]));
+            inputstream s;
+            hr = a.open(s, F2U(argv[2]));
             if (hr == S_OK) {
-                hr = a.extract(new extractstream(argc > 3 ? F2U(argv[3]) : L""));
+                extractstream e(argc > 3 ? F2U(argv[3]) : L"");
+                hr = a.extract(e);
             }
             break;
         }

@@ -56,22 +56,22 @@ namespace sevenzip {
 
     Iarchive::~Iarchive() { delete pimpl; };
 
-    HRESULT Iarchive::open(Istream* istream,
+    HRESULT Iarchive::open(Istream& istream,
             const wchar_t* path, int formatIndex) {
-        return pimpl->open(istream, path, nullptr, formatIndex);
+        return pimpl->open(&istream, path, nullptr, formatIndex);
     };
 
-    HRESULT Iarchive::open(Istream* istream,
+    HRESULT Iarchive::open(Istream& istream,
            const wchar_t* path, const wchar_t* password, int formatIndex) {
-        return pimpl->open(istream, path, password, formatIndex);
+        return pimpl->open(&istream, path, password, formatIndex);
     };
 
-    HRESULT Iarchive::extract(Ostream* ostream, int itemIndex) {
-        return pimpl->extract(ostream, nullptr, itemIndex);
+    HRESULT Iarchive::extract(Ostream& ostream, int itemIndex) {
+        return pimpl->extract(&ostream, nullptr, itemIndex);
     }
 
-    HRESULT Iarchive::extract(Ostream* ostream, const wchar_t* password, int itemIndex) {
-        return pimpl->extract(ostream, password, itemIndex);
+    HRESULT Iarchive::extract(Ostream& ostream, const wchar_t* password, int itemIndex) {
+        return pimpl->extract(&ostream, password, itemIndex);
     }
 
     void Iarchive::close() {
@@ -154,14 +154,14 @@ namespace sevenzip {
 
     Oarchive::~Oarchive() {delete pimpl;};
 
-    HRESULT Oarchive::open(Istream* istream, Ostream* ostream,
+    HRESULT Oarchive::open(Istream& istream, Ostream& ostream,
             const wchar_t* filename, int formatIndex) {
-        return pimpl->open(istream, ostream, filename, nullptr, formatIndex);
+        return pimpl->open(&istream, &ostream, filename, nullptr, formatIndex);
     };
 
-    HRESULT Oarchive::open(Istream* istream, Ostream* ostream,
+    HRESULT Oarchive::open(Istream& istream, Ostream& ostream,
             const wchar_t* filename, const wchar_t* password, int formatIndex) {
-        return pimpl->open(istream, ostream, filename, password, formatIndex);
+        return pimpl->open(&istream, &ostream, filename, password, formatIndex);
     };
 
     HRESULT Oarchive::update() {

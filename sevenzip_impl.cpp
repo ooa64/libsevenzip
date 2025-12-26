@@ -153,13 +153,13 @@ namespace sevenzip {
 
     // streams
 
-    CInStream::CInStream(Istream* istream): istream(istream) {
-        DEBUGLOG(this << " CInStream " << istream);
+    CInStream::CInStream(Istream* istream, bool cloned): istream(istream), cloned(cloned) {
+        DEBUGLOG(this << " CInStream " << istream << " " << cloned);
     };
 
     CInStream::~CInStream() {
         DEBUGLOG(this << " ~CInStream");
-        if (istream)
+        if (cloned)
             delete istream;
     };
 
@@ -219,8 +219,6 @@ namespace sevenzip {
 
     COutStream::~COutStream() {
         DEBUGLOG(this << " ~COutStream");
-        if (ostream)
-            delete ostream;
     };
 
     STDMETHODIMP COutStream::Write(const void* data, UInt32 size, UInt32* processedSize) throw() {
@@ -294,8 +292,6 @@ namespace sevenzip {
             prop = subarchivename;
         }
         else {
-            if (!istream)
-                return S_FALSE;
             switch (propID) {
             case kpidPath: prop = istream->Path(); break;
             case kpidName: prop = istream->Path(); break;
@@ -320,14 +316,12 @@ namespace sevenzip {
 
         if (subarchivemode)
             return S_FALSE;
-        if (!istream)
-            return E_FAIL;
 
         auto newIstream = istream->Clone();
         if (!newIstream)
             return E_FAIL;
 
-        CMyComPtr<IInStream> instream(new CInStream(newIstream));
+        CMyComPtr<IInStream> instream(new CInStream(newIstream, true));
         *inStream = instream.Detach();
 
         HRESULT hr = newIstream->Open(name);

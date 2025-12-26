@@ -44,23 +44,24 @@ void run_oarchive_tests() {
 
     HRESULT hr;
     sevenzip::Lib l; // not loaded
+    FakeIstream in;
+    FakeOstream out;
 
     // Oarchive: null streams
     sevenzip::Oarchive oarc(l);
-    hr = oarc.open(nullptr, nullptr, L"out.7z");
+    hr = oarc.open(in, out, L"out.7z");
     CHECK(hr == S_FALSE, "Oarchive::open with nullptrs should return S_FALSE");
 
     // Oarchive: ostream Open failure should propagate
     FakeOstream badO;
     badO.open_ok = false;
-    FakeIstream in;
-    hr = oarc.open(&in, &badO, L"out.7z");
+    hr = oarc.open(in, badO, L"out.7z");
     CHECK(hr == S_FALSE, "Oarchive::open should return S_FALSE when ostream->Open fails");
 
     // Oarchive: good streams but library missing -> return S_FALSE (CreateObjectFunc not set)
     FakeOstream goodO;
     goodO.open_ok = true;
-    hr = oarc.open(&in, &goodO, L"out.7z");
+    hr = oarc.open(in, goodO, L"out.7z");
     CHECK(hr == S_FALSE, "Oarchive::open should return S_FALSE when library CreateObjectFunc missing");
 
     std::cout << "oarchive tests passed." << std::endl;

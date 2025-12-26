@@ -184,7 +184,9 @@ int main(int argc, char** argv) {
 
         case 'a': {
             Oarchive a(l);
-            hr = a.open(new compressstream(), new outputstream(), convert.from_bytes(argv[2]).c_str());
+            compressstream s;
+            outputstream o;
+            hr = a.open(s, o, convert.from_bytes(argv[2]).c_str());
             if (hr == S_OK) {
                 for (int i = 3; i < argc; i++) {
                     a.addItem(convert.from_bytes(argv[i]).c_str());
@@ -196,7 +198,8 @@ int main(int argc, char** argv) {
 
         case 'l': {
             Iarchive a(l);
-            hr = a.open(new inputstream(), convert.from_bytes(argv[2]).c_str());
+            inputstream s;
+            hr = a.open(s, convert.from_bytes(argv[2]).c_str());
             if (hr == S_OK) {
                 int n = a.getNumberOfItems();
                 for (int i = 0; i < n; i++) {
@@ -208,9 +211,11 @@ int main(int argc, char** argv) {
 
         case 'x': {
             Iarchive a(l);
-            hr = a.open(new inputstream(), convert.from_bytes(argv[2]).c_str());
+            inputstream s;
+            hr = a.open(s, convert.from_bytes(argv[2]).c_str());
             if (hr == S_OK) {
-                hr = a.extract(new extractstream(argc > 3 ? convert.from_bytes(argv[3]).c_str() : L""));
+                extractstream e(argc > 3 ? convert.from_bytes(argv[3]).c_str() : L"");
+                hr = a.extract(e);
             }
             break;
         }

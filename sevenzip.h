@@ -109,9 +109,13 @@ namespace sevenzip {
         Iarchive(Lib& lib);
         ~Iarchive();
 
-        HRESULT open(Istream* istream,
+        // formatIndex >  -1 : force format
+        // formatIndex == -1 : detect format by extension and then by signature
+        // formatIndex <  -1 : detect format by signature
+
+        HRESULT open(Istream& istream,
                 const wchar_t* filename, int formatIndex = -1);
-        HRESULT open(Istream* istream,
+        HRESULT open(Istream& istream,
                 const wchar_t* filename, const wchar_t* password, int formatIndex = -1);
 
         void close();
@@ -123,8 +127,8 @@ namespace sevenzip {
         Int64 getItemTime(int index);
         bool getItemIsDir(int index);
 
-        HRESULT extract(Ostream* ostream, int index = -1);
-        HRESULT extract(Ostream* ostream, const wchar_t* password, int index = -1);
+        HRESULT extract(Ostream& ostream, int index = -1);
+        HRESULT extract(Ostream& ostream, const wchar_t* password, int index = -1);
 
         // lowlevel routines, CPP/7zip/PropID.h and CPP/Common/MyWindows.h can be useful
 
@@ -157,9 +161,9 @@ namespace sevenzip {
         Oarchive(Lib& lib);
         ~Oarchive();
 
-        HRESULT open(Istream* istream, Ostream* ostream,
+        HRESULT open(Istream& istream, Ostream& ostream,
                 const wchar_t* filename, int formatIndex = -1);
-        HRESULT open(Istream* istream, Ostream* ostream,
+        HRESULT open(Istream& istream, Ostream& ostream,
                 const wchar_t* filename, const wchar_t* password, int formatIndex = -1);
 
         void close();

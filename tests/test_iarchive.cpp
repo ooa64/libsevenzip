@@ -43,24 +43,25 @@ void run_iarchive_tests() {
     std::cout << "Running archive tests... ";
 
     HRESULT hr;
+    FakeIstream in;
     sevenzip::Lib l; // not loaded
 
     // Iarchive: passing nullptr istream should return S_FALSE
     sevenzip::Iarchive iarc(l);
-    hr = iarc.open(nullptr, L"file.7z");
+    hr = iarc.open(in, L"file.7z");
     CHECK(hr == S_FALSE, "Iarchive::open with nullptr istream should return S_FALSE");
 
     // Iarchive: if Open fails on the stream, open should return that HRESULT
     FakeIstream badStream;
     badStream.open_ok = false;
-    hr = iarc.open(&badStream, L"file.7z");
+    hr = iarc.open(badStream, L"file.7z");
     CHECK(hr == S_FALSE, "Iarchive::open should return S_FALSE when stream Open fails");
 
     // Iarchive: valid stream but lib not initialized -> CreateObjectFunc null -> S_FALSE
     FakeIstream goodStream;
     goodStream.open_ok = true;
     goodStream.seek_ok = true;
-    hr = iarc.open(&goodStream, L"file.7z");
+    hr = iarc.open(goodStream, L"file.7z");
     CHECK(hr == S_FALSE, "Iarchive::open should return S_FALSE when library CreateObjectFunc is not available");
 
     std::cout << "iarchive tests passed." << std::endl;

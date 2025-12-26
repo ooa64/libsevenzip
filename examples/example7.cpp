@@ -76,8 +76,9 @@ int main() {
     }
 
     Oarchive a(l);
-    HRESULT hr;
-    hr = a.open(new inputstream(), new outputstream(), L"temps/example7.7z", L"example7");
+    inputstream i;
+    outputstream o;
+    HRESULT hr = a.open(i, o, L"temps/example7.7z", L"example7");
     wcout << "open : " << getMessage(hr) << "\n";
     a.addItem(L"temps/example7.txt");
     hr = a.update();

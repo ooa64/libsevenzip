@@ -32,7 +32,7 @@ namespace sevenzip {
         STDMETHOD(Read)(void* data, UInt32 size, UInt32* processedSize) throw() Z7_override Z7_final;
         STDMETHOD(Seek)(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) throw() Z7_override Z7_final;
 
-        CInStream(Istream* istream);
+        CInStream(Istream* istream, bool cloned = false);
         virtual ~CInStream();
 
         HRESULT Open(const wchar_t* filename);
@@ -50,6 +50,7 @@ namespace sevenzip {
     private:
 
         Istream* istream;
+        bool cloned;
     };
 
     class COutStream Z7_final :
