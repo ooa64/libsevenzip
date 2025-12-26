@@ -63,8 +63,6 @@ cleanall: clean
 libsevenzip.a: $(OBJS)
 	ar rcs $@ $^
 
-examples: $(EXAMPLES) example_dir
-
 example0: example0.cpp sevenzip.h libsevenzip.a
 example1: example1.cpp sevenzip.h libsevenzip.a
 example2: example2.cpp sevenzip.h libsevenzip.a
@@ -94,12 +92,12 @@ example_dir:
 	@cd temps && cp example.txt example8.txt >> /dev/null
 	@cd temps && rm example.txt >> /dev/null
 	
-test: examples
+examples: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
 	    echo -n "Running test on $$ex ... "; \
 	    LD_LIBRARY_PATH=$(SEVENZIPPATH) \
 	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH) \
-	    ./$$ex 2>> _dev_null | grep "TEST"; \
+	    ./$$ex 2>> /dev/null | grep "TEST"; \
 	done
 
 valgrind: examples
@@ -110,7 +108,15 @@ valgrind: examples
 	    valgrind --leak-check=full --show-leak-kinds=all ./$$ex 2>&1 | grep "ERROR SUMMARY"; \
 	done
 
+tests/tests: tests/tests.cpp tests/test_*.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $^ libsevenzip.a
+
+tests: tests/tests
+	@env LD_LIBRARY_PATH=$(SEVENZIPPATH) DYLD_LIBRARY_PATH=$(SEVENZIPPATH) \
+		./tests/tests
+
 $O/sevenzip_impl.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip_impl.cpp
+
 $O/sevenzip.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip.cpp
 
 VPATH = examples:tests:$(SEVENZIPSRC)/CPP/Common:$(SEVENZIPSRC)/CPP/Windows

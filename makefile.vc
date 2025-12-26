@@ -120,6 +120,7 @@ $O\exampleH.exe: examples\exampleH.cpp sevenzip.h $L
 	$(CXX) $(CXXFLAGS) -D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING -std:c++17 -Fe$O\ examples\exampleH.cpp $(LIBS)
 
 $O\sevenzip_impl.obj: sevenzip_impl.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h
+
 $O\sevenzip.obj: sevenzip.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h
 
 {$(SEVENZIPSRC)\CPP\Common}.cpp{$O}.obj:
