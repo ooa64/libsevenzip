@@ -238,7 +238,8 @@ namespace sevenzip {
         Impl(Lib& lib);
         ~Impl();
 
-        HRESULT open(Istream* istream, const wchar_t* pathname, const wchar_t* password, int formatIndex);
+        HRESULT open(Istream* istream,
+                const wchar_t* filename, const wchar_t* password, int formatIndex);
 
         void close();
 

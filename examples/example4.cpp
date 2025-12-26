@@ -52,7 +52,9 @@ struct inputstream: public Istream, private std::ifstream {
         return path.c_str();
     };
 
-    private: std::wstring path;
+private:
+        
+    wstring path;
 }; 
 
 int main() {

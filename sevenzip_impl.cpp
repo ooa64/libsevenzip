@@ -919,7 +919,7 @@ namespace sevenzip {
 
         GUID guid = libimpl->getFormatGUID(formatIndex);
 
-        updatecallback = new CUpdateCallback(istream, (password ? password : L""));
+        updatecallback = new CUpdateCallback(istream, password ? password : L"");
         outstream = new COutStream(ostream);
         return libimpl->CreateObjectFunc(&guid, &IID_IOutArchive, (void**)&outarchive);
     }
