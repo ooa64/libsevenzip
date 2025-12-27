@@ -142,7 +142,7 @@ int main() {
         result = (int)sstream.str().size();
         wcout << "extract: " << hr << " " << getMessage(hr) << "\n";
         wcout << "extracted size: " << result << " expected " << expected<< "\n";
-        wcout << "extracted data: " << F2U(sstream.str().substr(0,16)) << "\n";
+        wcout << "extracted data: " << F2U(sstream.str().substr(0,16).c_str()) << "\n";
     }
     if (hr != S_OK)
         return 1;
