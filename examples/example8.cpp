@@ -41,9 +41,6 @@ struct Outputstream_preopen: public Ostream {
 
     Outputstream_preopen(ofstream& stream) : stream(&stream) {}
 
-    virtual HRESULT Open(const wchar_t* /*path*/) override { return S_OK; };
-    virtual void Close() override {};
-
     virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
         stream->write((const char*)data, size);
         processed = size;
@@ -64,9 +61,6 @@ struct Inputstream_preopen : public Istream {
 
     Inputstream_preopen(ifstream& stream) : stream(&stream) {}
 
-    virtual HRESULT Open(const wchar_t* /*path*/) override { return S_OK; };
-    virtual void Close() override {};
-
     virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
         stream->read((char*)data, size);
         processed = size;
@@ -86,9 +80,6 @@ struct Inputstream_preopen : public Istream {
 struct Extractstream_preopen : public Ostream {
 
     Extractstream_preopen(ostream& stream) : stream(&stream) {}
-
-    virtual HRESULT Open(const wchar_t* /*path*/) override { return S_OK; };
-    virtual void Close() override {};
 
     virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
         stream->write((const char*)data, size);

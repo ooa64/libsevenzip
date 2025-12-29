@@ -7,9 +7,6 @@ using namespace sevenzip;
 
 struct Inputstream: public Istream, public std::ifstream {
 
-    virtual HRESULT Open(const wchar_t*) {return S_FALSE;}
-    virtual void Close() {}
-
     virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) {
         read((char*)data, size);
         processed = (UInt32)gcount();

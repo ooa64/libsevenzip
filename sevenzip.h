@@ -58,7 +58,7 @@ namespace sevenzip {
 
         // Not used in the case of preopen streams
         virtual HRESULT Open(const wchar_t* /*filename*/) { return S_OK; };
-        virtual void Close() = 0;
+        virtual void Close() {};
 
         // Used by update handler
         virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64& /*position*/) { return S_FALSE; };
@@ -142,14 +142,14 @@ namespace sevenzip {
         // lowlevel routines, CPP/7zip/PropID.h and CPP/Common/MyWindows.h can be useful
 
         int getNumberOfProperties();
-        const wchar_t* getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
+        HRESULT getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
         HRESULT getStringProperty(PROPID propId, const wchar_t*& propValue);
         HRESULT getBoolProperty(PROPID propId, bool& propValue);
         HRESULT getIntProperty(PROPID propId, UInt32& propValue);
         HRESULT getWideProperty(PROPID propId, UInt64& propValue);
 
         int getNumberOfItemProperties();
-        const wchar_t* getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
+        HRESULT getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
         HRESULT getStringItemProperty(int index, PROPID propId, const wchar_t*& propValue);
         HRESULT getBoolItemProperty(int index, PROPID propId, bool& propValue);
         HRESULT getIntItemProperty(int index, PROPID propId, UInt32& propValue);
