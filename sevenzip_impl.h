@@ -253,7 +253,7 @@ namespace sevenzip {
         HRESULT extract(Ostream* ostream, const wchar_t* password, int index);
 
         int getNumberOfProperties();
-        const wchar_t* getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
+        HRESULT getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
         HRESULT getStringProperty(PROPID propId, const wchar_t*& propValue);
         HRESULT getBoolProperty(PROPID propId, bool& propValue);
         HRESULT getIntProperty(PROPID propId, UInt32& propValue);
@@ -261,7 +261,7 @@ namespace sevenzip {
         HRESULT getTimeProperty(PROPID propId, UInt32& propValue);
 
         int getNumberOfItemProperties();
-        const wchar_t* getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
+        HRESULT getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
         HRESULT getStringItemProperty(int index, PROPID propId, const wchar_t*& propValue);
         HRESULT getBoolItemProperty(int index, PROPID propId, bool& propValue);
         HRESULT getIntItemProperty(int index, PROPID propId, UInt32& propValue);
@@ -278,7 +278,6 @@ namespace sevenzip {
 
         wchar_t lastItemPath[1024] = { L'\0' };
         wchar_t lastStringProperty[1024] = { L'\0' };
-        wchar_t lastPropertyInfo[128] = { L'\0' };
     };
 
 

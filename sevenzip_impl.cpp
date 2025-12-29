@@ -761,11 +761,14 @@ namespace sevenzip {
         return 0;
     };
 
-    const wchar_t* Iarchive::Impl::getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
+    HRESULT Iarchive::Impl::getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
         CMyComBSTR name;
-        if (inarchive && inarchive->GetArchivePropertyInfo(propIndex, &name, &propId, &propType) == S_OK)
-            return COPYWCHARS(lastPropertyInfo, name);
-        return nullptr;
+        if (!inarchive)
+            return S_FALSE;
+        HRESULT hr = inarchive->GetArchivePropertyInfo(propIndex, &name, &propId, &propType);
+        if (hr != S_OK)
+			return hr;
+        return S_OK;
     };
 
     HRESULT Iarchive::Impl::getStringProperty(PROPID propId, const wchar_t*& propValue) {
@@ -835,11 +838,14 @@ namespace sevenzip {
         return 0;
     };
 
-    const wchar_t* Iarchive::Impl::getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
+    HRESULT Iarchive::Impl::getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
         CMyComBSTR name;
-        if (inarchive && inarchive->GetPropertyInfo(propIndex, &name, &propId, &propType) == S_OK)
-            return COPYWCHARS(lastPropertyInfo, name);
-        return nullptr;
+        if (!inarchive)
+            return S_FALSE;
+        HRESULT hr = inarchive->GetPropertyInfo(propIndex, &name, &propId, &propType);
+        if (hr != S_OK)
+            return hr;
+        return S_OK;
     };
 
     HRESULT Iarchive::Impl::getStringItemProperty(int index, PROPID propId, const wchar_t*& propValue) {
