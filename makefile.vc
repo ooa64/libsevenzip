@@ -53,7 +53,7 @@ OBJS = \
 	$O\DLL.obj
 
 TARGET = $L
-EXAMPLES = $O\example0.exe $O\example1.exe $O\example2.exe $O\example3.exe $O\example4.exe $O\example5.exe $O\example6.exe $O\example7.exe $O\example8.exe
+EXAMPLES = $O\example0.exe $O\example1.exe $O\example2.exe $O\example3.exe $O\example4.exe $O\example5.exe $O\example6.exe $O\example7.exe $O\example8.exe $O\example9.exe
 
 all: prepare $(TARGET)
 
@@ -90,8 +90,8 @@ tests: $O\tests.exe
 	@$O\tests.exe
 
 temps_dir:
-	-@md temps 2> NUL
-	-@del temps\example* 2> NUL
+	-@del /q/s temps 2> NUL
+	-@md temps\example
 	@(cd temps & for /l %%i in (1,1,64) do @echo 0123456789ABCDEF >> example.txt)
 	@(cd temps & 7z a example1.7z example.txt >> NUL)
 	@(cd temps & 7z a example2.7z example.txt >> NUL)
@@ -101,7 +101,8 @@ temps_dir:
 	@(cd temps & copy example.txt example6.txt >> NUL)
 	@(cd temps & copy example.txt example7.txt >> NUL)
 	@(cd temps & copy example.txt example8.txt >> NUL)
-	@(cd temps & del example.txt >> NUL)
+	@(cd temps & 7z a example9.7z example.txt example >> NUL)
+	@(cd temps & del example.txt & del /q example)
 
 $O\tests.exe: tests\tests.cpp tests\test_*.cpp
 

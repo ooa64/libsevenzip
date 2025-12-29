@@ -31,7 +31,7 @@ endif
 CXX17=$(CXX) -std=c++17
 
 TARGET = libsevenzip.a
-EXAMPLES = example0 example1 example2 example3 example4 example5 example6 example7 example8
+EXAMPLES = example0 example1 example2 example3 example4 example5 example6 example7 example8 example9
 
 CFLAGS += -fPIC -Wall -Wextra -I$(SEVENZIPSRC) -I.
 CXXFLAGS += $(CFLAGS)

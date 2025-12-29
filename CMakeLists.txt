@@ -30,7 +30,7 @@ add_executable (example "examples/example.cpp" "sevenzip.h")
 target_include_directories(example PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(example sevenzip)
 
-foreach(i RANGE 1 8)
+foreach(i RANGE 1 9)
     set(target "example${i}")
     add_executable(${target} "examples/${target}.cpp")
     target_include_directories(${target} PRIVATE ${CMAKE_SOURCE_DIR})
