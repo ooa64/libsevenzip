@@ -12,7 +12,7 @@
 #include <codecvt>
 std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 #define U2F(_s_) (convert.to_bytes(_s_).c_str())
-#define LOCALTIME(_t_,_i_) localtime_t((_t_),(_i_))
+#define LOCALTIME(_t_,_i_) localtime_r((_t_),(_i_))
 #endif
 
 using namespace std;
@@ -184,7 +184,7 @@ int main() {
             bool boolValue;
             UInt32 uint32Value;
             UInt64 uint64Value;
-            if (propId >= 0 && propId < sizeof(propNames)/sizeof(propNames[0]))
+            if (propId < sizeof(propNames)/sizeof(propNames[0]))
                 wcout << propNames[propId] << "(" << propId << "/" << propType << ") = ";
             else 
                 wcout << "unknown (" << propId << "/" << propType << ") = ";
@@ -220,7 +220,7 @@ int main() {
                 bool boolValue;
                 UInt32 uint32Value;
                 UInt64 uint64Value;
-                if (propId >= 0 && propId < sizeof(propNames) / sizeof(propNames[0]))
+                if (propId < sizeof(propNames) / sizeof(propNames[0]))
                     wcout << propNames[propId] << "(" << propId << "/" << propType << ") = ";
                 else
                     wcout << "unknown (" << propId << "/" << propType << ") = ";

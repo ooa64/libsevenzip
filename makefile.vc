@@ -116,6 +116,7 @@ $O\example5.exe: examples\example5.cpp sevenzip.h $L
 $O\example6.exe: examples\example6.cpp sevenzip.h $L
 $O\example7.exe: examples\example7.cpp sevenzip.h $L
 $O\example8.exe: examples\example8.cpp sevenzip.h $L
+$O\example9.exe: examples\example9.cpp sevenzip.h $L
 
 $O\exampleH.exe: examples\exampleH.cpp sevenzip.h $L
 	$(CXX) $(CXXFLAGS) -D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING -std:c++17 -Fe$O\ examples\exampleH.cpp $(LIBS)

@@ -1,21 +1,19 @@
 # makefile
 
-I = install
-O = outputs
-
 #SEVENZIPSRC ?= externals/p7zip
 SEVENZIPSRC ?= externals/7zip
-SEVENZIPPATH ?=$(SEVENZIPSRC)/CPP/7zip/Bundles/Format7zF/_o
+SEVENZIPPATH ?= /usr/local/lib
 
 ifdef UNICODE
 	CFLAGS += -DUNICODE -D_UNICODE
 endif
 
 ifdef DEBUG
-	O = outputs/debug
+	O = $(CURDIR)/outputs/debug
 	CFLAGS += -ggdb -O0
+	SEVENZIPFLAGS += DEBUG_BUILD=1
 else
-	O = outputs/release
+	O = $(CURDIR)/outputs/release
 endif
 
 ifdef DEBUG_IMPL
@@ -79,8 +77,9 @@ exampleH: exampleH.cpp sevenzip.h libsevenzip.a
 
 example_dir:
 	@echo "Example directory prepared."
+	-@rm -rf temps/example* >> /dev/null
 	-@mkdir -p temps
-	-@rm temps/example* >> /dev/null || true
+	-@mkdir -p temps/example
 	@cd temps && seq 64 | sed -E 's/.+/0123456789ABCDEF/' > example.txt
 	@cd temps && 7zz a example1.7z example.txt >> /dev/null
 	@cd temps && 7zz a example2.7z example.txt >> /dev/null
@@ -90,21 +89,22 @@ example_dir:
 	@cd temps && cp example.txt example6.txt >> /dev/null
 	@cd temps && cp example.txt example7.txt >> /dev/null
 	@cd temps && cp example.txt example8.txt >> /dev/null
-	@cd temps && rm example.txt >> /dev/null
-	
+	@cd temps && 7z a example9.7z example.txt example >> /dev/null
+	@cd temps && rm -rf example.txt example/ >> /dev/null
+
 examples: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
 	    echo -n "Running test on $$ex ... "; \
-	    LD_LIBRARY_PATH=$(SEVENZIPPATH) \
-	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH) \
+	    LD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
+	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
 	    ./$$ex 2>> /dev/null | grep "TEST"; \
 	done
 
-valgrind: examples
+valgrind: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
 	    echo -n "Running valgrind on $$ex ... "; \
-	    LD_LIBRARY_PATH=$(SEVENZIPPATH) \
-	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH) \
+	    LD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
+	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
 	    valgrind --leak-check=full --show-leak-kinds=all ./$$ex 2>&1 | grep "ERROR SUMMARY"; \
 	done
 
@@ -112,12 +112,17 @@ tests/tests: tests/tests.cpp tests/test_*.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^ libsevenzip.a
 
 tests: tests/tests
-	@env LD_LIBRARY_PATH=$(SEVENZIPPATH) DYLD_LIBRARY_PATH=$(SEVENZIPPATH) \
+	@env LD_LIBRARY_PATH=$(SEVENZIPPATH):$O DYLD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
 		./tests/tests
 
 $O/sevenzip_impl.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip_impl.cpp
 
 $O/sevenzip.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip.cpp
+
+7zip: $O/7z.so
+$O/7z.so:
+	(cd $(SEVENZIPSRC)/CPP/7zip/Bundles/Format7zF && make -f makefile.gcc $(SEVENZIPFLAGS) O=$O/7zip)
+	cp $O/7zip/7z.so $O/7z.so
 
 VPATH = examples:tests:$(SEVENZIPSRC)/CPP/Common:$(SEVENZIPSRC)/CPP/Windows
 
