@@ -11,13 +11,11 @@ struct Inputstream: public Istream, public std::ifstream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
 	    filesystem::path fn(filename);
-        this->filename = filename;
         open(fn, ios::binary);
         return getResult(is_open());
     }
 
     virtual void Close() override {
-        filename.clear();
         close();
     }
 
@@ -36,13 +34,7 @@ struct Inputstream: public Istream, public std::ifstream {
 
     virtual Istream* Clone() const override {
         return new Inputstream();
-    };
-
-    virtual const wchar_t* Path() const override {
-        return filename.c_str();
-    };
-
-    protected: std::wstring filename;      
+    };  
 };
 
 struct Compressstream: public Inputstream {

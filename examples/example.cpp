@@ -41,7 +41,6 @@ using namespace sevenzip;
 struct Inputstream: public Istream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
-        this->path = filename;
         this->file = FOPEN(filename, L"rb");
         return getResult(this->file);
     }
@@ -49,8 +48,7 @@ struct Inputstream: public Istream {
     virtual void Close() override {
         if (this->file)
             fclose(this->file);
-        //this->file = nullptr;
-        path.clear();
+        this->file = nullptr;
     }
 
     virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
@@ -69,11 +67,6 @@ struct Inputstream: public Istream {
         return new Inputstream();
     };
 
-    virtual const wchar_t* Path() const override {
-        return path.c_str();
-    };
-
-    std::wstring path; 
     FILE* file = nullptr;
 };
 
@@ -120,7 +113,7 @@ struct Outputstream: public Ostream {
     virtual void Close() override {
         if (this->file)
             fclose(this->file);
-        //this->file = nullptr;
+        this->file = nullptr;
     };
 
     virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
