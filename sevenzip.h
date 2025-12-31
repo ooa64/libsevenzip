@@ -203,6 +203,9 @@ namespace sevenzip {
     wchar_t* getMessage(HRESULT hr);
     HRESULT getResult(bool noerror);
     UInt32 getVersion();
+
+    wchar_t *fromBytes(const char* str);
+    char *toBytes(const wchar_t* str);
 };
 
 #endif

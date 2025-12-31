@@ -1,7 +1,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <codecvt>
 #include "sevenzip.h"
 
 using namespace std;
@@ -140,8 +139,6 @@ private:
     wstring basepath;
 };
 
-std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-
 static const wchar_t * const usage =
 L"7-Zip example application\n\n"
 L"Usage: example.exe [a | l | x] archive.ext [fileName ...]\n"
@@ -174,10 +171,10 @@ int main(int argc, char** argv) {
             Oarchive a(l);
             Compressstream c;
             Outputstream o;
-            hr = a.open(c, o, convert.from_bytes(argv[2]).c_str());
+            hr = a.open(c, o, fromBytes(argv[2]));
             if (hr == S_OK) {
                 for (int i = 3; i < argc; i++) {
-                    a.addItem(convert.from_bytes(argv[i]).c_str());
+                    a.addItem(fromBytes(argv[i]));
                 }
                 hr = a.update();
             }
@@ -187,7 +184,7 @@ int main(int argc, char** argv) {
         case 'l': {
             Iarchive a(l);
             Inputstream s;
-            hr = a.open(s, convert.from_bytes(argv[2]).c_str());
+            hr = a.open(s, fromBytes(argv[2]));
             if (hr == S_OK) {
                 int n = a.getNumberOfItems();
                 for (int i = 0; i < n; i++) {
@@ -200,9 +197,9 @@ int main(int argc, char** argv) {
         case 'x': {
             Iarchive a(l);
             Inputstream s;
-            hr = a.open(s, convert.from_bytes(argv[2]).c_str());
+            hr = a.open(s, fromBytes(argv[2]));
             if (hr == S_OK) {
-                Extractstream e(argc > 3 ? convert.from_bytes(argv[3]).c_str() : L"");
+                Extractstream e(argc > 3 ? fromBytes(argv[3]) : L"");
                 hr = a.extract(e);
             }
             break;

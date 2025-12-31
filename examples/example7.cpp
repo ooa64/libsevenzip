@@ -4,22 +4,13 @@
 
 #include <sys/stat.h>
 
-#ifdef _WIN32
-#define U2F(_s_) (_s_)
-#else
-#include <locale>
-#include <codecvt>
-std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-#define U2F(_s_) (convert.to_bytes(_s_).c_str())
-#endif
-
 using namespace std;
 using namespace sevenzip;
 
 struct Inputstream: public Istream, private std::ifstream {
 
     virtual HRESULT Open(const wchar_t* path) override {
-        open(U2F(path), ios::binary);
+        open(toBytes(path), ios::binary);
         return getResult(is_open());
     }
 
@@ -37,7 +28,7 @@ struct Inputstream: public Istream, private std::ifstream {
 struct Outputstream: public Ostream, private std::ofstream {
 
     virtual HRESULT Open(const wchar_t* path) override {
-        open(U2F(path), ios::binary);
+        open(toBytes(path), ios::binary);
         return getResult(is_open());
     };
 

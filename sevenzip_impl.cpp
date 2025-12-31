@@ -42,6 +42,20 @@ namespace sevenzip {
         return ((MY_VER_MAJOR << 16) | MY_VER_MINOR);
     }
 
+    wchar_t *fromBytes(const char* str) {
+        static wchar_t buffer[1024];
+        wcsncpy(buffer, as2us(str), sizeof(buffer)/sizeof(buffer[0])-1);
+        buffer[sizeof(buffer)/sizeof(buffer[0])-1] = L'\0';
+        return buffer;
+    }
+
+    char *toBytes(const wchar_t* str) {
+        static char buffer[1024*sizeof(wchar_t)];
+        strncpy(buffer, us2as(str), sizeof(buffer)-1);
+        buffer[sizeof(buffer)-1] = '\0';
+        return buffer;
+    }
+
     static UString getFilenameExt(const wchar_t* filename) {
         if (!filename)
             return L"";

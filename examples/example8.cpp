@@ -5,24 +5,13 @@
 
 #include <sys/stat.h>
 
-#ifdef _WIN32
-#define U2F(_s_) (_s_)
-#define F2U(_s_) (_s_)
-#else
-#include <locale>
-#include <codecvt>
-std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-#define U2F(_s_) (convert.to_bytes(_s_).c_str())
-#define F2U(_s_) (convert.from_bytes(_s_).c_str())
-#endif
-
 using namespace std;
 using namespace sevenzip;
 
 struct Compressstream: public Istream, private std::ifstream {
 
     virtual HRESULT Open(const wchar_t* path) override {
-        open(U2F(path), ios::binary);
+        open(toBytes(path), ios::binary);
         return getResult(is_open());
     }
 
@@ -133,7 +122,7 @@ int main() {
         result = (int)sstream.str().size();
         wcout << "extract: " << hr << " " << getMessage(hr) << "\n";
         wcout << "extracted size: " << result << " expected " << expected<< "\n";
-        wcout << "extracted data: " << F2U(sstream.str().substr(0,16).c_str()) << "\n";
+        wcout << "extracted data: " << fromBytes(sstream.str().substr(0,16).c_str()) << "\n";
     }
     if (hr != S_OK)
         return 1;
