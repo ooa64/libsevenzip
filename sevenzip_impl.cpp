@@ -127,30 +127,6 @@ namespace sevenzip {
         return getStringValue(prop, propValue);
     }
 
-    static HRESULT getArchiveTimeItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
-        NWindows::NCOM::CPropVariant prop;
-        HRESULT hr = archive->GetProperty(index, propId, &prop);
-        if (hr != S_OK)
-            return hr;
-        return getTimeValue(prop, propValue);
-    }
-
-    static HRESULT getArchiveWideItemProperty(IInArchive* archive, int index, PROPID propId, UInt64& propValue) {
-        NWindows::NCOM::CPropVariant prop;
-        HRESULT hr = archive->GetProperty(index, propId, &prop);
-        if (hr != S_OK)
-            return hr;
-        return getWideValue(prop, propValue);
-    }
-
-    static HRESULT getArchiveIntItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
-        NWindows::NCOM::CPropVariant prop;
-        HRESULT hr = archive->GetProperty(index, propId, &prop);
-        if (hr != S_OK)
-            return hr;
-        return getIntValue(prop, propValue);
-    }
-
     static HRESULT getArchiveBoolItemProperty(IInArchive* archive, int index, PROPID propId, bool& propValue) {
         NWindows::NCOM::CPropVariant prop;
         HRESULT hr = archive->GetProperty(index, propId, &prop);
@@ -163,6 +139,30 @@ namespace sevenzip {
         else
             return E_FAIL;
         return S_OK;
+    }
+
+    static HRESULT getArchiveIntItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = archive->GetProperty(index, propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getIntValue(prop, propValue);
+    }
+
+    static HRESULT getArchiveWideItemProperty(IInArchive* archive, int index, PROPID propId, UInt64& propValue) {
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = archive->GetProperty(index, propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getWideValue(prop, propValue);
+    }
+
+    static HRESULT getArchiveTimeItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
+        NWindows::NCOM::CPropVariant prop;
+        HRESULT hr = archive->GetProperty(index, propId, &prop);
+        if (hr != S_OK)
+            return hr;
+        return getTimeValue(prop, propValue);
     }
 
     // streams

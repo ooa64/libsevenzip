@@ -126,6 +126,10 @@ namespace sevenzip {
         return pimpl->getWideProperty(propId, propValue);
     };
 
+    HRESULT Iarchive::getTimeProperty(PROPID propId, UInt32& propValue) {
+        return pimpl->getTimeProperty(propId, propValue);
+    };
+
     int Iarchive::getNumberOfItemProperties() {
         return pimpl->getNumberOfItemProperties();
     };
@@ -148,6 +152,10 @@ namespace sevenzip {
 
     HRESULT Iarchive::getWideItemProperty(int index, PROPID propId, UInt64& propValue) {
         return pimpl->getWideItemProperty(index, propId, propValue);
+    };
+
+    HRESULT Iarchive::getTimeItemProperty(int index, PROPID propId, UInt32& propValue) {
+        return pimpl->getTimeItemProperty(index, propId, propValue);
     };
 
     Oarchive::Oarchive(Lib& lib): pimpl(new Impl(lib)) {};

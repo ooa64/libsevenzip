@@ -157,6 +157,7 @@ namespace sevenzip {
         HRESULT getBoolProperty(PROPID propId, bool& propValue);
         HRESULT getIntProperty(PROPID propId, UInt32& propValue);
         HRESULT getWideProperty(PROPID propId, UInt64& propValue);
+        HRESULT getTimeProperty(PROPID propId, UInt32& propValue);
 
         int getNumberOfItemProperties();
         HRESULT getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
@@ -164,6 +165,7 @@ namespace sevenzip {
         HRESULT getBoolItemProperty(int index, PROPID propId, bool& propValue);
         HRESULT getIntItemProperty(int index, PROPID propId, UInt32& propValue);
         HRESULT getWideItemProperty(int index, PROPID propId, UInt64& propValue);
+        HRESULT getTimeItemProperty(int index, PROPID propId, UInt32& propValue);
 
     private:
 

@@ -191,6 +191,8 @@ int main() {
                 wcout << uint32Value << "\n";
             else if (a.getWideProperty(propId, uint64Value) == S_OK)
                 wcout << propId << " = " << uint64Value << "\n";
+            else if (a.getTimeProperty(propId, uint32Value) == S_OK)
+                wcout << propId << " = " << ftime(uint32Value) << "\n";
             else
                 wcout << propId << " = " << "unknown" << propType << "\n";
        }
@@ -227,6 +229,8 @@ int main() {
                     wcout << uint32Value << "\n";
                 else if (a.getWideItemProperty(i, propId, uint64Value) == S_OK)
                     wcout << uint64Value << "\n";
+                else if (a.getTimeItemProperty(i, propId, uint32Value) == S_OK)
+                    wcout << ftime(uint32Value) << "\n";
                 else
                     wcout << "unknown" << "\n";
             }
