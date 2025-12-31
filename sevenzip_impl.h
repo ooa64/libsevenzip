@@ -38,8 +38,6 @@ namespace sevenzip {
         HRESULT Open(const wchar_t* filename);
         void Close();
 
-        const wchar_t* Path();
-
         bool IsDir(const wchar_t* pathname);
         //UInt64 GetSize(const wchar_t* pathname);
         UInt32 GetMode(const wchar_t* pathname);
@@ -110,12 +108,13 @@ namespace sevenzip {
 
         STDMETHOD(CryptoGetTextPassword)(BSTR* password) throw() Z7_override Z7_final;
 
-        COpenCallback(Istream* istream, const wchar_t* password);
+        COpenCallback(Istream* istream, const wchar_t* name, const wchar_t* password);
         virtual ~COpenCallback();
 
     private:
 
         Istream* istream;
+        UString pathname;
         UString password;
         UString subarchivename;
         bool subarchivemode = false;

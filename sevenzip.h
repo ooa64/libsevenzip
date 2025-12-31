@@ -26,14 +26,19 @@ typedef UInt16 VARTYPE;
 
 namespace sevenzip {
 
-    // To be redefined by the user of the library 
+    // To be redefined by the user of the library
+
+	// Input stream interface
+	// Used to read input archive in the Iarchive class
+	// Used to read input files in the Oarchive class
+	// Passed in unopened state to Iarchive and Oarchive methods
 
     struct Istream {
 
         virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) = 0;
 
-        // Not used in the case of preopen streams
-        virtual HRESULT Open(const wchar_t* /*filename*/) { return S_OK; };
+        // Does nothing for preopened stream
+        virtual HRESULT Open(const wchar_t* /*filename*/) { return S_FALSE; };
         virtual void Close() {};
 
         // Used by the open handler
@@ -41,7 +46,6 @@ namespace sevenzip {
 
         // Used by open multivolume handler
         virtual Istream* Clone() const { return nullptr; };
-        virtual const wchar_t* Path() const { return L""; };
         
         // Used by the update handler
         virtual bool IsDir(const wchar_t* /*filename*/) const { return false; };
@@ -52,12 +56,17 @@ namespace sevenzip {
         virtual ~Istream() = default;
     };
 
+    // Output stream interface
+    // Used to write extracted files in the Iarchive class
+    // Used to write output archive in the Oarchive class
+    // Passed in unopened state to Iarchive and Oarchive methods
+
     struct Ostream {
 
         virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) = 0;
 
-        // Not used in the case of preopen streams
-        virtual HRESULT Open(const wchar_t* /*filename*/) { return S_OK; };
+        // Does nothing for preopened stream
+        virtual HRESULT Open(const wchar_t* /*filename*/) { return S_FALSE; };
         virtual void Close() {};
 
         // Used by update handler
@@ -104,6 +113,7 @@ namespace sevenzip {
         friend class Oarchive;
     };
 
+	// Archive reading/extracting class
 
     class Iarchive {
 
@@ -114,7 +124,7 @@ namespace sevenzip {
         ~Iarchive();
 
 		// istream can be preopened in the case of singlevolume archives
-		// filename will be ignored in that case
+        // istream seek position must be at the beginning of the archive
 
         // formatIndex >  -1 : force format
         // formatIndex == -1 : detect format by extension and then by signature
@@ -161,6 +171,7 @@ namespace sevenzip {
         Impl* pimpl;
     };
 
+    // Archive creating/compressing classe
 
     class Oarchive {
 
@@ -170,8 +181,7 @@ namespace sevenzip {
         Oarchive(Lib& lib);
         ~Oarchive();
 
-        // ostream can be preopened
-        // filename will be ignored in that case
+		// ostream can be preopened
 
         HRESULT open(Istream& istream, Ostream& ostream,
                 const wchar_t* filename, int formatIndex = -1);

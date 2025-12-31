@@ -185,11 +185,6 @@ namespace sevenzip {
         if (istream) istream->Close();
     }
 
-    const wchar_t* CInStream::Path() {
-        DEBUGLOG(this << " CInStream::Path");
-        return istream ? istream->Path() : L"";
-    }
-
     bool CInStream::IsDir(const wchar_t* pathname) {
         DEBUGLOG(this << " CInStream::IsDir " << pathname);
         return istream ? istream->IsDir(pathname) : false;
@@ -267,8 +262,9 @@ namespace sevenzip {
 
     // callbacks
 
-    COpenCallback::COpenCallback(Istream* istream, const wchar_t* password) :
+    COpenCallback::COpenCallback(Istream* istream, const wchar_t* name, const wchar_t* password) :
         istream(istream),
+		pathname(name),
         password(password),
         subarchivename(L""),
         subarchivemode(false) {
@@ -297,15 +293,15 @@ namespace sevenzip {
         }
         else {
             switch (propID) {
-            case kpidPath: prop = istream->Path(); break;
-            case kpidName: prop = istream->Path(); break;
-            case kpidIsDir: prop = istream->IsDir(istream->Path()); break;
-            case kpidSize: prop = (UInt64)1 /*istream->GetFileSize(istream->Path())*/; break;
-            case kpidCTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(istream->Path())); break;
-            case kpidATime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(istream->Path())); break;
-            case kpidMTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(istream->Path())); break;
-            case kpidAttrib: prop = ((istream->GetMode(istream->Path()) & 0xffff) << 16) | 0x8000; break;
-            case kpidPosixAttrib: prop = istream->GetMode(istream->Path()); break;
+            case kpidPath: prop = pathname; break;
+            case kpidName: prop = pathname; break;
+            case kpidIsDir: prop = istream->IsDir(pathname); break;
+            case kpidSize: prop = (UInt64)1 /*istream->GetFileSize(pathname)*/; break;
+            case kpidCTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(pathname)); break;
+            case kpidATime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(pathname)); break;
+            case kpidMTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(pathname)); break;
+            case kpidAttrib: prop = ((istream->GetMode(pathname) & 0xffff) << 16) | 0x8000; break;
+            case kpidPosixAttrib: prop = istream->GetMode(pathname); break;
             default: return S_FALSE;
             }
         }
@@ -317,6 +313,7 @@ namespace sevenzip {
     STDMETHODIMP COpenCallback::GetStream(const wchar_t* name, IInStream** inStream)  throw() {
         DEBUGLOG(this << " COpenCallback::GetStream " << name << "/" << *inStream);
         *inStream = nullptr;
+        pathname = L"";
 
         if (subarchivemode)
             return S_FALSE;
@@ -327,6 +324,7 @@ namespace sevenzip {
 
         CMyComPtr<IInStream> instream(new CInStream(newIstream, true));
         *inStream = instream.Detach();
+		pathname = name;
 
         HRESULT hr = newIstream->Open(name);
 
@@ -399,7 +397,9 @@ namespace sevenzip {
 
         *outStream = outstream;
         outstream->AddRef();
-        return COUTSTREAM(outstream)->Open(pathname);
+
+        hr = COUTSTREAM(outstream)->Open(pathname);
+        return FAILED(hr) ? hr : S_OK;
     }
 
     STDMETHODIMP CExtractCallback::PrepareOperation(Int32 askExtractMode) throw() {
@@ -529,7 +529,9 @@ namespace sevenzip {
         *inStream = nullptr;
         *inStream = instream;
         instream->AddRef();
-        return CINSTREAM(instream)->Open(items[index]);
+
+		HRESULT hr = CINSTREAM(instream)->Open(items[index]);
+        return FAILED(hr) ? hr : S_OK;
     }
 
     STDMETHODIMP CUpdateCallback::SetOperationResult(Int32 operationResult) throw() {
@@ -579,21 +581,19 @@ namespace sevenzip {
             return S_FALSE;
 
         HRESULT hr = S_OK;
-        if (filename) {
-            hr = istream->Open(filename);
-            if (FAILED(hr))
-                return hr;
-        }
-        //hr = istream->Seek(0, SZ_SEEK_SET, nullptr);
+        UString name = filename ? filename : L"";
+        hr = istream->Open(name);
         if (FAILED(hr))
             return hr;
+        // hr = istream->Seek(0, SZ_SEEK_SET, nullptr);
+        // if (FAILED(hr))
+        //     return hr;
 
         close();
 
         instream = new CInStream(istream);
-        opencallback = new COpenCallback(istream, password ? password : L"");
+        opencallback = new COpenCallback(istream, name, password ? password : L"");
 
-        UString name = filename ? filename : L"";
         const UInt64 scan = (UInt64)1 << 23;
         while (true) {
 
@@ -910,11 +910,9 @@ namespace sevenzip {
         if (!libimpl || !libimpl->CreateObjectFunc)
             return S_FALSE;
 
-        if (filename) {
-            HRESULT hr = ostream->Open(filename);
-            if (hr != S_OK)
-                return hr;
-        }
+        HRESULT hr = ostream->Open(filename);
+        if (FAILED(hr))
+            return hr;
 
         close();
 
