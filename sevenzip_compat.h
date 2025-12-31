@@ -15,14 +15,14 @@ namespace NModulePropID {
     enum EEnum {kInterfaceType, kVersion};
 }
 namespace NModuleInterfaceType {
-  const UInt32 k_IUnknown_VirtDestructor_No  = 0;
-  const UInt32 k_IUnknown_VirtDestructor_Yes = 1;
-  const UInt32 k_IUnknown_VirtDestructor_ThisModule =
-  #if !defined(_WIN32)
-    k_IUnknown_VirtDestructor_Yes;
-  #else
-    k_IUnknown_VirtDestructor_No;
-  #endif
+    const UInt32 k_IUnknown_VirtDestructor_No  = 0;
+    const UInt32 k_IUnknown_VirtDestructor_Yes = 1;
+    const UInt32 k_IUnknown_VirtDestructor_ThisModule =
+    #if !defined(_WIN32)
+        k_IUnknown_VirtDestructor_Yes;
+    #else
+        k_IUnknown_VirtDestructor_No;
+    #endif
 }
 #endif
 

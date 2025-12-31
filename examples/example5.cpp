@@ -70,7 +70,7 @@ int main() {
     }
 
     Iarchive a(l);
-	Inputstream s;
+    Inputstream s;
     HRESULT hr = a.open(s, L"temps/example5.7z");
     wcout << "open : " << getMessage(hr) << "\n";
     wcout << "items :\n";

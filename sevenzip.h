@@ -28,10 +28,10 @@ namespace sevenzip {
 
     // To be redefined by the user of the library
 
-	// Input stream interface
-	// Used to read input archive in the Iarchive class
-	// Used to read input files in the Oarchive class
-	// Passed in unopened state to Iarchive and Oarchive methods
+    // Input stream interface
+    // Used to read input archive in the Iarchive class
+    // Used to read input files in the Oarchive class
+    // Passed in unopened state to Iarchive and Oarchive methods
 
     struct Istream {
 
@@ -113,7 +113,7 @@ namespace sevenzip {
         friend class Oarchive;
     };
 
-	// Archive reading/extracting class
+    // Archive reading/extracting class
 
     class Iarchive {
 
@@ -123,7 +123,7 @@ namespace sevenzip {
         Iarchive(Lib& lib);
         ~Iarchive();
 
-		// istream can be preopened in the case of singlevolume archives
+        // istream can be preopened in the case of singlevolume archives
         // istream seek position must be at the beginning of the archive
 
         // formatIndex >  -1 : force format
@@ -144,7 +144,7 @@ namespace sevenzip {
         UInt32 getItemTime(int index);
         bool getItemIsDir(int index);
 
-		// ostream can be preopened in the case of single item extraction (index > -1)
+        // ostream can be preopened in the case of single item extraction (index > -1)
 
         HRESULT extract(Ostream& ostream, int index = -1);
         HRESULT extract(Ostream& ostream, const wchar_t* password, int index = -1);
@@ -181,7 +181,7 @@ namespace sevenzip {
         Oarchive(Lib& lib);
         ~Oarchive();
 
-		// ostream can be preopened
+        // ostream can be preopened
 
         HRESULT open(Istream& istream, Ostream& ostream,
                 const wchar_t* filename, int formatIndex = -1);

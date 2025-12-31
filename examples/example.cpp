@@ -49,13 +49,13 @@ struct Inputstream: public Istream {
     }
 
     virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
-		size_t count = fread(data, 1, size, this->file);
+        size_t count = fread(data, 1, size, this->file);
         processed = (UInt32)count;
         return getResult(count >= 0);
     };
 
     virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
-		int result = fseek(this->file, (long)offset, origin);
+        int result = fseek(this->file, (long)offset, origin);
         position = ftell(this->file);
         return getResult(result == 0);
     };
@@ -120,7 +120,7 @@ struct Outputstream: public Ostream {
     };
 
     virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
-		int result = fseek(this->file, (long)offset, origin);
+        int result = fseek(this->file, (long)offset, origin);
         position = ftell(this->file);
         return getResult(result == 0);
     };

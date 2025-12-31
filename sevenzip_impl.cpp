@@ -234,13 +234,13 @@ namespace sevenzip {
 
     STDMETHODIMP COutStream::Write(const void* data, UInt32 size, UInt32* processedSize) throw() {
         DEBUGLOG(this << " COutStream::Write " << size);
-		UInt32 dummy = 0;
+        UInt32 dummy = 0;
         return ostream ? ostream->Write(data, size, processedSize ? *processedSize : dummy) : S_FALSE;
     };
 
     STDMETHODIMP COutStream::Seek(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) throw() {
         DEBUGLOG(this << " COutStream::Seek " << offset << "/" << seekOrigin);
-		UInt64 dummy = 0;
+        UInt64 dummy = 0;
         return ostream ? ostream->Seek(offset, seekOrigin, newPosition ? *newPosition : dummy) : S_FALSE;
     }
 
@@ -278,7 +278,7 @@ namespace sevenzip {
 
     COpenCallback::COpenCallback(Istream* istream, const wchar_t* name, const wchar_t* password) :
         istream(istream),
-		pathname(name),
+        pathname(name),
         password(password),
         subarchivename(L""),
         subarchivemode(false) {
@@ -338,7 +338,7 @@ namespace sevenzip {
 
         CMyComPtr<IInStream> instream(new CInStream(newIstream, true));
         *inStream = instream.Detach();
-		pathname = name;
+        pathname = name;
 
         HRESULT hr = newIstream->Open(name);
 
@@ -544,7 +544,7 @@ namespace sevenzip {
         *inStream = instream;
         instream->AddRef();
 
-		HRESULT hr = CINSTREAM(instream)->Open(items[index]);
+        HRESULT hr = CINSTREAM(instream)->Open(items[index]);
         return FAILED(hr) ? hr : S_OK;
     }
 
@@ -781,7 +781,7 @@ namespace sevenzip {
             return S_FALSE;
         HRESULT hr = inarchive->GetArchivePropertyInfo(propIndex, &name, &propId, &propType);
         if (hr != S_OK)
-			return hr;
+            return hr;
         return S_OK;
     };
 

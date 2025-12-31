@@ -9,7 +9,7 @@ using namespace sevenzip;
 struct Inputstream: public Istream, public std::ifstream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
-	    filesystem::path fn(filename);
+        filesystem::path fn(filename);
         open(fn, ios::binary);
         return getResult(is_open());
     }
@@ -48,7 +48,7 @@ struct Compressstream: public Inputstream {
     };
 
     virtual bool IsDir(const wchar_t* pathname) const override {
-	    filesystem::path pn(pathname);
+        filesystem::path pn(pathname);
         return filesystem::is_directory(pn);
     };
 
@@ -62,7 +62,7 @@ struct Compressstream: public Inputstream {
 
     virtual UInt32 GetTime(const wchar_t* pathname) const override {
         // TODO: implement file time comversion to POSIX
-	    filesystem::path pn(pathname);
+        filesystem::path pn(pathname);
         auto mtime = std::filesystem::last_write_time(pn);
         // wcout << "Getting mtime for " << pathname << " : " << mtime << "\n";
         return 0;
@@ -106,14 +106,14 @@ struct Extractstream: public Outputstream {
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {
         wcout << "Creating " << dirname << "\n";
-	    filesystem::path dn(fullname(dirname));
+        filesystem::path dn(fullname(dirname));
         filesystem::create_directories(dn);
         return S_OK;
     };
 
     virtual HRESULT SetMode(const wchar_t* pathname, UInt32 mode) override {
         // TODO: implement file mode conversion from POSIX
-	    filesystem::path pn(fullname(pathname));
+        filesystem::path pn(fullname(pathname));
         filesystem::perms perm = filesystem::perms::owner_read
                 | filesystem::perms::owner_write
                 | filesystem::perms::group_read
@@ -125,7 +125,7 @@ struct Extractstream: public Outputstream {
     virtual HRESULT SetTime(const wchar_t* pathname, UInt32 time) override {
         // TODO: implement file time conversion from POSIX
         const filesystem::file_time_type mtime = filesystem::file_time_type::clock::now(); 
-	    filesystem::path pn(fullname(pathname));
+        filesystem::path pn(fullname(pathname));
         filesystem::last_write_time(pn, mtime);
         return S_OK;
     };
