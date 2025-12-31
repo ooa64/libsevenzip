@@ -740,7 +740,7 @@ namespace sevenzip {
         return 0;
     };
 
-    Int64 Iarchive::Impl::getItemTime(int index) {
+    UInt32 Iarchive::Impl::getItemTime(int index) {
         UInt32 time;
         if (getArchiveTimeItemProperty(inarchive, index, kpidMTime, time) == S_OK)
             return time;

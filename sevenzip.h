@@ -131,7 +131,7 @@ namespace sevenzip {
         const wchar_t* getItemPath(int index);
         UInt64 getItemSize(int index);
         UInt32 getItemMode(int index);
-        Int64 getItemTime(int index);
+        UInt32 getItemTime(int index);
         bool getItemIsDir(int index);
 
 		// ostream can be preopened in the case of single item extraction (index > -1)

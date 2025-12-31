@@ -94,7 +94,7 @@ namespace sevenzip {
         return pimpl->getItemMode(index);
     };
 
-    Int64 Iarchive::getItemTime(int index) {
+    UInt32 Iarchive::getItemTime(int index) {
         return pimpl->getItemTime(index);
     };
 

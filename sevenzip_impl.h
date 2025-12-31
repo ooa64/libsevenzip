@@ -247,7 +247,7 @@ namespace sevenzip {
         const wchar_t* getItemPath(int index);
         UInt64 getItemSize(int index);
         UInt32 getItemMode(int index);
-        Int64 getItemTime(int index);
+        UInt32 getItemTime(int index);
         bool getItemIsDir(int index);
 
         HRESULT extract(Ostream* ostream, const wchar_t* password, int index);

@@ -23,7 +23,7 @@ struct Inputstream: public Istream, public std::ifstream {
 
     virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
         read((char*)data, size);
-        processed = (unsigned)gcount();
+        processed = (UInt32)gcount();
         return getResult(is_open() && !bad());
     };
 
