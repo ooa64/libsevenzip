@@ -137,17 +137,19 @@ namespace sevenzip {
 
         void close();
 
+        // ostream can be preopened in the case of single item extraction (index > -1)
+
+        HRESULT extract(Ostream& ostream, int index = -1);
+        HRESULT extract(Ostream& ostream, const wchar_t* password, int index = -1);
+
+        // archive items listing
+
         int getNumberOfItems();
         const wchar_t* getItemPath(int index);
         UInt64 getItemSize(int index);
         UInt32 getItemMode(int index);
         UInt32 getItemTime(int index);
         bool getItemIsDir(int index);
-
-        // ostream can be preopened in the case of single item extraction (index > -1)
-
-        HRESULT extract(Ostream& ostream, int index = -1);
-        HRESULT extract(Ostream& ostream, const wchar_t* password, int index = -1);
 
         // lowlevel routines, CPP/7zip/PropID.h and CPP/Common/MyWindows.h can be useful
 
@@ -194,13 +196,13 @@ namespace sevenzip {
 
         void addItem(const wchar_t* pathname);
 
+        HRESULT update();
+
         HRESULT setStringProperty(const wchar_t* name, const wchar_t* value);
         HRESULT setBoolProperty(const wchar_t* name, bool value);
         HRESULT setIntProperty(const wchar_t* name, UInt32 value);
         HRESULT setWideProperty(const wchar_t* name, UInt64 value);
         HRESULT setEmptyProperty(const wchar_t* name);
-
-        HRESULT update();
 
     private:
 

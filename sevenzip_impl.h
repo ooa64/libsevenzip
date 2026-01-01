@@ -242,14 +242,14 @@ namespace sevenzip {
 
         void close();
 
+        HRESULT extract(Ostream* ostream, const wchar_t* password, int index);
+
         int getNumberOfItems();
         const wchar_t* getItemPath(int index);
         UInt64 getItemSize(int index);
         UInt32 getItemMode(int index);
         UInt32 getItemTime(int index);
         bool getItemIsDir(int index);
-
-        HRESULT extract(Ostream* ostream, const wchar_t* password, int index);
 
         int getNumberOfProperties();
         HRESULT getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType);
@@ -294,13 +294,13 @@ namespace sevenzip {
 
         void addItem(const wchar_t* pathname);
 
+        HRESULT update();
+
         HRESULT setStringProperty(const wchar_t* name, const wchar_t* value);
         HRESULT setBoolProperty(const wchar_t* name, bool value);
         HRESULT setIntProperty(const wchar_t* name, UInt32 value);
         HRESULT setWideProperty(const wchar_t* name, UInt64 value);
         HRESULT setEmptyProperty(const wchar_t* name);
-
-        HRESULT update();
 
     private:
 

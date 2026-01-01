@@ -66,16 +66,16 @@ namespace sevenzip {
         return pimpl->open(&istream, path, password, formatIndex);
     };
 
+    void Iarchive::close() {
+        return pimpl->close();
+    };
+
     HRESULT Iarchive::extract(Ostream& ostream, int itemIndex) {
         return pimpl->extract(&ostream, nullptr, itemIndex);
-    }
+    };
 
     HRESULT Iarchive::extract(Ostream& ostream, const wchar_t* password, int itemIndex) {
         return pimpl->extract(&ostream, password, itemIndex);
-    }
-
-    void Iarchive::close() {
-        return pimpl->close();
     };
 
     int Iarchive::getNumberOfItems() {
@@ -136,7 +136,7 @@ namespace sevenzip {
 
     HRESULT Iarchive::getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
         return pimpl->getItemPropertyInfo(propIndex, propId, propType);
-    }
+    };
 
     HRESULT Iarchive::getStringItemProperty(int index, PROPID propId, const wchar_t*& propValue) {
         return pimpl->getStringItemProperty(index, propId, propValue);
@@ -172,14 +172,18 @@ namespace sevenzip {
         return pimpl->open(&istream, &ostream, filename, password, formatIndex);
     };
 
-    void Oarchive::addItem(const wchar_t* pathname) {
-        pimpl->addItem(pathname);
-    };
-
     void Oarchive::close() {
         pimpl->close();
     };
 
+    void Oarchive::addItem(const wchar_t* pathname) {
+        pimpl->addItem(pathname);
+    };
+
+    HRESULT Oarchive::update() {
+        return pimpl->update();
+    };
+    
     HRESULT Oarchive::setStringProperty(const wchar_t* name, const wchar_t* value) {
         return pimpl->setStringProperty(name, value);
     };
@@ -198,9 +202,5 @@ namespace sevenzip {
 
     HRESULT Oarchive::setEmptyProperty(const wchar_t* name) {
         return pimpl->setEmptyProperty(name);
-    };
-
-    HRESULT Oarchive::update() {
-        return pimpl->update();
     };
 }

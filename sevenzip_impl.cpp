@@ -30,31 +30,31 @@ namespace sevenzip {
         if (error == 0)
             return E_FAIL;
         return HRESULT_FROM_WIN32(error);
-    }
+    };
 
     wchar_t* getMessage(HRESULT hr) {
         static wchar_t lastMessage[128] = { L'\0' };
         COPYWCHARS(lastMessage, NWindows::NError::MyFormatMessage(hr));
         return lastMessage;
-    }
+    };
 
     UInt32 getVersion() {
         return ((MY_VER_MAJOR << 16) | MY_VER_MINOR);
-    }
+    };
 
     wchar_t *fromBytes(const char* str) {
         static wchar_t buffer[1024];
         wcsncpy(buffer, as2us(str), sizeof(buffer)/sizeof(buffer[0])-1);
         buffer[sizeof(buffer)/sizeof(buffer[0])-1] = L'\0';
         return buffer;
-    }
+    };
 
     char *toBytes(const wchar_t* str) {
         static char buffer[1024*sizeof(wchar_t)];
         strncpy(buffer, us2as(str), sizeof(buffer)-1);
         buffer[sizeof(buffer)-1] = '\0';
         return buffer;
-    }
+    };
 
     static UString getFilenameExt(const wchar_t* filename) {
         if (!filename)
@@ -64,7 +64,7 @@ namespace sevenzip {
         if (dot > n.ReverseFind_PathSepar())
             return n.Ptr((unsigned)(dot + 1));
         return L"";
-    }
+    };
 
     static HRESULT getStringValue(NWindows::NCOM::CPropVariant& prop, UString& propValue) {
         if (prop.vt == VT_EMPTY)
@@ -125,7 +125,7 @@ namespace sevenzip {
         if (hr != S_OK)
             return hr;
         return getStringValue(prop, propValue);
-    }
+    };
 
     static HRESULT getArchiveBoolItemProperty(IInArchive* archive, int index, PROPID propId, bool& propValue) {
         NWindows::NCOM::CPropVariant prop;
@@ -139,7 +139,7 @@ namespace sevenzip {
         else
             return E_FAIL;
         return S_OK;
-    }
+    };
 
     static HRESULT getArchiveIntItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
         NWindows::NCOM::CPropVariant prop;
@@ -147,7 +147,7 @@ namespace sevenzip {
         if (hr != S_OK)
             return hr;
         return getIntValue(prop, propValue);
-    }
+    };
 
     static HRESULT getArchiveWideItemProperty(IInArchive* archive, int index, PROPID propId, UInt64& propValue) {
         NWindows::NCOM::CPropVariant prop;
@@ -155,7 +155,7 @@ namespace sevenzip {
         if (hr != S_OK)
             return hr;
         return getWideValue(prop, propValue);
-    }
+    };
 
     static HRESULT getArchiveTimeItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
         NWindows::NCOM::CPropVariant prop;
@@ -163,7 +163,7 @@ namespace sevenzip {
         if (hr != S_OK)
             return hr;
         return getTimeValue(prop, propValue);
-    }
+    };
 
     static HRESULT setProperty(IOutArchive* archive, const wchar_t* name, NWindows::NCOM::CPropVariant prop) {
         CMyComPtr<ISetProperties> setter;
@@ -171,7 +171,7 @@ namespace sevenzip {
         if (setter)
             hr = setter->SetProperties(&name, &prop, 1);
         return hr;
-    }
+    };
 
     // streams
 
@@ -195,23 +195,24 @@ namespace sevenzip {
         DEBUGLOG(this << " CInStream::Seek " << offset << "/" << seekOrigin);
         UInt64 dummy = 0;
         return istream ? istream->Seek(offset, seekOrigin, newPosition ? *newPosition : dummy) : S_FALSE;
-    }
+    };
 
     HRESULT CInStream::Open(const wchar_t* path) {
         DEBUGLOG(this << " CInStream::Open " << path);
         return istream ? istream->Open(path) : S_FALSE;
-    }
+    };
 
     void CInStream::Close() {
         DEBUGLOG(this << " CInStream::Close");
         if (istream) istream->Close();
-    }
+    };
 
     bool CInStream::IsDir(const wchar_t* pathname) {
         DEBUGLOG(this << " CInStream::IsDir " << pathname);
         return istream ? istream->IsDir(pathname) : false;
-    }
+    };
 
+    //NOTE: GetSize is commented out because it is not used anywhere(?)
     //UInt64 CInStream::GetSize(const wchar_t* pathname) {
     //    DEBUGLOG(this << " CInStream::GetFileSize " << pathname);
     //    return istream ? istream->GetFileSize(pathname) : 1;
@@ -220,17 +221,12 @@ namespace sevenzip {
     UInt32 CInStream::GetTime(const wchar_t* pathname) {
         DEBUGLOG(this << " CInStream::GetFileTime " << pathname);
         return istream ? istream->GetTime(pathname) : 0;
-    }
+    };
 
     UInt32 CInStream::GetMode(const wchar_t* pathname) {
         DEBUGLOG(this << " CInStream::GetFileMode " << pathname);
         return istream ? istream->GetMode(pathname) : 0;
-    }
-
-    //CInStream* CInStream::Clone() {
-    //    DEBUGLOG(this << " CInStream::Clone");
-    //    return istream ? new CInStream(istream->Clone()) : nullptr;
-    //}
+    };
 
     COutStream::COutStream(Ostream* ostream): ostream(ostream) {
         DEBUGLOG(this << " COutStream");
@@ -250,37 +246,37 @@ namespace sevenzip {
         DEBUGLOG(this << " COutStream::Seek " << offset << "/" << seekOrigin);
         UInt64 dummy = 0;
         return ostream ? ostream->Seek(offset, seekOrigin, newPosition ? *newPosition : dummy) : S_FALSE;
-    }
+    };
 
     STDMETHODIMP COutStream::SetSize(UInt64 size) throw() {
         DEBUGLOG(this << " COutStream::SetSize " << size);
         return ostream ? ostream->SetSize(size) : S_FALSE;
-    }
+    };
 
     HRESULT COutStream::Mkdir(const wchar_t* dirname) {
         DEBUGLOG(this << " COutStream::Mkdir " << dirname);
         return ostream ? ostream->Mkdir(dirname) : S_FALSE;
-    }
+    };
     
     HRESULT COutStream::SetMode(const wchar_t* pathname, UInt32 mode) {
         DEBUGLOG(this << " COutStream::SetMode " << pathname << " " << std::oct << mode);
         return ostream ? ostream->SetMode(pathname, mode) : S_FALSE;
-    }
+    };
     
     HRESULT COutStream::SetTime(const wchar_t* pathname, UInt32 time) {
         DEBUGLOG(this << " COutStream::SetTime " << pathname << " " << time);
         return ostream ? ostream->SetTime(pathname, time) : S_FALSE;
-    }
+    };
 
     HRESULT COutStream::Open(const wchar_t* filename) {
         DEBUGLOG(this << " COutStream::Open " << filename);
         return ostream ? ostream->Open(filename) : S_FALSE;
-    }
+    };
 
     void COutStream::Close() {
         DEBUGLOG(this << " COutStream::Close");
         if (ostream) ostream->Close();
-    }
+    };
 
     // callbacks
 
@@ -354,14 +350,14 @@ namespace sevenzip {
         // DEBUGLOG(this << " COpenCallback::GetStream " << std::hex << hr << " vs " << std::hex << HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND));
         // return  hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ? S_FALSE : hr;
         return (hr & 0xffff) == ERROR_FILE_NOT_FOUND ? S_FALSE : hr;
-    }
+    };
 
     STDMETHODIMP COpenCallback::SetSubArchiveName(const wchar_t* name) throw() {
         DEBUGLOG(this << " COpenCallback::SetSubArchiveName " << name);
         subarchivemode = true;
         subarchivename = name;
         return S_OK;
-    }
+    };
 
     STDMETHODIMP COpenCallback::CryptoGetTextPassword(BSTR* password)  throw() {
         DEBUGLOG(this << " COpenCallback::CryptoGetTextPassword(");
@@ -422,12 +418,12 @@ namespace sevenzip {
 
         hr = COUTSTREAM(outstream)->Open(pathname);
         return FAILED(hr) ? hr : S_OK;
-    }
+    };
 
     STDMETHODIMP CExtractCallback::PrepareOperation(Int32 askExtractMode) throw() {
         DEBUGLOG(this << " CExtractCallback::PrepareOperation " << askExtractMode);
         return S_OK;
-    }
+    };
 
     STDMETHODIMP CExtractCallback::SetOperationResult(Int32 operationResult) throw() {
         DEBUGLOG(this << " CExtractCallback::SetOperationResult " << operationResult << " item " << index);
@@ -458,7 +454,7 @@ namespace sevenzip {
                 }
             }
         return S_OK;
-    }
+    };
 
     STDMETHODIMP CExtractCallback::CryptoGetTextPassword(BSTR* password) throw() {
         DEBUGLOG(this << " CExtractCallback::CryptoGetTextPassword " << (password ? *password : L""));
@@ -473,21 +469,21 @@ namespace sevenzip {
             instream(new CInStream(istream)),
             password(password) {
         DEBUGLOG(this << " CUpdateCallback " << istream << " " << (password ? password : L"NULL"));
-    }
+    };
 
     CUpdateCallback::~CUpdateCallback() {
         DEBUGLOG(this << " ~CUpdateCallback");
-    }
+    };
 
     STDMETHODIMP CUpdateCallback::SetTotal(UInt64 size) throw() {
         DEBUGLOG(this << " CUpdateCallback::SetTotal " << size);
         return S_OK;
-    }
+    };
 
     STDMETHODIMP CUpdateCallback::SetCompleted(const UInt64* completeValue) throw() {
         DEBUGLOG(this << " CUpdateCallback::SetCompleted " << (completeValue ? *completeValue : 0));
         return S_OK;
-    }
+    };
 
     STDMETHODIMP CUpdateCallback::GetUpdateItemInfo(UInt32 index,
             Int32* newData, Int32* newProperties, UInt32* indexInArchive) throw() {
@@ -501,11 +497,12 @@ namespace sevenzip {
             *indexInArchive = (UInt32)(Int32)-1;
 
         return S_OK;
-    }
+    };
 
     STDMETHODIMP CUpdateCallback::GetProperty(UInt32 index, PROPID propID, PROPVARIANT* value) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetProperty " << index << " id " << propID);
 
+        // NOTE: alternative implementation without prop variable
         // if (propID == kpidIsAnti) {
         //     NWindows::NCOM::PropVarEm_Set_Bool(value, false);
         // } else {
@@ -544,7 +541,7 @@ namespace sevenzip {
         prop.Detach(value);
 
         return S_OK;
-    }
+    };
 
     STDMETHODIMP CUpdateCallback::GetStream(UInt32 index, ISequentialInStream** inStream) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetStream " << index);
@@ -554,18 +551,18 @@ namespace sevenzip {
 
         HRESULT hr = CINSTREAM(instream)->Open(items[index]);
         return FAILED(hr) ? hr : S_OK;
-    }
+    };
 
     STDMETHODIMP CUpdateCallback::SetOperationResult(Int32 operationResult) throw() {
         DEBUGLOG(this << " CUpdateCallback::SetOperationResult " << operationResult);
         CINSTREAM(instream)->Close();
         return S_OK;
-    }
+    };
 
     STDMETHODIMP CUpdateCallback::GetVolumeSize(UInt32 index, UInt64* /*size*/) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetVolumeSize " << index);
         return S_FALSE;
-    }
+    };
 
     STDMETHODIMP CUpdateCallback::GetVolumeStream(UInt32 index, ISequentialOutStream** /*volumeStream*/) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetVolumeStream " << index);
@@ -586,11 +583,11 @@ namespace sevenzip {
 
     Iarchive::Impl::Impl(Lib& lib) : libimpl(lib.pimpl) {
         DEBUGLOG(this << " Iarchive::Impl::Impl");
-    }
+    };
 
     Iarchive::Impl::~Impl() {
         DEBUGLOG(this << " Iarchive::Impl::~Impl");
-    }
+    };
 
     HRESULT Iarchive::Impl::open(Istream* istream,
         const wchar_t* filename, const wchar_t* password, int formatIndex) {
@@ -607,6 +604,7 @@ namespace sevenzip {
         hr = istream->Open(name);
         if (FAILED(hr))
             return hr;
+        // NOTE: commented to allow preopen stream start at nonzero positions (not checked yet)
         // hr = istream->Seek(0, SZ_SEEK_SET, nullptr);
         // if (FAILED(hr))
         //     return hr;
@@ -633,25 +631,23 @@ namespace sevenzip {
 
             GUID guid = libimpl->getFormatGUID(formatIndex);
             inarchive = nullptr; // input stream leak w/o this assignment
-            DEBUGLOG(this << " Iarchive::Impl::open CreateObjectFunc guid " << guid.Data1 << "-" << guid.Data2 << "-" << guid.Data3);
+            // DEBUGLOG(this << " Iarchive::Impl::open CreateObjectFunc guid " << guid.Data1 << "-" << guid.Data2 << "-" << guid.Data3);
             hr = libimpl->CreateObjectFunc(&guid, &IID_IInArchive, (void**)&inarchive);
             if (hr != S_OK)
                 return hr;
 
-            DEBUGLOG(this << " Iarchive::Impl::open inarchive->Open");
+            // DEBUGLOG(this << " Iarchive::Impl::open inarchive->Open");
             hr = inarchive->Open(instream, &scan, opencallback);
             if (hr != S_OK)
                 return hr;
 
-            DEBUGLOG(this << " Iarchive::Impl::open inarchive->GetNumberOfItems");
+            // DEBUGLOG(this << " Iarchive::Impl::open inarchive->GetNumberOfItems");
             UInt32 nitems = 0;
             hr = inarchive->GetNumberOfItems(&nitems);
             if (hr != S_OK)
                 return hr;
 
-            // DEBUGLOG(this << " arc nitems " << nitems);
-
-            DEBUGLOG(this << " Iarchive::Impl::open getIntProperty kpidMainSubfile");
+            // DEBUGLOG(this << " Iarchive::Impl::open getIntProperty kpidMainSubfile");
             UInt32 mainsubfile = (UInt32)(Int32)- 1;
             hr = getIntProperty(kpidMainSubfile, mainsubfile);
             if (hr == S_FALSE)
@@ -659,14 +655,12 @@ namespace sevenzip {
             if (hr != S_OK)
                 return hr;
 
-            // DEBUGLOG(this << " arc mainsubfile " << mainsubfile);
-
-            DEBUGLOG(this << " Iarchive::Impl::open getArchiveStringItemProperty kpidPath");
+            // DEBUGLOG(this << " Iarchive::Impl::open getArchiveStringItemProperty kpidPath " << mainsubfile);
             hr = getArchiveStringItemProperty(inarchive, mainsubfile, kpidPath, name);
             if (hr != S_OK)
                 return hr;
 
-            DEBUGLOG(this << " Iarchive::Impl::open QueryInterface IID_IInArchiveGetStream");
+            // DEBUGLOG(this << " Iarchive::Impl::open QueryInterface IID_IInArchiveGetStream");
             CMyComPtr<IInArchiveGetStream> getStream = nullptr;
             hr = inarchive->QueryInterface(IID_IInArchiveGetStream, (void**)&getStream);
             if (hr != S_OK)
@@ -674,7 +668,7 @@ namespace sevenzip {
             if (!getStream)
                 return S_FALSE;
 
-            DEBUGLOG(this << " Iarchive::Impl::open getStream->GetStream");
+            // DEBUGLOG(this << " Iarchive::Impl::open getStream->GetStream");
             CMyComPtr<ISequentialInStream> insubstream = nullptr;
             hr = getStream->GetStream(mainsubfile, &insubstream);
             if (hr != S_OK)
@@ -682,7 +676,7 @@ namespace sevenzip {
             if (!insubstream)
                 return S_FALSE;
 
-            DEBUGLOG(this << " Iarchive::Impl::open insubstream->QueryInterface IID_IInStream");
+            // DEBUGLOG(this << " Iarchive::Impl::open insubstream->QueryInterface IID_IInStream");
             instream = nullptr;
             hr = insubstream.QueryInterface(IID_IInStream, &instream);
             if (hr != S_OK)
@@ -690,7 +684,7 @@ namespace sevenzip {
             if (!instream)
                 return S_FALSE;
 
-            DEBUGLOG(this << " Iarchive::Impl::open QueryInterface IID_IArchiveOpenSetSubArchiveName");
+            // DEBUGLOG(this << " Iarchive::Impl::open QueryInterface IID_IArchiveOpenSetSubArchiveName");
             CMyComPtr<IArchiveOpenSetSubArchiveName> insetsubname;
             hr = opencallback->QueryInterface(IID_IArchiveOpenSetSubArchiveName, (void**)&insetsubname);
             if (hr != S_OK)
@@ -704,6 +698,14 @@ namespace sevenzip {
         }
     };
 
+    void Iarchive::Impl::close() {
+        DEBUGLOG(this << " Iarchive::close");
+        instream = nullptr;
+        inarchive = nullptr;
+        opencallback = nullptr;
+        formatIndex = -1;
+    }
+
     HRESULT Iarchive::Impl::extract(Ostream* ostream, const wchar_t* password, int index) {
         if (!inarchive)
             return E_FAIL;
@@ -716,14 +718,6 @@ namespace sevenzip {
         } else {
             return inarchive->Extract((UInt32*)&index, 1, false, extractcallback);
         }
-    }
-
-    void Iarchive::Impl::close() {
-        DEBUGLOG(this << " Iarchive::close");
-        instream = nullptr;
-        inarchive = nullptr;
-        opencallback = nullptr;
-        formatIndex = -1;
     }
 
     int Iarchive::Impl::getNumberOfItems() {
@@ -807,6 +801,7 @@ namespace sevenzip {
         else
             return E_FAIL;
         return S_OK;
+        //NOTE: alternative implementation
         //UString us;
         //if (getStringValue(prop, us) >= S_OK)
         //    propValue = COPYWCHARS(lastStringProperty, us.Ptr());
@@ -884,6 +879,7 @@ namespace sevenzip {
         else
             return E_FAIL;
         return S_OK;
+        //NOTE: alternative implementation
         //UString us;
         //HRESULT hr = getArchiveStringItemProperty(inarchive, index, propId, us);
         //if (hr >= S_OK)
@@ -915,14 +911,14 @@ namespace sevenzip {
         return getArchiveTimeItemProperty(inarchive, index, propId, propValue);
     };
 
+
     Oarchive::Impl::Impl(Lib& lib) : libimpl(lib.pimpl) {
         DEBUGLOG(this << " Oarchive::Impl::Impl");
-    }
+    };
 
     Oarchive::Impl::~Impl() {
         DEBUGLOG(this << " Oarchive::Impl::~Impl");
-    }
-
+    };
 
     HRESULT Oarchive::Impl::open(Istream* istream, Ostream* ostream,
             const wchar_t* filename, const wchar_t* password, int formatIndex) {
@@ -952,59 +948,21 @@ namespace sevenzip {
         updatecallback = new CUpdateCallback(istream, password ? password : L"");
         outstream = new COutStream(ostream);
         return libimpl->CreateObjectFunc(&guid, &IID_IOutArchive, (void**)&outarchive);
-    }
+    };
+    
+    void Oarchive::Impl::close() {
+        DEBUGLOG(this << " Oarchive::close");
+        outstream = nullptr;
+        outarchive = nullptr;
+        updatecallback = nullptr;
+        formatIndex = -1;
+    };
 
-    HRESULT Oarchive::Impl::setEmptyProperty(const wchar_t* name) {
-        DEBUGLOG(this << " Oarchive::setEmptyProperty " << name);
-
-        if (!outarchive || !name)
-            return S_FALSE;
-
-        NWindows::NCOM::CPropVariant prop;
-        return setProperty(outarchive, name, prop);
-    }   
-
-    HRESULT Oarchive::Impl::setStringProperty(const wchar_t* name, const wchar_t* value) {
-        DEBUGLOG(this << " Oarchive::setStringProperty " << name << " " << (value ? value : L"NULL"));
-
-        if (!outarchive || !name)
-            return S_FALSE;
-
-        NWindows::NCOM::CPropVariant prop = L"";
-        if (value)            
-            prop = value;
-        return setProperty(outarchive, name, prop);
-    }
-
-    HRESULT Oarchive::Impl::setBoolProperty(const wchar_t* name, bool value) {
-        DEBUGLOG(this << " Oarchive::setBoolProperty " << name << " " << value);
-
-        if (!outarchive || !name)
-            return S_FALSE;
-
-        NWindows::NCOM::CPropVariant prop = value;
-        return setProperty(outarchive, name, prop);
-    }
-
-    HRESULT Oarchive::Impl::setIntProperty(const wchar_t* name, UInt32 value) {
-        DEBUGLOG(this << " Oarchive::setIntProperty " << name << " " << value);
-
-        if (!outarchive || !name)
-            return S_FALSE;
-
-        NWindows::NCOM::CPropVariant prop = value;
-        return setProperty(outarchive, name, prop);
-    }
-
-    HRESULT Oarchive::Impl::setWideProperty(const wchar_t* name, UInt64 value) {
-        DEBUGLOG(this << " Oarchive::setWideProperty " << name << " " << value);
-
-        if (!outarchive || !name)
-            return S_FALSE;
-
-        NWindows::NCOM::CPropVariant prop = value;
-        return setProperty(outarchive, name, prop);
-    }
+    void Oarchive::Impl::addItem(const wchar_t* pathname) {
+        DEBUGLOG(this << " Oarchive::addItem " << pathname);
+        if (updatecallback)
+            CUPDATECALLBACK(updatecallback)->items.Add(pathname);
+    };
 
     HRESULT Oarchive::Impl::update() {
         DEBUGLOG(this << " Oarchive::update");
@@ -1018,31 +976,69 @@ namespace sevenzip {
 
         return outarchive->UpdateItems(outstream,
                 CUPDATECALLBACK(updatecallback)->items.Size(), updatecallback);
-    }
+    };
 
-    void Oarchive::Impl::addItem(const wchar_t* pathname) {
-        DEBUGLOG(this << " Oarchive::addItem " << pathname);
-        if (updatecallback)
-            CUPDATECALLBACK(updatecallback)->items.Add(pathname);
-    }
+    HRESULT Oarchive::Impl::setEmptyProperty(const wchar_t* name) {
+        DEBUGLOG(this << " Oarchive::setEmptyProperty " << name);
 
-    void Oarchive::Impl::close() {
-        DEBUGLOG(this << " Oarchive::close");
-        outstream = nullptr;
-        outarchive = nullptr;
-        updatecallback = nullptr;
-        formatIndex = -1;
-    }
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop;
+        return setProperty(outarchive, name, prop);
+    };
+
+    HRESULT Oarchive::Impl::setStringProperty(const wchar_t* name, const wchar_t* value) {
+        DEBUGLOG(this << " Oarchive::setStringProperty " << name << " " << (value ? value : L"NULL"));
+
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop = L"";
+        if (value)            
+            prop = value;
+        return setProperty(outarchive, name, prop);
+    };
+
+    HRESULT Oarchive::Impl::setBoolProperty(const wchar_t* name, bool value) {
+        DEBUGLOG(this << " Oarchive::setBoolProperty " << name << " " << value);
+
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop = value;
+        return setProperty(outarchive, name, prop);
+    };
+
+    HRESULT Oarchive::Impl::setIntProperty(const wchar_t* name, UInt32 value) {
+        DEBUGLOG(this << " Oarchive::setIntProperty " << name << " " << value);
+
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop = value;
+        return setProperty(outarchive, name, prop);
+    };
+
+    HRESULT Oarchive::Impl::setWideProperty(const wchar_t* name, UInt64 value) {
+        DEBUGLOG(this << " Oarchive::setWideProperty " << name << " " << value);
+
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop = value;
+        return setProperty(outarchive, name, prop);
+    };
 
     // library
 
     Lib::Impl::Impl() {
         DEBUGLOG(this << " Lib::Impl::Impl");
-    }
+    };
 
     Lib::Impl::~Impl() {
         DEBUGLOG(this << " Lib::Impl::~Impl");
-    }
+    };
 
     bool Lib::Impl::load(const wchar_t* dllname) {
         do {
@@ -1075,7 +1071,8 @@ namespace sevenzip {
         COPYWCHARS(loadMessage, NWindows::NError::MyFormatMessage(GetLastError()).Ptr());
 #else
         COPYACHARS(loadMessage, dlerror());
-#endif        
+#endif
+        // NOTE: to be perfected - unset all function pointers on failure
         // GetModuleProp = nullptr;
         // CreateObjectFunc = nullptr;
         // GetNumberOfMethods = nullptr;
@@ -1084,17 +1081,18 @@ namespace sevenzip {
         // GetHandlerProperty2 = nullptr;
         lib.Free();
         return false;
-    }
+    };
 
     bool Lib::Impl::isLoaded() {
+        // NOTE: commented nonportable checks
         // return lib.IsLoaded();
         // return lib.Get_HMODULE() != nullptr;
         return GetHandlerProperty2 != nullptr;
-    }
+    };
 
     wchar_t* Lib::Impl::getLoadMessage() {
         return loadMessage;
-    }
+    };
 
     unsigned int Lib::Impl::getVersion() {
         NWindows::NCOM::CPropVariant prop;
@@ -1105,7 +1103,7 @@ namespace sevenzip {
         if (prop.vt != VT_UI4)
             return 0;
         return prop.ulVal;
-    }
+    };
 
     int Lib::Impl::getNumberOfFormats() {
         UInt32 n = 1;
@@ -1127,7 +1125,7 @@ namespace sevenzip {
             return lastFormatExtensions;
         COPYWCHARS(lastFormatExtensions, prop.bstrVal);
         return lastFormatExtensions;
-    }
+    };
 
     wchar_t* Lib::Impl::getFormatName(int index) {
         lastFormatName[0] = L'\0';
@@ -1140,7 +1138,7 @@ namespace sevenzip {
             return lastFormatName;
         COPYWCHARS(lastFormatName, prop.bstrVal);
         return lastFormatName;
-    }
+    };
 
     bool Lib::Impl::getFormatUpdatable(int index) {
         NWindows::NCOM::CPropVariant prop;
@@ -1151,7 +1149,7 @@ namespace sevenzip {
         if (prop.vt != VT_BOOL)
             return false;
         return prop.boolVal;
-    }
+    };
 
     int Lib::Impl::getFormatByExtension(const wchar_t* ext) {
         for (int i = 0; i < getNumberOfFormats(); i++) {
@@ -1169,7 +1167,7 @@ namespace sevenzip {
             return i;
         }
         return -1;
-    }
+    };
 
     // FIXME: iso, udf and others with signature outside first 1024 bytes
     int Lib::Impl::getFormatBySignature(Istream* stream) {
@@ -1224,7 +1222,7 @@ namespace sevenzip {
             }
         }
         return -1;
-    }
+    };
 
     GUID Lib::Impl::getFormatGUID(int index) {
         NWindows::NCOM::CPropVariant prop;
@@ -1237,7 +1235,7 @@ namespace sevenzip {
         if (SysStringByteLen(prop.bstrVal) != sizeof(GUID))
             return IID_IUnknown;
         return *(const GUID*)(const void*)prop.bstrVal;
-    }
+    };
 
     UString Lib::Impl::getStringProperty(int propIndex, PROPID propID) {
         NWindows::NCOM::CPropVariant prop;
@@ -1248,7 +1246,7 @@ namespace sevenzip {
         if (prop.vt != VT_BSTR)
             return L"";
         return (UString)prop.bstrVal;
-    }
+    };
 
     bool Lib::Impl::checkInterfaceType() const {
         UInt32 flags =
@@ -1269,6 +1267,5 @@ namespace sevenzip {
             << NModuleInterfaceType::k_IUnknown_VirtDestructor_ThisModule
             << " vs " << flags);
         return flags == NModuleInterfaceType::k_IUnknown_VirtDestructor_ThisModule;
-    }
-
+    };
 }
