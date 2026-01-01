@@ -165,6 +165,14 @@ namespace sevenzip {
         return getTimeValue(prop, propValue);
     }
 
+    static HRESULT setProperty(IOutArchive* archive, const wchar_t* name, NWindows::NCOM::CPropVariant prop) {
+        CMyComPtr<ISetProperties> setter;
+        HRESULT hr = archive->QueryInterface(IID_ISetProperties, (void **)&setter);
+        if (setter)
+            hr = setter->SetProperties(&name, &prop, 1);
+        return hr;
+    }
+
     // streams
 
     CInStream::CInStream(Istream* istream, bool cloned): istream(istream), cloned(cloned) {
@@ -944,6 +952,58 @@ namespace sevenzip {
         updatecallback = new CUpdateCallback(istream, password ? password : L"");
         outstream = new COutStream(ostream);
         return libimpl->CreateObjectFunc(&guid, &IID_IOutArchive, (void**)&outarchive);
+    }
+
+    HRESULT Oarchive::Impl::setEmptyProperty(const wchar_t* name) {
+        DEBUGLOG(this << " Oarchive::setEmptyProperty " << name);
+
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop;
+        return setProperty(outarchive, name, prop);
+    }   
+
+    HRESULT Oarchive::Impl::setStringProperty(const wchar_t* name, const wchar_t* value) {
+        DEBUGLOG(this << " Oarchive::setStringProperty " << name << " " << (value ? value : L"NULL"));
+
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop = L"";
+        if (value)            
+            prop = value;
+        return setProperty(outarchive, name, prop);
+    }
+
+    HRESULT Oarchive::Impl::setBoolProperty(const wchar_t* name, bool value) {
+        DEBUGLOG(this << " Oarchive::setBoolProperty " << name << " " << value);
+
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop = value;
+        return setProperty(outarchive, name, prop);
+    }
+
+    HRESULT Oarchive::Impl::setIntProperty(const wchar_t* name, UInt32 value) {
+        DEBUGLOG(this << " Oarchive::setIntProperty " << name << " " << value);
+
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop = value;
+        return setProperty(outarchive, name, prop);
+    }
+
+    HRESULT Oarchive::Impl::setWideProperty(const wchar_t* name, UInt64 value) {
+        DEBUGLOG(this << " Oarchive::setWideProperty " << name << " " << value);
+
+        if (!outarchive || !name)
+            return S_FALSE;
+
+        NWindows::NCOM::CPropVariant prop = value;
+        return setProperty(outarchive, name, prop);
     }
 
     HRESULT Oarchive::Impl::update() {

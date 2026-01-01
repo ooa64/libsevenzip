@@ -63,8 +63,14 @@ int main() {
     Inputstream i;
     Outputstream o;
     HRESULT hr = a.open(i, o, L"temps/example6.7z");
-    wcout << "open : " << getMessage(hr) << "\n";
+    wcout << "open : " << hr << " " << getMessage(hr) << "\n";
     a.addItem(L"temps/example6.txt");
+    // wcout << "method prop : " << a.setStringProperty(L"m", L"lzma") << "\n";
+    // wcout << "solid prop : " << a.setBoolProperty(L"s", true) << "\n";
+    hr = a.setIntProperty(L"x", 0); // set compression level to 0 (store)
+    wcout << "prop : " << hr << " " << getMessage(hr) << "\n";
+    if (hr != S_OK)
+        return 1;
     hr = a.update();
     wcout << "update: " << hr << " " << getMessage(hr) << "\n";    
     a.close();

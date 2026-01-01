@@ -194,6 +194,12 @@ namespace sevenzip {
 
         void addItem(const wchar_t* pathname);
 
+        HRESULT setStringProperty(const wchar_t* name, const wchar_t* value);
+        HRESULT setBoolProperty(const wchar_t* name, bool value);
+        HRESULT setIntProperty(const wchar_t* name, UInt32 value);
+        HRESULT setWideProperty(const wchar_t* name, UInt64 value);
+        HRESULT setEmptyProperty(const wchar_t* name);
+
         HRESULT update();
 
     private:

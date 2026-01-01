@@ -172,15 +172,35 @@ namespace sevenzip {
         return pimpl->open(&istream, &ostream, filename, password, formatIndex);
     };
 
-    HRESULT Oarchive::update() {
-        return pimpl->update();
-    };
-
     void Oarchive::addItem(const wchar_t* pathname) {
         pimpl->addItem(pathname);
     };
 
     void Oarchive::close() {
         pimpl->close();
+    };
+
+    HRESULT Oarchive::setStringProperty(const wchar_t* name, const wchar_t* value) {
+        return pimpl->setStringProperty(name, value);
+    };
+
+    HRESULT Oarchive::setBoolProperty(const wchar_t* name, bool value) {
+        return pimpl->setBoolProperty(name, value);
+    };
+
+    HRESULT Oarchive::setIntProperty(const wchar_t* name, UInt32 value) {
+        return pimpl->setIntProperty(name, value);
+    };
+
+    HRESULT Oarchive::setWideProperty(const wchar_t* name, UInt64 value) {
+        return pimpl->setWideProperty(name, value);
+    };
+
+    HRESULT Oarchive::setEmptyProperty(const wchar_t* name) {
+        return pimpl->setEmptyProperty(name);
+    };
+
+    HRESULT Oarchive::update() {
+        return pimpl->update();
     };
 }
