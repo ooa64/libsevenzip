@@ -360,7 +360,7 @@ namespace sevenzip {
     };
 
     STDMETHODIMP COpenCallback::CryptoGetTextPassword(BSTR* password)  throw() {
-        DEBUGLOG(this << " COpenCallback::CryptoGetTextPassword(");
+        DEBUGLOG(this << " COpenCallback::CryptoGetTextPassword " << !this->password.IsEmpty());
         *password = NULL;
         if (this->password.IsEmpty())
             return E_NOTIMPL;
@@ -457,7 +457,7 @@ namespace sevenzip {
     };
 
     STDMETHODIMP CExtractCallback::CryptoGetTextPassword(BSTR* password) throw() {
-        DEBUGLOG(this << " CExtractCallback::CryptoGetTextPassword " << (password ? *password : L""));
+        DEBUGLOG(this << " CExtractCallback::CryptoGetTextPassword " << !this->password.IsEmpty());
         *password = NULL;
         if (this->password.IsEmpty())
             return E_NOTIMPL;
@@ -570,7 +570,7 @@ namespace sevenzip {
     };
 
     STDMETHODIMP CUpdateCallback::CryptoGetTextPassword2(Int32* passwordIsDefined, BSTR* password) throw() {
-        DEBUGLOG(this << " CUpdateCallback::CryptoGetTextPassword2 " << this->password);
+        DEBUGLOG(this << " CUpdateCallback::CryptoGetTextPassword2 " << !this->password.IsEmpty());
         *password = NULL;
         *passwordIsDefined = BoolToInt(false);
         if (this->password.IsEmpty())
