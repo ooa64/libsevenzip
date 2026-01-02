@@ -581,7 +581,7 @@ namespace sevenzip {
 
     // archives
 
-    Iarchive::Impl::Impl(Lib& lib) : libimpl(lib.pimpl) {
+    Iarchive::Impl::Impl() {
         DEBUGLOG(this << " Iarchive::Impl::Impl");
     };
 
@@ -589,7 +589,7 @@ namespace sevenzip {
         DEBUGLOG(this << " Iarchive::Impl::~Impl");
     };
 
-    HRESULT Iarchive::Impl::open(Istream* istream,
+    HRESULT Iarchive::Impl::open(Lib::Impl* libimpl, Istream* istream,
         const wchar_t* filename, const wchar_t* password, int formatIndex) {
         DEBUGLOG(this << " Iarchive::open "
                 << (filename ? filename : L"NULL") << " "
@@ -913,7 +913,7 @@ namespace sevenzip {
     };
 
 
-    Oarchive::Impl::Impl(Lib& lib) : libimpl(lib.pimpl) {
+    Oarchive::Impl::Impl() {
         DEBUGLOG(this << " Oarchive::Impl::Impl");
     };
 
@@ -921,7 +921,7 @@ namespace sevenzip {
         DEBUGLOG(this << " Oarchive::Impl::~Impl");
     };
 
-    HRESULT Oarchive::Impl::open(Istream* istream, Ostream* ostream,
+    HRESULT Oarchive::Impl::open(Lib::Impl* libimpl,  Istream* istream, Ostream* ostream,
             const wchar_t* filename, const wchar_t* password, int formatIndex) {
         DEBUGLOG(this << " Oarchive::open " << istream << " " << ostream << " "
                 << (filename ? filename : L"NULL") << " " << formatIndex);

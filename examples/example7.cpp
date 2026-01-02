@@ -59,10 +59,10 @@ int main() {
         return 1;
     }
 
-    Oarchive a(l);
+    Oarchive a;
     Inputstream i;
     Outputstream o;
-    HRESULT hr = a.open(i, o, L"temps/example7.7z", L"example7");
+    HRESULT hr = a.open(l, i, o, L"temps/example7.7z", L"example7");
     wcout << "open : " << getMessage(hr) << "\n";
     a.addItem(L"temps/example7.txt");
     hr = a.update();

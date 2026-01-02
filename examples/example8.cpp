@@ -98,10 +98,10 @@ int main() {
     }
     {
         ofstream fstream("temps/example8.7z", ios::binary);
-        Oarchive a(l);
+        Oarchive a;
         Compressstream s;
         Outputstream_preopen o(fstream);
-        hr = a.open(s, o, nullptr);
+        hr = a.open(l, s, o, nullptr);
         wcout << "open : " << getMessage(hr) << "\n";
         a.addItem(L"temps/example8.txt");
         hr = a.update();
@@ -113,10 +113,10 @@ int main() {
     {
         stringstream sstream;
         ifstream fstream("temps/example8.7z", ios::binary);
-        Iarchive a(l);
+        Iarchive a;
         Inputstream_preopen s(fstream);
         Extractstream_preopen x(sstream);
-        hr = a.open(s, nullptr);
+        hr = a.open(l, s, nullptr);
         wcout << "open : " << getMessage(hr) << "\n";
         hr = a.extract(x, 0);
         result = (int)sstream.str().size();

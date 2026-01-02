@@ -56,18 +56,18 @@ namespace sevenzip {
         return pimpl->getFormatUpdatable(index);
     }
 
-    Iarchive::Iarchive(Lib& lib) : pimpl(new Impl(lib)) {};
+    Iarchive::Iarchive() : pimpl(new Impl()) {};
 
     Iarchive::~Iarchive() { delete pimpl; };
 
-    HRESULT Iarchive::open(Istream& istream,
+    HRESULT Iarchive::open(Lib& lib, Istream& istream,
             const wchar_t* path, int formatIndex) {
-        return pimpl->open(&istream, path, nullptr, formatIndex);
+        return pimpl->open(lib.pimpl, &istream, path, nullptr, formatIndex);
     };
 
-    HRESULT Iarchive::open(Istream& istream,
+    HRESULT Iarchive::open(Lib& lib, Istream& istream,
            const wchar_t* path, const wchar_t* password, int formatIndex) {
-        return pimpl->open(&istream, path, password, formatIndex);
+        return pimpl->open(lib.pimpl, &istream, path, password, formatIndex);
     };
 
     void Iarchive::close() {
@@ -162,18 +162,18 @@ namespace sevenzip {
         return pimpl->getTimeItemProperty(index, propId, propValue);
     };
 
-    Oarchive::Oarchive(Lib& lib): pimpl(new Impl(lib)) {};
+    Oarchive::Oarchive(): pimpl(new Impl()) {};
 
     Oarchive::~Oarchive() {delete pimpl;};
-
-    HRESULT Oarchive::open(Istream& istream, Ostream& ostream,
+    
+    HRESULT Oarchive::open(Lib& lib, Istream& istream, Ostream& ostream,
             const wchar_t* filename, int formatIndex) {
-        return pimpl->open(&istream, &ostream, filename, nullptr, formatIndex);
+        return pimpl->open(lib.pimpl, &istream, &ostream, filename, nullptr, formatIndex);
     };
 
-    HRESULT Oarchive::open(Istream& istream, Ostream& ostream,
+    HRESULT Oarchive::open(Lib& lib, Istream& istream, Ostream& ostream,
             const wchar_t* filename, const wchar_t* password, int formatIndex) {
-        return pimpl->open(&istream, &ostream, filename, password, formatIndex);
+        return pimpl->open(lib.pimpl, &istream, &ostream, filename, password, formatIndex);
     };
 
     void Oarchive::close() {

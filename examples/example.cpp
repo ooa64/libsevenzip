@@ -194,10 +194,10 @@ int MAIN(argc, argv) {
     switch (argv[1][0]) {
 
         case 'a': {
-            Oarchive a(l);
+            Oarchive a;
             Compressstream c;
             Outputstream o;
-            hr = a.open(c, o, F2U(argv[2]));
+            hr = a.open(l, c, o, F2U(argv[2]));
             if (hr == S_OK) {
                 for (int i = 3; i < argc; i++) {
                     a.addItem(F2U(argv[i]));
@@ -208,9 +208,9 @@ int MAIN(argc, argv) {
         }
 
         case 'l': {
-            Iarchive a(l);
+            Iarchive a;
             Inputstream s;
-            hr = a.open(s, F2U(argv[2]));
+            hr = a.open(l, s, F2U(argv[2]));
             if (hr == S_OK) {
                 int n = a.getNumberOfItems();
                 for (int i = 0; i < n; i++) {
@@ -221,9 +221,9 @@ int MAIN(argc, argv) {
         }
 
         case 'x': {
-            Iarchive a(l);
+            Iarchive a;
             Inputstream s;
-            hr = a.open(s, F2U(argv[2]));
+            hr = a.open(l, s, F2U(argv[2]));
             if (hr == S_OK) {
                 Extractstream e(argc > 3 ? F2U(argv[3]) : L"");
                 hr = a.extract(e);

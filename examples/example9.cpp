@@ -164,9 +164,9 @@ int main() {
         return 1;
     }
 
-    Iarchive a(l);
+    Iarchive a;
     Inputstream s;
-    HRESULT hr = a.open(s, L"temps/example9.7z");
+    HRESULT hr = a.open(l, s, L"temps/example9.7z");
     wcout << "open : " << getMessage(hr) << "\n";
     wcout << "props :\n";
     int m =  a.getNumberOfProperties();

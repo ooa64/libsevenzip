@@ -41,9 +41,9 @@ int main() {
         return 1;
     }
 
-    Iarchive a(l);
+    Iarchive a;
     Inputstream s;
-    HRESULT hr = a.open(s, L"temps/example3.7z", L"example3");
+    HRESULT hr = a.open(l, s, L"temps/example3.7z", L"example3");
     wcout << "open : " << getMessage(hr) << "\n";
     wcout << "items :\n";
     int n = a.getNumberOfItems();

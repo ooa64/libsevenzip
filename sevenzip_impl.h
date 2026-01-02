@@ -235,10 +235,10 @@ namespace sevenzip {
 
     public:
 
-        Impl(Lib& lib);
+        Impl();
         ~Impl();
 
-        HRESULT open(Istream* istream,
+        HRESULT open(Lib::Impl* libimpl, Istream* istream,
                 const wchar_t* filename, const wchar_t* password, int formatIndex);
 
         void close();
@@ -270,7 +270,6 @@ namespace sevenzip {
 
     private:
 
-        Lib::Impl* libimpl;
         CMyComPtr<IInStream> instream;
         CMyComPtr<IInArchive> inarchive;
         CMyComPtr<IArchiveOpenCallback> opencallback;
@@ -285,10 +284,10 @@ namespace sevenzip {
 
     public:
 
-        Impl(Lib& lib);
+        Impl();
         ~Impl();
 
-        HRESULT open(Istream* istream, Ostream* ostream,
+        HRESULT open(Lib::Impl* libimpl, Istream* istream, Ostream* ostream,
             const wchar_t* filename, const wchar_t* password, int formatIndex);
 
         void close();
@@ -305,7 +304,6 @@ namespace sevenzip {
 
     private:
 
-        Lib::Impl* libimpl;
         CMyComPtr<IOutStream> outstream;
         CMyComPtr<IOutArchive> outarchive;
         CMyComPtr<IArchiveUpdateCallback2> updatecallback;

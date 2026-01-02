@@ -120,8 +120,7 @@ namespace sevenzip {
 
     public:
 
-        Iarchive() = delete;
-        Iarchive(Lib& lib);
+        Iarchive();
         ~Iarchive();
 
         // istream can be preopened in the case of singlevolume archives
@@ -131,9 +130,9 @@ namespace sevenzip {
         // formatIndex == -1 : detect format by extension and then by signature
         // formatIndex <  -1 : detect format by signature
 
-        HRESULT open(Istream& istream,
+        HRESULT open(Lib& lib, Istream& istream,
                 const wchar_t* filename, int formatIndex = -1);
-        HRESULT open(Istream& istream,
+        HRESULT open(Lib& lib, Istream& istream,
                 const wchar_t* filename, const wchar_t* password, int formatIndex = -1);
 
         void close();
@@ -182,15 +181,14 @@ namespace sevenzip {
 
     public:
 
-        Oarchive() = delete;
-        Oarchive(Lib& lib);
+        Oarchive();
         ~Oarchive();
 
         // ostream can be preopened
 
-        HRESULT open(Istream& istream, Ostream& ostream,
+        HRESULT open(Lib& lib, Istream& istream, Ostream& ostream,
                 const wchar_t* filename, int formatIndex = -1);
-        HRESULT open(Istream& istream, Ostream& ostream,
+        HRESULT open(Lib& lib, Istream& istream, Ostream& ostream,
                 const wchar_t* filename, const wchar_t* password, int formatIndex = -1);
 
         void close();
