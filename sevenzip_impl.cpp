@@ -729,9 +729,10 @@ namespace sevenzip {
 
     const wchar_t* Iarchive::Impl::getItemPath(int index) {
         UString path;
-        if (!inarchive || getArchiveStringItemProperty(inarchive, index, kpidPath, path) != S_OK)
-            return L"";
-        return COPYWCHARS(lastItemPath, path.Ptr());
+		lastItemPath[0] = L'\0';
+        if (inarchive && getArchiveStringItemProperty(inarchive, index, kpidPath, path) == S_OK)
+            COPYWCHARS(lastItemPath, path.Ptr());
+        return lastItemPath;
     };
 
     UInt64 Iarchive::Impl::getItemSize(int index) {
