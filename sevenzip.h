@@ -94,6 +94,7 @@ namespace sevenzip {
         ~Lib();
 
         bool load(const wchar_t* libname);
+        void unload();
         bool isLoaded();
         wchar_t* getLoadMessage(); // lib.load() error message
         unsigned getVersion();

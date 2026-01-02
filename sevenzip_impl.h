@@ -197,7 +197,8 @@ namespace sevenzip {
         ~Impl();
 
         bool load(const wchar_t* libname);
-        bool isLoaded();
+		void unload();
+        bool isLoaded() const;
         wchar_t* getLoadMessage();
         unsigned getVersion();
 
@@ -222,7 +223,7 @@ namespace sevenzip {
 
     private:
 
-        NWindows::NDLL::CLibrary lib;
+        NWindows::NDLL::CLibrary *lib = nullptr;
 
         wchar_t loadMessage[128] = { L'\0' };
         wchar_t lastFormatExtensions[128] = { L'\0' };

@@ -12,6 +12,10 @@ namespace sevenzip {
 
     Lib::~Lib() { delete pimpl; }
 
+    void Lib::unload() {
+        pimpl->unload();
+    }
+
     bool Lib::load(const wchar_t* libname) {
         return pimpl->load(libname);
     }

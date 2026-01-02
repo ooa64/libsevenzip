@@ -1039,11 +1039,30 @@ namespace sevenzip {
 
     Lib::Impl::~Impl() {
         DEBUGLOG(this << " Lib::Impl::~Impl");
+		unload();
+    };
+
+    void Lib::Impl::unload() {
+        DEBUGLOG(this << " Lib::Impl::unload");
+        if (lib) {
+            // NOTE: HMODULE is detached from lib to avoid crash in the dependent modules
+            // NOTE: we need to count references to the HMODULE if we want to unload it safely
+            lib->Detach();
+            delete lib;
+            lib = nullptr;
+        }
     };
 
     bool Lib::Impl::load(const wchar_t* dllname) {
+        DEBUGLOG(this << " Lib::Impl::Load " << (dllname ? dllname : L"NULL"));
+        loadMessage[0] = '\0';
+        if (lib)
+            return true;
+        if (!dllname)
+            return false;
+		lib = new NWindows::NDLL::CLibrary();
         do {
-            if (!lib.Load(us2fs(dllname)))
+            if (!lib->Load(us2fs(dllname)))
                 break;
             GetModuleProp = (Func_GetModuleProp)GETPROCADDRESS(lib, "GetModuleProp");
             if (!checkInterfaceType()) {
@@ -1065,7 +1084,6 @@ namespace sevenzip {
             GetHandlerProperty2 = (Func_GetHandlerProperty2)GETPROCADDRESS(lib, "GetHandlerProperty2");
             if (!GetHandlerProperty2)
                 break;
-            loadMessage[0] = '\0';
             return true;
         } while (0);
 #ifdef _WIN32
@@ -1080,15 +1098,13 @@ namespace sevenzip {
         // GetNumberOfFormats = nullptr;
         // GetHandlerProperty = nullptr;
         // GetHandlerProperty2 = nullptr;
-        lib.Free();
+        DEBUGLOG(this << " Lib::Impl::Load error : " << loadMessage);
+        unload();
         return false;
     };
 
-    bool Lib::Impl::isLoaded() {
-        // NOTE: commented nonportable checks
-        // return lib.IsLoaded();
-        // return lib.Get_HMODULE() != nullptr;
-        return GetHandlerProperty2 != nullptr;
+    bool Lib::Impl::isLoaded() const {
+		return lib != nullptr;
     };
 
     wchar_t* Lib::Impl::getLoadMessage() {
