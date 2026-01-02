@@ -286,11 +286,11 @@ namespace sevenzip {
         password(password),
         subarchivename(L""),
         subarchivemode(false) {
-        DEBUGLOG(this << " COpenCallback " << istream << " " << (password ? password : L"NULL") << "\n");
+        DEBUGLOG(this << " COpenCallback " << istream << " " << (password ? password : L"NULL"));
     };
 
     COpenCallback::~COpenCallback() {
-        DEBUGLOG(this << " ~COpenCallback\n");
+        DEBUGLOG(this << " ~COpenCallback");
     };
 
     STDMETHODIMP COpenCallback::SetTotal(const UInt64* files, const UInt64* bytes)  throw() {
