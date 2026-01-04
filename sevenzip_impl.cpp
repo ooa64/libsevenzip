@@ -54,15 +54,23 @@ namespace sevenzip {
 
     wchar_t *fromBytes(const char* str) {
         static wchar_t buffer[1024];
-        wcsncpy(buffer, as2us(str), sizeof(buffer)/sizeof(buffer[0])-1);
-        buffer[sizeof(buffer)/sizeof(buffer[0])-1] = L'\0';
+        return fromBytes(buffer, Z7_ARRAY_SIZE(buffer), str);
+    };
+
+    wchar_t *fromBytes(wchar_t* buffer, size_t size, const char* str) {
+        wcsncpy(buffer, as2us(str), size - 1);
+        buffer[size - 1] = L'\0';
         return buffer;
     };
 
     char *toBytes(const wchar_t* str) {
         static char buffer[1024*sizeof(wchar_t)];
-        strncpy(buffer, us2as(str), sizeof(buffer)-1);
-        buffer[sizeof(buffer)-1] = '\0';
+        return toBytes(buffer, sizeof(buffer), str);
+    };
+
+    char *toBytes(char* buffer, size_t size, const wchar_t* str) {
+        strncpy(buffer, us2as(str), size - 1);
+        buffer[size - 1] = '\0';
         return buffer;
     };
 
@@ -71,9 +79,19 @@ namespace sevenzip {
             return L"";
         UString n(filename);
         int dot = n.ReverseFind_Dot();
-        if (dot > n.ReverseFind_PathSepar())
-            return n.Ptr((unsigned)(dot + 1));
-        return L"";
+        if (dot < n.ReverseFind_PathSepar())
+            return L"";
+        return n.Ptr((unsigned)(dot + 1));
+    };
+
+    static UString getFilenameDir(const wchar_t* filename) {
+        if (!filename)
+            return L"";
+        UString n(filename);
+        int sep = n.ReverseFind_PathSepar();
+        if (sep < 0)
+            return L"";
+        return n.Left((unsigned)sep);
     };
 
     static HRESULT getStringValue(NWindows::NCOM::CPropVariant& prop, UString& propValue) {

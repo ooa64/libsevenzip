@@ -215,8 +215,11 @@ namespace sevenzip {
     HRESULT getResult(bool noerror);
     UInt32 getVersion();
 
-    wchar_t *fromBytes(const char* str);
-    char *toBytes(const wchar_t* str);
+    wchar_t *fromBytes(const char* str); // static buffer 1024 wchar_ts
+    wchar_t *fromBytes(wchar_t* buffer, size_t size, const char* str);
+
+    char *toBytes(const wchar_t* str); // static buffer 1024*sizeof(wchar_t) chars
+    char *toBytes(char* buffer, size_t size, const wchar_t* str);
 };
 
 #endif
