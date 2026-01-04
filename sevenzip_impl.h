@@ -110,14 +110,16 @@ namespace sevenzip {
 
         COpenCallback(Istream* istream, const wchar_t* name, const wchar_t* password);
         virtual ~COpenCallback();
+        const wchar_t *Password() const;
 
     private:
 
         Istream* istream;
         UString pathname;
         UString password;
+        bool passworddefined;
         UString subarchivename;
-        bool subarchivemode = false;
+        bool subarchivemode;
     };
 
 
@@ -147,6 +149,7 @@ namespace sevenzip {
         CMyComPtr<ISequentialOutStream> outstream;
         IInArchive* archive;
         UString password;
+        bool passworddefined;
         int index;
     };
 
@@ -186,6 +189,7 @@ namespace sevenzip {
 
         CMyComPtr<ISequentialInStream> instream;
         UString password;
+        bool passworddefined;
     };
 
 
@@ -323,6 +327,7 @@ namespace sevenzip {
 
 #define CINSTREAM(_i_) (static_cast<CInStream*>((void*)(_i_)))
 #define COUTSTREAM(_i_) (static_cast<COutStream*>((void*)(_i_)))
+#define COPENCALLBACK(_i_) (static_cast<COpenCallback*>((void*)(_i_)))
 #define CUPDATECALLBACK(_i_) (static_cast<CUpdateCallback*>((void*)(_i_)))
 
 }
