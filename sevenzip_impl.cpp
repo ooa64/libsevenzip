@@ -23,6 +23,8 @@
 
 namespace sevenzip {
 
+    static const wchar_t * const kEmptyFileAlias = L"[Content]";
+
     HRESULT getResult(bool noerror) {
         if (noerror)
             return S_OK;
@@ -430,11 +432,14 @@ namespace sevenzip {
         *outStream = nullptr;
         this->index = -1;
 
+        if (askExtractMode != NArchive::NExtract::NAskMode::kExtract)
+            return S_OK;
+
         if (!outstream)
             return E_FAIL;
 
         HRESULT hr;
-        UString pathname = L"[Content]";
+        UString pathname = kEmptyFileAlias;
         hr = getArchiveStringItemProperty(archive, index, kpidPath, pathname);
         if (FAILED(hr))
             return hr;
@@ -463,10 +468,10 @@ namespace sevenzip {
     STDMETHODIMP CExtractCallback::SetOperationResult(Int32 operationResult) throw() {
         DEBUGLOG(this << " CExtractCallback::SetOperationResult " << operationResult << " item " << index);
         if (operationResult == NArchive::NExtract::NOperationResult::kOK)
-            if (outstream) {
+            if (outstream && index >= 0) {
                 COUTSTREAM(outstream)->Close();
 
-                UString pathname = L"[Content]";
+                UString pathname = kEmptyFileAlias;
                 if (getArchiveStringItemProperty(archive, index, kpidPath, pathname) == S_OK) {
 
                     bool isdir = false;
