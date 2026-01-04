@@ -1084,24 +1084,30 @@ namespace sevenzip {
     void Lib::Impl::unload() {
         DEBUGLOG(this << " Lib::Impl::unload");
         if (lib) {
-            // NOTE: HMODULE is detached from lib to avoid crash in the dependent modules
+            // NOTE: HMODULE must be preserved to avoid dependent modules crashes
             // NOTE: we need to count references to the HMODULE if we want to unload it safely
+#ifdef _WIN32
+            // NOTE: HMODULE can be detached from lib on Windows to minimize memory leak
             lib->Detach();
             delete lib;
+#else
+            // NOTE: Memory leak (8 bytes in 1 blocks).
+            // delete lib;
+#endif
             lib = nullptr;
         }
     };
 
-    bool Lib::Impl::load(const wchar_t* dllname) {
-        DEBUGLOG(this << " Lib::Impl::Load " << (dllname ? dllname : L"NULL"));
+    bool Lib::Impl::load(const wchar_t* libname) {
+        DEBUGLOG(this << " Lib::Impl::Load " << (libname ? libname : L"NULL"));
         loadMessage[0] = '\0';
         if (lib)
             return true;
-        if (!dllname)
+        if (!libname)
             return false;
 		lib = new NWindows::NDLL::CLibrary();
         do {
-            if (!lib->Load(us2fs(dllname)))
+            if (!lib->Load(us2fs(libname)))
                 break;
             GetModuleProp = (Func_GetModuleProp)GETPROCADDRESS(lib, "GetModuleProp");
             if (!checkInterfaceType()) {
