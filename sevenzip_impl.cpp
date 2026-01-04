@@ -1249,6 +1249,7 @@ namespace sevenzip {
         UInt64 pos = 0, dummy;
         UInt32 bufsize = 1024;
         CByteBuffer buf(bufsize);
+        buf.Wipe();
         if (stream->Seek(0, SZ_SEEK_CUR, pos) != S_OK)
             return -1;
         if (stream->Seek(0, SZ_SEEK_SET, dummy) != S_OK)
