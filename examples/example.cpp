@@ -37,28 +37,39 @@ static char charbuffer[1024];
 using namespace std;
 using namespace sevenzip;
 
+bool mkpath(std::wstring path) {
+    if (MKDIR(path.c_str(), 0775) == 0)
+        return true;
+    if (errno == EEXIST)
+        return true;
+    if (errno == ENOENT)
+        if (mkpath(path.substr(0, path.find_last_of('/'))))
+            return MKDIR(path.c_str(), 0775) == 0;
+    return false;
+}
+
 struct Inputstream: public Istream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
-        this->file = FOPEN(filename, L"rb");
-        return getResult(this->file);
+        file = FOPEN(filename, L"rb");
+        return getResult(file);
     }
 
     virtual void Close() override {
-        if (this->file)
-            fclose(this->file);
-        this->file = nullptr;
+        if (file)
+            fclose(file);
+        file = nullptr;
     }
 
     virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
-        size_t count = fread(data, 1, size, this->file);
+        size_t count = fread(data, 1, size, file);
         processed = (UInt32)count;
-        return getResult(count >= 0);
+        return getResult(!ferror(file));
     };
 
     virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
-        int result = fseek(this->file, (long)offset, origin);
-        position = ftell(this->file);
+        int result = fseek(file, (long)offset, origin);
+        position = ftell(file);
         return getResult(result == 0);
     };
 
@@ -105,20 +116,20 @@ struct Compressstream: public Inputstream {
 struct Outputstream: public Ostream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
-        this->file = FOPEN(filename, L"wb");
-        return getResult(this->file);
+        file = FOPEN(filename, L"wb");
+        return getResult(file);
     };
 
     virtual void Close() override {
-        if (this->file)
-            fclose(this->file);
-        this->file = nullptr;
+        if (file)
+            fclose(file);
+        file = nullptr;
     };
 
     virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) override {
-        size_t count = fwrite(data, 1, size, this->file);
+        size_t count = fwrite(data, 1, size, file);
         processed = (UInt32)count;
-        return getResult(count >= 0);
+        return getResult(!ferror(file));
     };
 
     virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position) override {
@@ -141,8 +152,8 @@ struct Extractstream: public Outputstream {
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {
         wcout << "Creating " << dirname << "\n";
-        (void)MKDIR(fullname(dirname).c_str(), 0755);
-        return S_OK;
+        // (void)MKDIR(fullname(dirname).c_str(), 0755);
+        return mkpath(fullname(dirname)) ? S_OK : S_FALSE;
     };
 
     virtual HRESULT SetMode(const wchar_t* pathname, UInt32 mode) override {
