@@ -772,8 +772,12 @@ namespace sevenzip {
     const wchar_t* Iarchive::Impl::getItemPath(int index) {
         UString path;
 		lastItemPath[0] = L'\0';
-        if (inarchive && getArchiveStringItemProperty(inarchive, index, kpidPath, path) == S_OK)
+        if (!inarchive)
+            return lastItemPath;
+        if (getArchiveStringItemProperty(inarchive, index, kpidPath, path) == S_OK)
             COPYWCHARS(lastItemPath, path.Ptr());
+        else
+            COPYWCHARS(lastItemPath, kEmptyFileAlias);
         return lastItemPath;
     };
 
