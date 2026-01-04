@@ -482,9 +482,9 @@ namespace sevenzip {
                         COUTSTREAM(outstream)->SetTime(pathname, time);
                     
                     UInt32 mode = 0700;
-                    if (getArchiveTimeItemProperty(archive, index, kpidPosixAttrib, mode) == S_OK)
+                    if (getArchiveIntItemProperty(archive, index, kpidPosixAttrib, mode) == S_OK)
                         mode |= (isdir ? 0700 : 0);
-                    else if (getArchiveTimeItemProperty(archive, index, kpidAttrib, mode) == S_OK)
+                    else if (getArchiveIntItemProperty(archive, index, kpidAttrib, mode) == S_OK)
                         if (mode & 0x8000)
                             mode = (mode >> 16) | (isdir ? 0700 : 0);
                     COUTSTREAM(outstream)->SetMode(pathname, mode);
