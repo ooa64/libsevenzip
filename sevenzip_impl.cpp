@@ -662,12 +662,12 @@ namespace sevenzip {
             if (formatIndex < 0)
                 formatIndex = libimpl->getFormatBySignature(istream);
             if (formatIndex < 0)
-                return E_NOTIMPL;
+                return E_NOTSUPPORTED;
 
             this->formatIndex = formatIndex;
 
             // DEBUGLOG(this << " arc name " << name.Ptr() << " formatIndex " << formatIndex
-            //         << L" (" << libimpl->getStringProp(formatIndex, NArchive::NHandlerPropID::kName) << L")");
+            //         << L" (" << libimpl->getStringProperty(formatIndex, NArchive::NHandlerPropID::kName) << L")");
 
             GUID guid = libimpl->getFormatGUID(formatIndex);
             inarchive = nullptr; // input stream leak w/o this assignment
@@ -678,6 +678,8 @@ namespace sevenzip {
 
             // DEBUGLOG(this << " Iarchive::Impl::open inarchive->Open");
             hr = inarchive->Open(instream, &scan, opencallback);
+            if (hr == S_FALSE)
+                return E_NOTSUPPORTED;
             if (hr != S_OK)
                 return hr;
 
