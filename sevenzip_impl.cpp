@@ -453,10 +453,19 @@ namespace sevenzip {
         if (isdir)
             return COUTSTREAM(outstream)->Mkdir(pathname);
 
+        UString dirname = getFilenameDir(pathname);
+        if (!dirname.IsEmpty()) {
+            hr = COUTSTREAM(outstream)->Mkdir(dirname);
+            DEBUGLOG(this << " CExtractCallback::GetStream Mkdir " << dirname.Ptr() << " hr " << hr);
+            if (FAILED(hr))
+                return hr;
+        }
+
         *outStream = outstream;
         outstream->AddRef();
 
         hr = COUTSTREAM(outstream)->Open(pathname);
+        DEBUGLOG(this << " CExtractCallback::GetStream Open " << pathname.Ptr() << " hr " << hr);
         return FAILED(hr) ? hr : S_OK;
     };
 
