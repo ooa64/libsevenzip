@@ -34,7 +34,17 @@ namespace sevenzip {
 
     wchar_t* getMessage(HRESULT hr) {
         static wchar_t lastMessage[128] = { L'\0' };
-        COPYWCHARS(lastMessage, NWindows::NError::MyFormatMessage(hr));
+        if (hr == S_OK)
+            COPYWCHARS(lastMessage, L"success");
+        else if (hr == S_FALSE)
+            COPYWCHARS(lastMessage, L"failure");
+        else if (hr == E_NOTSUPPORTED)
+            COPYWCHARS(lastMessage, L"not supported");
+        else if (hr == E_NEEDPASSWORD)
+            COPYWCHARS(lastMessage, L"need password");
+        else 
+            COPYWCHARS(lastMessage, NWindows::NError::MyFormatMessage(hr));
+        
         return lastMessage;
     };
 
