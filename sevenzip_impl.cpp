@@ -760,8 +760,10 @@ namespace sevenzip {
         UInt32 items[1] = {(UInt32)(Int32)index};
         if (index < 0)
             return inarchive->Extract(nullptr, (UInt32)(Int32)(-1), false, extractcallback);
-        else
+        else if (index < getNumberOfItems())
             return inarchive->Extract(items, 1, false, extractcallback);
+        else
+            return E_INVALIDARG;
     }
 
     int Iarchive::Impl::getNumberOfItems() {
