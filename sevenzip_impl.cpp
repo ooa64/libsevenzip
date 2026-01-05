@@ -29,6 +29,10 @@ namespace sevenzip {
         if (noerror)
             return S_OK;
         DWORD error = ::GetLastError();
+#ifdef _WIN32
+        if (error == 0)
+           error = errno;
+#endif
         if (error == 0)
             return E_FAIL;
         return HRESULT_FROM_WIN32(error);
