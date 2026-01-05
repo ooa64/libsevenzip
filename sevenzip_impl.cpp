@@ -1040,8 +1040,11 @@ namespace sevenzip {
         if (!updatecallback)
             return S_FALSE;
 
-        return outarchive->UpdateItems(outstream,
-                CUPDATECALLBACK(updatecallback)->items.Size(), updatecallback);
+        HRESULT hr = outarchive->UpdateItems(outstream,
+            CUPDATECALLBACK(updatecallback)->items.Size(), updatecallback);
+        if (hr == S_OK)
+            CUPDATECALLBACK(updatecallback)->items.Clear();
+        return hr;
     };
 
     HRESULT Oarchive::Impl::setEmptyProperty(const wchar_t* name) {
