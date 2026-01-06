@@ -1,0 +1,4 @@
+improve time handling, switch 32->64bit, set atime/ctime/btime
+improve attribute handling, use windows attributes
+add progress callbacks
+add multivolume creation
