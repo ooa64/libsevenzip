@@ -43,7 +43,7 @@ namespace sevenzip {
         if (hr == S_OK)
             COPYWCHARS(lastMessage, L"success");
         else if (hr == S_FALSE)
-            COPYWCHARS(lastMessage, L"failure");
+            COPYWCHARS(lastMessage, L"false condition");
         else if (hr == E_NOTSUPPORTED)
             COPYWCHARS(lastMessage, L"not supported");
         else if (hr == E_NEEDPASSWORD)
