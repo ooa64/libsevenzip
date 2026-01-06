@@ -33,6 +33,10 @@ static char charbuffer[1024];
 #define STRUCT_STAT struct stat
 #define STRUCT_UTIMBUF struct utimbuf
 #endif
+#ifndef STRINGIFY
+#define STRINGIFY(x) STRINGIFY1(x)
+#define STRINGIFY1(x) #x
+#endif
 
 using namespace std;
 using namespace sevenzip;
@@ -179,7 +183,7 @@ private:
 };
 
 static const wchar_t * const usage =
-L"7-Zip example application\n\n"
+L"7-Zip example application " STRINGIFY(LIBSEVENZIP_VER_MAJOR) "." STRINGIFY(LIBSEVENZIP_VER_MINOR) "\n\n"
 L"Usage: example.exe [a | l | x] archive.ext [fileName ...]\n"
 L"Examples:\n"
 L"  example.exe a archive.7z f1.txt f2.txt  : Add two files to archive.7z\n"
@@ -200,7 +204,7 @@ int MAIN(argc, argv) {
         return 1;
     }
 
-    wcout << "7-Zip " << (getVersion() >> 16) << "." << (getVersion() & 0xffff) << " example "
+    wcout << "7-Zip " << (getVersion() >> 16) << "." << (getVersion() & 0xffff)  << " example "
             << "(" SEVENZIPDLL " " << (l.getVersion() >> 16) << "." << (l.getVersion() & 0xffff) << ")\n\n";
 
     HRESULT hr;

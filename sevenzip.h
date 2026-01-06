@@ -1,6 +1,9 @@
 #ifndef SEVENZIP_H
 #define SEVENZIP_H
 
+#define LIBSEVENZIP_VER_MAJOR 1
+#define LIBSEVENZIP_VER_MINOR 0
+
 #include "C/7zTypes.h"
 
 #ifdef _WIN32
@@ -27,6 +30,8 @@ typedef UInt16 VARTYPE;
 #define E_NEEDPASSWORD ((HRESULT)0x80040001L)
 
 namespace sevenzip {
+
+    const unsigned Version ((LIBSEVENZIP_VER_MAJOR << 16) | LIBSEVENZIP_VER_MINOR);
 
     // To be redefined by the user of the library
 
