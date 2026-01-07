@@ -43,6 +43,7 @@
 # local
 *.cmd
 *.sh
+*.bak
 *.lst
 *.log
 *.sublime*
