@@ -17,6 +17,8 @@
 #define UTIME(_p_,_t_) (_wutime((_p_),(_t_)))
 #define STRUCT_STAT struct _stat
 #define STRUCT_UTIMBUF struct _utimbuf
+#pragma comment(lib, "User32.lib")
+#pragma comment(lib, "OleAut32.lib")
 #else
 #include <utime.h>
 static char charbuffer[1024];
