@@ -72,13 +72,13 @@ clean:
 	-@del /q $(OBJS) $O\example*.obj $O\test*.obj temps\example.txt > NUL 2>>&1
 
 cleanall: clean
-	-@del /q/s $L $R $O\libsevenzip $O\example*.exe $O\example*.pdb $O\tests*.exe $O\tests*.pdb temps > NUL 2>>&1
+	-@del /q/s $L $R C $O\libsevenzip $O\example*.exe $O\example*.pdb $O\tests*.exe $O\tests*.pdb temps > NUL 2>>&1
 
 library: $L C\7zVersion.h C\7zTypes.h
 
 release: library example
 	-@del /q $R > NUL 2>>&1
-	-@md $O\libsevenzip\C
+	-@md $O\libsevenzip\C 2> NUL
 	@copy sevenzip.h $O\libsevenzip
 	@copy C\7zVersion.h $O\libsevenzip\C
 	@copy C\7zTypes.h $O\libsevenzip\C
