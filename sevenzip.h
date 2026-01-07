@@ -31,7 +31,7 @@ typedef UInt16 VARTYPE;
 
 namespace sevenzip {
 
-    const unsigned Version ((LIBSEVENZIP_VER_MAJOR << 16) | LIBSEVENZIP_VER_MINOR);
+    const unsigned Version = ((LIBSEVENZIP_VER_MAJOR << 16) | LIBSEVENZIP_VER_MINOR);
 
     // To be redefined by the user of the library
 
@@ -182,7 +182,7 @@ namespace sevenzip {
         Impl* pimpl;
     };
 
-    // Archive creating/compressing classe
+    // Archive creating/compressing class
 
     class Oarchive {
 
@@ -227,4 +227,4 @@ namespace sevenzip {
     char *toBytes(char* buffer, size_t size, const wchar_t* str);
 };
 
-#endif
+#endif // SEVENZIP_H

@@ -35,4 +35,4 @@ namespace NModuleInterfaceType {
 #define Z7_final final
 #endif
 
-#endif
+#endif // SEVENZIP_COMPAT_H

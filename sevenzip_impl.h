@@ -43,8 +43,6 @@ namespace sevenzip {
         UInt32 GetMode(const wchar_t* pathname);
         UInt32 GetTime(const wchar_t* pathname);
 
-        //CInStream* Clone();
-
     private:
 
         Istream* istream;
@@ -108,7 +106,7 @@ namespace sevenzip {
 
         STDMETHOD(CryptoGetTextPassword)(BSTR* password) throw() Z7_override Z7_final;
 
-        COpenCallback(Istream* istream, const wchar_t* name, const wchar_t* password);
+        COpenCallback(Istream* istream, const wchar_t* pathname, const wchar_t* password);
         virtual ~COpenCallback();
         const wchar_t *Password() const;
 
@@ -128,7 +126,9 @@ namespace sevenzip {
         public ICryptoGetTextPassword,
         public CMyUnknownImp {
 
-        Z7_COM_UNKNOWN_IMP_1(ICryptoGetTextPassword)
+        Z7_COM_UNKNOWN_IMP_2(
+            IArchiveExtractCallback,
+            ICryptoGetTextPassword)
 
     public:
 
@@ -161,17 +161,17 @@ namespace sevenzip {
 
     public:
 
-        Z7_COM_UNKNOWN_IMP_2(IArchiveUpdateCallback2, ICryptoGetTextPassword2)
+        Z7_COM_UNKNOWN_IMP_2(
+            IArchiveUpdateCallback2,
+            ICryptoGetTextPassword2)
 
     public:
 
-        // IProgress
         STDMETHOD(SetTotal)(UInt64 size) throw() Z7_override Z7_final;
         STDMETHOD(SetCompleted)(const UInt64* completeValue) throw() Z7_override Z7_final;
 
-        // IUpdateCallback2
         STDMETHOD(GetUpdateItemInfo)(UInt32 index,
-            Int32* newData, Int32* newProperties, UInt32* indexInArchive) throw() Z7_override Z7_final;
+                Int32* newData, Int32* newProperties, UInt32* indexInArchive) throw() Z7_override Z7_final;
         STDMETHOD(GetProperty)(UInt32 index, PROPID propID, PROPVARIANT* value) throw() Z7_override Z7_final;
         STDMETHOD(GetStream)(UInt32 index, ISequentialInStream** inStream) throw() Z7_override Z7_final;
         STDMETHOD(SetOperationResult)(Int32 operationResult) throw() Z7_override Z7_final;
@@ -292,7 +292,7 @@ namespace sevenzip {
         ~Impl();
 
         HRESULT open(Lib::Impl* libimpl, Istream* istream, Ostream* ostream,
-            const wchar_t* filename, const wchar_t* password, int formatIndex);
+                const wchar_t* filename, const wchar_t* password, int formatIndex);
 
         void close();
 
@@ -332,4 +332,4 @@ namespace sevenzip {
 
 }
 
-#endif
+#endif // SEVENZIP_IMPL_H

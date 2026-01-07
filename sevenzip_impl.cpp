@@ -13,15 +13,15 @@
 #include <dlfcn.h>
 #endif
 
+#ifndef UNUSED
+#define UNUSED(x) [&x]{}()
+#endif
+
 #ifdef DEBUG_IMPL
 #   include <iostream>
 #   define DEBUGLOG(_x_) (std::wcerr << "DEBUG: " << _x_ << "\n")
 #else
 #   define DEBUGLOG(_x_)
-#endif
-
-#ifndef UNUSED
-#define UNUSED(x) [&x]{}()
 #endif
 
 namespace sevenzip {
@@ -218,7 +218,7 @@ namespace sevenzip {
 
     CInStream::~CInStream() {
         DEBUGLOG(this << " ~CInStream");
-        if (cloned)
+        if (cloned && istream)
             delete istream;
     };
 
@@ -249,11 +249,11 @@ namespace sevenzip {
         return istream ? istream->IsDir(pathname) : false;
     };
 
-    //NOTE: GetSize is commented out because it is not used anywhere(?)
-    //UInt64 CInStream::GetSize(const wchar_t* pathname) {
+    // NOTE: GetSize is commented out because it is not used anywhere(?)
+    // UInt64 CInStream::GetSize(const wchar_t* pathname) {
     //    DEBUGLOG(this << " CInStream::GetFileSize " << pathname);
     //    return istream ? istream->GetFileSize(pathname) : 1;
-    //}
+    // }
 
     UInt32 CInStream::GetTime(const wchar_t* pathname) {
         DEBUGLOG(this << " CInStream::GetFileTime " << pathname);
@@ -317,9 +317,9 @@ namespace sevenzip {
 
     // callbacks
 
-    COpenCallback::COpenCallback(Istream* istream, const wchar_t* name, const wchar_t* password) :
+    COpenCallback::COpenCallback(Istream* istream, const wchar_t* pathname, const wchar_t* password) :
         istream(istream),
-        pathname(name),
+        pathname(pathname ? pathname : L""),
         password(password ? password : L""),
         passworddefined(password),
         subarchivename(L""),
@@ -384,7 +384,7 @@ namespace sevenzip {
 
         CMyComPtr<IInStream> instream(new CInStream(newIstream, true));
         *inStream = instream.Detach();
-        pathname = name;
+        pathname = name ? name : L"";
 
         HRESULT hr = newIstream->Open(name);
 
@@ -397,7 +397,7 @@ namespace sevenzip {
     STDMETHODIMP COpenCallback::SetSubArchiveName(const wchar_t* name) throw() {
         DEBUGLOG(this << " COpenCallback::SetSubArchiveName " << name);
         subarchivemode = true;
-        subarchivename = name;
+        subarchivename = name ? name : L"";
         return S_OK;
     };
 
@@ -441,7 +441,7 @@ namespace sevenzip {
     };
 
     STDMETHODIMP CExtractCallback::GetStream(UInt32 index, ISequentialOutStream** outStream, Int32 askExtractMode) throw() {
-        DEBUGLOG(this << " CExtractCallback::GetStream " << index << "/" << *outStream << "/" << askExtractMode);
+        DEBUGLOG(this << " CExtractCallback::GetStream " << index << " stream " << *outStream << " mode " << askExtractMode);
         *outStream = nullptr;
         this->index = -1;
 
@@ -634,9 +634,10 @@ namespace sevenzip {
         return S_FALSE;
     };
 
-    STDMETHODIMP CUpdateCallback::GetVolumeStream(UInt32 index, ISequentialOutStream** /*volumeStream*/) throw() {
+    STDMETHODIMP CUpdateCallback::GetVolumeStream(UInt32 index, ISequentialOutStream** volumeStream) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetVolumeStream " << index);
         UNUSED(index);
+        UNUSED(volumeStream);
         return S_FALSE;
     };
 
@@ -701,6 +702,7 @@ namespace sevenzip {
 
             GUID guid = libimpl->getFormatGUID(formatIndex);
             inarchive = nullptr; // input stream leak w/o this assignment
+
             // DEBUGLOG(this << " Iarchive::Impl::open CreateObjectFunc guid " << guid.Data1 << "-" << guid.Data2 << "-" << guid.Data3);
             hr = libimpl->CreateObjectFunc(&guid, &IID_IInArchive, (void**)&inarchive);
             if (hr != S_OK)
@@ -882,11 +884,11 @@ namespace sevenzip {
         else
             return E_FAIL;
         return S_OK;
-        //NOTE: alternative implementation
-        //UString us;
-        //if (getStringValue(prop, us) >= S_OK)
+        // NOTE: alternative implementation
+        // UString us;
+        // if (getStringValue(prop, us) >= S_OK)
         //    propValue = COPYWCHARS(lastStringProperty, us.Ptr());
-        //return hr;
+        // return hr;
     };
 
     HRESULT Iarchive::Impl::getBoolProperty(PROPID propId, bool& propValue) {
@@ -960,12 +962,12 @@ namespace sevenzip {
         else
             return E_FAIL;
         return S_OK;
-        //NOTE: alternative implementation
-        //UString us;
-        //HRESULT hr = getArchiveStringItemProperty(inarchive, index, propId, us);
-        //if (hr >= S_OK)
+        // NOTE: alternative implementation
+        // UString us;
+        // HRESULT hr = getArchiveStringItemProperty(inarchive, index, propId, us);
+        // if (hr >= S_OK)
         //    propValue = COPYWCHARS(lastStringProperty, us.Ptr());
-        //return hr;
+        // return hr;
     };
 
     HRESULT Iarchive::Impl::getBoolItemProperty(int index, PROPID propId, bool& propValue) {
@@ -1277,7 +1279,7 @@ namespace sevenzip {
         return -1;
     };
 
-    // FIXME: iso, udf and others with signature outside first 1024 bytes
+    // TODO: iso, udf and others with signature outside first 1024 bytes
     int Lib::Impl::getFormatBySignature(Istream* stream) {
         if (!GetHandlerProperty2)
             return -1;
