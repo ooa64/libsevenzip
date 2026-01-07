@@ -42,7 +42,7 @@ namespace sevenzip {
     };
 
     wchar_t* getMessage(HRESULT hr) {
-        static wchar_t lastMessage[128] = { L'\0' };
+        static thread_local wchar_t lastMessage[128] = { L'\0' };
         if (hr == S_OK)
             COPYWCHARS(lastMessage, L"success");
         else if (hr == S_FALSE)
