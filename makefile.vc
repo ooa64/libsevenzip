@@ -79,6 +79,7 @@ library: $L C\7zVersion.h C\7zTypes.h
 release: library example
 	-@del /q $R > NUL 2>>&1
 	-@md $O\libsevenzip\C 2> NUL
+	@copy sevenzip.md $O\libsevenzip
 	@copy sevenzip.h $O\libsevenzip
 	@copy C\7zVersion.h $O\libsevenzip\C
 	@copy C\7zTypes.h $O\libsevenzip\C

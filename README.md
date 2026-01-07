@@ -8,3 +8,5 @@ call vcvars64.bat
 cl -MD example.cpp sevenzip.lib
 ```
 
+[Documentation](sevenzip.md)
+

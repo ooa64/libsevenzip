@@ -44,7 +44,7 @@ namespace sevenzip {
 
         virtual HRESULT Read(void* data, UInt32 size, UInt32& processed) = 0;
 
-        // Does nothing for preopened stream
+        // Should return false for a preopened stream
         virtual HRESULT Open(const wchar_t* /*filename*/) { return S_FALSE; };
         virtual void Close() {};
 
@@ -72,7 +72,7 @@ namespace sevenzip {
 
         virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) = 0;
 
-        // Does nothing for preopened stream
+        // Should return false for a preopened stream
         virtual HRESULT Open(const wchar_t* /*filename*/) { return S_FALSE; };
         virtual void Close() {};
 
