@@ -9,11 +9,11 @@ ifdef UNICODE
 endif
 
 ifdef DEBUG
-	O = $(CURDIR)/outputs/debug
+	O = outputs/debug
 	CFLAGS += -ggdb -O0
 	SEVENZIPFLAGS += DEBUG_BUILD=1
 else
-	O = $(CURDIR)/outputs/release
+	O = outputs/release
 endif
 
 ifdef DEBUG_IMPL
@@ -95,16 +95,16 @@ example_dir:
 examples: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
 	    echo -n "Running test on $$ex ... "; \
-	    LD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
-	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
+	    LD_LIBRARY_PATH=$(SEVENZIPPATH):. \
+	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH):. \
 	    ./$$ex 2>> /dev/null | grep "TEST"; \
 	done
 
 valgrind: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
 	    echo -n "Running valgrind on $$ex ... "; \
-	    LD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
-	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
+	    LD_LIBRARY_PATH=$(SEVENZIPPATH):. \
+	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH):. \
 	    valgrind --leak-check=full --show-leak-kinds=all ./$$ex 2>&1 | grep "ERROR SUMMARY"; \
 	done
 
@@ -112,17 +112,17 @@ tests/tests: tests/tests.cpp tests/test_*.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^ libsevenzip.a
 
 tests: tests/tests
-	@env LD_LIBRARY_PATH=$(SEVENZIPPATH):$O DYLD_LIBRARY_PATH=$(SEVENZIPPATH):$O \
+	@env LD_LIBRARY_PATH=$(SEVENZIPPATH):. DYLD_LIBRARY_PATH=$(SEVENZIPPATH):. \
 		./tests/tests
 
 $O/sevenzip_impl.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip_impl.cpp
 
 $O/sevenzip.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip.cpp
 
-7zip: $O/7z.so
-$O/7z.so:
-	(cd $(SEVENZIPSRC)/CPP/7zip/Bundles/Format7zF && make -f makefile.gcc $(SEVENZIPFLAGS) O=$O/7zip)
-	cp $O/7zip/7z.so $O/7z.so
+7z: 7z.so
+7z.so:
+	(cd $(SEVENZIPSRC)/CPP/7zip/Bundles/Format7zF && make -f makefile.gcc $(SEVENZIPFLAGS) O=$(CURDIR)/$O/7zip)
+	cp $O/7zip/7z.so $7z.so
 
 VPATH = examples:tests:$(SEVENZIPSRC)/CPP/Common:$(SEVENZIPSRC)/CPP/Windows
 

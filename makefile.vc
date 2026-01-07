@@ -141,15 +141,15 @@ $O\sevenzip_impl.obj: sevenzip_impl.cpp sevenzip.h sevenzip_compat.h sevenzip_im
 
 $O\sevenzip.obj: sevenzip.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h
 
-7zip: $O\7z.dll
-$O\7z.dll: $(SEVENZIPSRC)\CPP\7zip\Bundles\Format7zF\makefile
-	cd $(SEVENZIPSRC)\CPP\7zip\Bundles\Format7zF && nmake -f makefile $(SEVENZIPFLAGS) O=$O\7zip
-	copy $O\7zip\7zdll $@
+7z: 7z.dll
+7z.dll: $(SEVENZIPSRC)\CPP\7zip\Bundles\Format7zF\makefile
+	@cd $(SEVENZIPSRC)\CPP\7zip\Bundles\Format7zF && nmake -f makefile $(SEVENZIPFLAGS) O=%CD%\$O\7zip
+	@cp $O\7zip\7z.dll .
 
 C\7zVersion.h C\7zTypes.h:
 	-@mkdir C 2>NUL
-	@copy /q $(SEVENZIPSRC)\C\7zVersion.h C
-	@copy /q $(SEVENZIPSRC)\C\7zTypes.h C
+	@copy $(SEVENZIPSRC)\C\7zVersion.h C
+	@copy $(SEVENZIPSRC)\C\7zTypes.h C
 
 {$(SEVENZIPSRC)\CPP\Common}.cpp{$O}.obj:
 	$(CXX) -c $(CXXFLAGS) -I$(SEVENZIPSRC) $<
