@@ -63,7 +63,7 @@ namespace sevenzip {
 
     wchar_t *fromBytes(const char* str) {
         static wchar_t buffer[1024];
-        return fromBytes(buffer, Z7_ARRAY_SIZE(buffer), str);
+        return fromBytes(buffer, sizeof(buffer)/sizeof(buffer[0]), str);
     };
 
     wchar_t *fromBytes(wchar_t* buffer, size_t size, const char* str) {
