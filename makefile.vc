@@ -1,14 +1,7 @@
 # makefile.vc
 
-I = install
-O = outputs
-L = sevenzip.lib
-
 !ifndef SEVENZIPSRC
-#SEVENZIPSRC = externals/p7zip
-#SEVENZIPSRC = externals/7-Zip-zstd 
-#SEVENZIPSRC = externals/lzma2501
-SEVENZIPSRC = externals/7zip
+SEVENZIPSRC = ../7zip
 !endif
 
 !ifdef UNICODE
@@ -21,20 +14,25 @@ CFLAGS = $(CFLAGS) -fsanitize=address -Zi
 
 !ifdef DEBUG
 L = sevenzipd.lib
-O = $O\Debug
+R = libsevenzipd.7z
+O = outputs\debug
 CFLAGS = $(CFLAGS) -MDd
 LFLAGS = $(LFLAGS) /DEBUG
+SEVENZIPFLAGS = $(SEVENZIPFLAGS) DEBUG_BUILD=1
 !else
-O = $O\Release
+L = sevenzip.lib
+R = libsevenzip.7z
+O = outputs\release
 CFLAGS = $(CFLAGS) -MD -wd4458 -D_CRT_SECURE_NO_WARNINGS=1
 !endif
+E = examples
 
 !ifdef DEBUG_IMPL
 CFLAGS = $(CFLAGS) -DDEBUG_IMPL
 !endif
 
 CFLAGS = $(CFLAGS) -nologo -Fo$O\ -W4 -EHsc -Gy -GR- -GF -GS- -Zc:forScope -Zc:wchar_t
-CFLAGS = $(CFLAGS) -D__STDC_WANT_LIB_EXT1__=1 -I$(SEVENZIPSRC) -I.
+CFLAGS = $(CFLAGS) -D__STDC_WANT_LIB_EXT1__=1 -I.
 CXXFLAGS = $(CXXFLAGS) $(CFLAGS)
 LFLAGS = $(LFLAGS) -nologo -OPT:REF -OPT:ICF
 LIBS = $L User32.lib OleAut32.lib
@@ -71,10 +69,23 @@ prepare:
 	-@md $O 2> NUL
 
 clean:
-	-@del $(OBJS) $O\example*.obj $O\test*.obj temps\example.txt 2> NUL
+	-@del /q $(OBJS) $O\example*.obj $O\test*.obj temps\example.txt > NUL 2>>&1
 
 cleanall: clean
-	-@del /q/s $L $O\example*.exe $O\example*.pdb $O\tests*.exe $O\tests*.pdb temps 2> NUL
+	-@del /q/s $L $R $O\libsevenzip $O\example*.exe $O\example*.pdb $O\tests*.exe $O\tests*.pdb temps > NUL 2>>&1
+
+library: $L C\7zVersion.h C\7zTypes.h
+
+release: library example
+	-@del /q $R > NUL 2>>&1
+	-@md $O\libsevenzip\C
+	@copy sevenzip.h $O\libsevenzip
+	@copy C\7zVersion.h $O\libsevenzip\C
+	@copy C\7zTypes.h $O\libsevenzip\C
+	@copy $L $O\libsevenzip
+	@copy $E\example.cpp $O\libsevenzip
+	@copy $O\example.exe $O\libsevenzip
+	@cd $O && 7z a %CD%\$R libsevenzip > NUL
 
 $L: $(OBJS)
 	lib -nologo -out:$@ $**	
@@ -86,11 +97,16 @@ examples: $(EXAMPLES) temps_dir
 	@echo Test examples ...
 	@for %%i in ($(EXAMPLES)) do @echo | set /p="%i " & %i 2>NUL | find "TEST"
 
+examples_output: $(EXAMPLES) temps_dir
+	@echo Test examples ...
+	@for %%i in ($(EXAMPLES)) do echo %i
+
 tests: $O\tests.exe
 	@$O\tests.exe
 
 temps_dir:
-	-@del /q/s temps 2> NUL
+	-@del /q/s temps > NUL 2>&1
+	-@rd temps\example
 	-@md temps\example
 	@(cd temps & for /l %%i in (1,1,64) do @echo 0123456789ABCDEF >> example.txt)
 	@(cd temps & 7z a example1.7z example.txt >> NUL)
@@ -106,33 +122,43 @@ temps_dir:
 
 $O\tests.exe: tests\tests.cpp tests\test_*.cpp
 
-$O\example.exe:  examples\example.cpp  sevenzip.h $L
-$O\example0.exe: examples\example0.cpp sevenzip.h $L
-$O\example1.exe: examples\example1.cpp sevenzip.h $L
-$O\example2.exe: examples\example2.cpp sevenzip.h $L
-$O\example3.exe: examples\example3.cpp sevenzip.h $L
-$O\example4.exe: examples\example4.cpp sevenzip.h $L
-$O\example5.exe: examples\example5.cpp sevenzip.h $L
-$O\example6.exe: examples\example6.cpp sevenzip.h $L
-$O\example7.exe: examples\example7.cpp sevenzip.h $L
-$O\example8.exe: examples\example8.cpp sevenzip.h $L
-$O\example9.exe: examples\example9.cpp sevenzip.h $L
+$O\example.exe:  $E\example.cpp  sevenzip.h library
+$O\example0.exe: $E\example0.cpp sevenzip.h library
+$O\example1.exe: $E\example1.cpp sevenzip.h library
+$O\example2.exe: $E\example2.cpp sevenzip.h library
+$O\example3.exe: $E\example3.cpp sevenzip.h library
+$O\example4.exe: $E\example4.cpp sevenzip.h library
+$O\example5.exe: $E\example5.cpp sevenzip.h library
+$O\example6.exe: $E\example6.cpp sevenzip.h library
+$O\example7.exe: $E\example7.cpp sevenzip.h library
+$O\example8.exe: $E\example8.cpp sevenzip.h library
+$O\example9.exe: $E\example9.cpp sevenzip.h library
 
-$O\exampleH.exe: examples\exampleH.cpp sevenzip.h $L
-	$(CXX) $(CXXFLAGS) -D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING -std:c++17 -Fe$O\ examples\exampleH.cpp $(LIBS)
+$O\exampleH.exe: $E\exampleH.cpp sevenzip.h library
+	$(CXX) $(CXXFLAGS) -D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING -std:c++17 -Fe$O\ $E\exampleH.cpp $(LIBS)
 
 $O\sevenzip_impl.obj: sevenzip_impl.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h
 
 $O\sevenzip.obj: sevenzip.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h
 
+7zip: $O\7z.dll
+$O\7z.dll: $(SEVENZIPSRC)\CPP\7zip\Bundles\Format7zF\makefile
+	cd $(SEVENZIPSRC)\CPP\7zip\Bundles\Format7zF && nmake -f makefile $(SEVENZIPFLAGS) O=$O\7zip
+	copy $O\7zip\7zdll $@
+
+C\7zVersion.h C\7zTypes.h:
+	-@mkdir C 2>NUL
+	@copy /q $(SEVENZIPSRC)\C\7zVersion.h C
+	@copy /q $(SEVENZIPSRC)\C\7zTypes.h C
+
 {$(SEVENZIPSRC)\CPP\Common}.cpp{$O}.obj:
-	$(CXX) -c $(CXXFLAGS) $<
+	$(CXX) -c $(CXXFLAGS) -I$(SEVENZIPSRC) $<
 
 {$(SEVENZIPSRC)\CPP\Windows}.cpp{$O}.obj:
-	$(CXX) -c $(CXXFLAGS) $<
+	$(CXX) -c $(CXXFLAGS) -I$(SEVENZIPSRC) $<
 
 .cpp{$O}.obj:
-	$(CXX) -c $(CXXFLAGS) $<
+	$(CXX) -c $(CXXFLAGS) -I$(SEVENZIPSRC) $<
 
 {examples}.cpp{$O}.exe:
 	$(CXX) $(CXXFLAGS) -Fe$O\ $< $(LIBS)
