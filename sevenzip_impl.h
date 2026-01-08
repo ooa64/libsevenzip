@@ -32,6 +32,7 @@ namespace sevenzip {
         STDMETHOD(Read)(void* data, UInt32 size, UInt32* processedSize) throw() Z7_override Z7_final;
         STDMETHOD(Seek)(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) throw() Z7_override Z7_final;
 
+        // NOTE: istream is owned by caller unless cloned is true
         CInStream(Istream* istream, bool cloned = false);
         virtual ~CInStream();
 
@@ -39,7 +40,7 @@ namespace sevenzip {
         void Close();
 
         bool IsDir(const wchar_t* pathname);
-        //UInt64 GetSize(const wchar_t* pathname);
+        UInt64 GetSize(const wchar_t* pathname);
         UInt32 GetMode(const wchar_t* pathname);
         UInt32 GetTime(const wchar_t* pathname);
 
@@ -63,6 +64,7 @@ namespace sevenzip {
         STDMETHOD(Seek)(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) throw() Z7_override Z7_final;
         STDMETHOD(SetSize)(UInt64 size) throw() Z7_override Z7_final;
 
+        // NOTE: ostream is owned by caller
         COutStream(Ostream* ostream);
         virtual ~COutStream();
 

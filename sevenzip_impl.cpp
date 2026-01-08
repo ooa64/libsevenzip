@@ -249,11 +249,11 @@ namespace sevenzip {
         return istream ? istream->IsDir(pathname) : false;
     };
 
-    // NOTE: GetSize is commented out because it is not used anywhere(?)
-    // UInt64 CInStream::GetSize(const wchar_t* pathname) {
-    //    DEBUGLOG(this << " CInStream::GetFileSize " << pathname);
-    //    return istream ? istream->GetFileSize(pathname) : 1;
-    // }
+    // NOTE: not used at this time, but implemented for possible future use
+    UInt64 CInStream::GetSize(const wchar_t* pathname) {
+       DEBUGLOG(this << " CInStream::GetSize " << pathname);
+       return istream ? istream->GetSize(pathname) : 0;
+    }
 
     UInt32 CInStream::GetTime(const wchar_t* pathname) {
         DEBUGLOG(this << " CInStream::GetFileTime " << pathname);

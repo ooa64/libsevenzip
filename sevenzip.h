@@ -51,15 +51,17 @@ namespace sevenzip {
         // Used by the open handler
         virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64& /*position*/) { return S_FALSE; };
 
-        // Used by open multivolume handler
-        virtual Istream* Clone() const { return nullptr; };
-        
+        // Looks like unused at this time, but left for possible future use
+        virtual UInt64 GetSize(const wchar_t* /*filename*/) const { return 0; };
+
         // Used by the update handler
         virtual bool IsDir(const wchar_t* /*filename*/) const { return false; };
-        //virtual UInt64 GetSize(const wchar_t* /*filename*/) const { return 1; };
         virtual UInt32 GetMode(const wchar_t* /*filename*/) const { return 0; };
         virtual UInt32 GetTime(const wchar_t* /*filename*/) const { return 0; };
 
+        // Used by open multivolume handler
+        virtual Istream* Clone() const { return nullptr; };
+        
         virtual ~Istream() = default;
     };
 
