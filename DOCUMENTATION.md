@@ -29,7 +29,7 @@
 ### Requirements
 
 - C++ compiler with C++11 support or later
-- 7-Zip DLL (`7z.dll` on Windows, `7z.so` on Linux)
+- 7-Zip DLL (`7z.dll` on Windows, `7z.so` on Linux/macOS)
 
 ### Include Header
 
@@ -844,12 +844,7 @@ The library does not throw exceptions. All errors are reported via HRESULT retur
 - Native wide character support
 - Requires Visual C++ or compatible compiler
 
-### Linux
-- Uses `7z.so`
-- Wide character support via platform libraries
-- Requires GCC or Clang with C++11
-
-### MacOS
+### Linux / macOS
 - Uses `7z.so`
 - Wide character support via platform libraries
 - Requires GCC or Clang with C++11
@@ -863,7 +858,7 @@ Platform-specific types are defined for compatibility:
 - `PROPID`: `unsigned long`
 - `VARTYPE`: `unsigned short`
 
-**Linux:** / **MacOS**
+**Linux:** / **macOS**
 - `HRESULT`: `Int32`
 - `PROPID`: `UInt32`
 - `VARTYPE`: `UInt16`
@@ -887,6 +882,11 @@ Platform-specific types are defined for compatibility:
 ### Problem: Library fails to load
 - **Solution**: Ensure 7z.dll/7z.so is in the system path (PATH, LD_LIBRARY_PATH, DYLD_LIBRARY_PATH)
 - Check `getLoadMessage()` for specific error
+
+### Problem: Library interface type mismatch
+- **Reason**: Linux/macOS versions of 7z.so v.23+ are incompatible with previous versions
+- **Symptom**: `"Library interface type mismatch"` message from `getLoadMessage()`
+- **Solution**: Change the used 7z.so or rebuild libsevenzip with correct 7-Zip SDK.
 
 ### Problem: Archive won't open
 - **Solution**: Verify format is supported and stream is seekable
