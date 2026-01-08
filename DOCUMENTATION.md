@@ -26,6 +26,11 @@
 
 ## Installation and Setup
 
+### Installation
+
+- Build from source using [instructions](#BUILD.md)
+- or download the binary release from [repository](https://github.com/ooa64/libsevenzip)
+
 ### Requirements
 
 - C++ compiler with C++11 support or later
@@ -166,7 +171,7 @@ virtual HRESULT Write(const void* data, UInt32 size, UInt32& processed) = 0;
 virtual HRESULT Open(const wchar_t* filename);
 ```
 - **Purpose:** Open/create a file for writing
-- **Default:** Can be used for for pre-opened streams
+- **Default:** Can be used for pre-opened streams
 
 ```cpp
 virtual void Close();
@@ -177,7 +182,7 @@ virtual void Close();
 virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position);
 ```
 - **Purpose:** Seek to a position in the stream
-- **Required for:** Archive updates
+- **Required for:** Archive creation and updates
 - **Default:** Can be used when passing to Iarchive extract method
 - **Returns:** `S_OK` on success, error code otherwise
 
@@ -264,7 +269,7 @@ wchar_t* getLoadMessage();
 ```cpp
 unsigned getVersion();
 ```
-- **Purpose:** Get 7-Zip library version
+- **Purpose:** Get version of the loaded 7-Zip library
 - **Returns:** Version number as unsigned integer with major in upper 16bits and minor in lower 16bits
 
 ##### `getNumberOfFormats()`
@@ -541,6 +546,7 @@ HRESULT update();
 - **Purpose:** Write the archive with all added items
 - **Returns:** `S_OK` on success, error code otherwise
 - **Note:** This performs the actual compression and archive creation
+- **Note** Clears internal list of items created by addItem method calls
 
 ##### Property Setters
 
@@ -586,8 +592,9 @@ HRESULT getResult(bool noerror);
 ```cpp
 UInt32 getVersion();
 ```
-- **Purpose:** Get libsevenzip version
+- **Purpose:** Get 7-Zip SDK version
 - **Returns:** Version number (major << 16 | minor)
+- **Note:** This is the 7-Zip SDK version used to build libsevenzip.
 
 #### String Conversion Functions
 
