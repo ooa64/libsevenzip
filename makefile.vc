@@ -54,10 +54,10 @@ OBJS = \
 	$O\ErrorMsg.obj \
 	$O\DLL.obj
 
-TARGET = $L
+TARGET = library
 EXAMPLES = $O\example0.exe $O\example1.exe $O\example2.exe $O\example3.exe $O\example4.exe $O\example5.exe $O\example6.exe $O\example7.exe $O\example8.exe $O\example9.exe
 
-all: prepare $(TARGET)
+all: $(TARGET)
 
 prepare:
 	-@md $O 2> NUL
@@ -66,11 +66,12 @@ clean:
 	-@del /q $(OBJS) $O\example*.obj $O\test*.obj temps\example.txt > NUL 2>>&1
 
 cleanall: clean
-	-@del /q/s $L $O\$R $O\example*.exe $O\example*.pdb $O\tests*.exe $O\tests*.pdb C temps > NUL 2>>&1
+	-@del /q/s $L $O\example*.exe $O\example*.pdb $O\tests*.exe $O\tests*.pdb > NUL 2>>&1
+	-@rd /q/s $O C temps
 
-library: $L
+library: prepare $L
 
-release: library example
+release: example
 	-@del /q $R > NUL 2>>&1
 	-@md $O\$R\C 2> NUL
 	@copy README.md $O\$R
@@ -89,24 +90,20 @@ $L: $(OBJS)
 	@copy $(SEVENZIPSRC)\C\7zTypes.h C
 	lib -nologo -out:$@ $**	
 
-
-example: $O\example.exe
-exampleH: $O\exampleH.exe
+example: library $O\example.exe
+exampleH: library $O\exampleH.exe
 
 examples: $(EXAMPLES) temps_dir
-	@echo Test examples ...
 	@for %%i in ($(EXAMPLES)) do @echo | set /p="%i " & %i 2>NUL | find "TEST"
 
 examples_output: $(EXAMPLES) temps_dir
-	@echo Test examples ...
 	@for %%i in ($(EXAMPLES)) do echo %i
 
-tests: $O\tests.exe
+tests: library $O\tests.exe
 	@$O\tests.exe
 
 temps_dir:
-	-@del /q/s temps > NUL 2>&1
-	-@rd temps\example
+	-@rd /q/s temps > NUL 2>&1
 	-@md temps\example
 	@(cd temps & for /l %%i in (1,1,64) do @echo 0123456789ABCDEF >> example.txt)
 	@(cd temps & 7z a example1.7z example.txt >> NUL)
