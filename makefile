@@ -1,18 +1,23 @@
 # makefile
 
-#SEVENZIPSRC ?= externals/p7zip
-SEVENZIPSRC ?= externals/7zip
-SEVENZIPPATH ?= /usr/local/lib
+VER_MAJOR = 1
+VER_MINOR = 0
+
+SEVENZIPSRC ?= ../7zip
+SEVENZIPBIN ?= 7z
+SEVENZIPPATH ?= .
 
 ifdef UNICODE
 	CFLAGS += -DUNICODE -D_UNICODE
 endif
 
 ifdef DEBUG
+	R = libsevenzip$(VER_MAJOR).$(VER_MINOR)d
 	O = outputs/debug
 	CFLAGS += -ggdb -O0
 	SEVENZIPFLAGS += DEBUG_BUILD=1
 else
+	R = libsevenzip$(VER_MAJOR).$(VER_MINOR)
 	O = outputs/release
 endif
 
@@ -31,9 +36,13 @@ CXX17=$(CXX) -std=c++17
 TARGET = libsevenzip.a
 EXAMPLES = example0 example1 example2 example3 example4 example5 example6 example7 example8 example9
 
-CFLAGS += -fPIC -Wall -Wextra -I$(SEVENZIPSRC) -I.
+CFLAGS += -fPIC -Wall -Wextra -I.
+CFLAGS += -DLIBSEVENZIP_VER_MAJOR=$(VER_MAJOR) -DLIBSEVENZIP_VER_MINOR=$(VER_MINOR)
 CXXFLAGS += $(CFLAGS)
 LDFLAGS +=
+
+# NOTE: uncomment to build p7zip compatible 7z.so using 7-Zip SDK v.23+
+# SEVENZIPFLAGS += LOCAL_FLAGS="-DZ7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN"
 
 OBJS = \
 	$O/sevenzip.o \
@@ -50,16 +59,32 @@ OBJS = \
 
 all: $(TARGET)
 
+release: example
+	-@rm -fr $R 2>> /dev/null
+	-@rm -fr $O/$R 2>> /dev/null	
+	-@mkdir -p $O/$R/C
+	cp -p README.md $O/$R
+	cp -p DOCUMENTATION.md $O/$R
+	cp -p sevenzip.h $O/$R
+	cp -p C/7zVersion.h $O/$R/C
+	cp -p C/7zTypes.h $O/$R/C
+	cp -p libsevenzip.a $O/$R
+	cp -p example $O/$R
+	cp -p examples/example.cpp $O/$R
+	cd $O && $(SEVENZIPBIN) a $(CURDIR)/$R.zip $R > /dev/null
+	               
 clean:
-	-rm $O/*.o
-	-rmdir $O
+	-rm -fr $O temps/example.txt 2> /dev/null
 
 cleanall: clean
-	-rm libsevenzip.a example[0-9H] example
-	-rm -fr temps
+	-rm -f libsevenzip.a 7z.so example[0-9H] example
+	-rm -fr C temps example[0-9H].dSYM example.dSYM
 
 libsevenzip.a: $(OBJS)
 	ar rcs $@ $^
+	-@mkdir -p C
+	@cp -p $(SEVENZIPSRC)/C/7zVersion.h C/7zVersion.h	
+	@cp -p $(SEVENZIPSRC)/C/7zTypes.h C/7zTypes.h		
 
 example0: example0.cpp sevenzip.h libsevenzip.a
 example1: example1.cpp sevenzip.h libsevenzip.a
@@ -72,39 +97,38 @@ example7: example7.cpp sevenzip.h libsevenzip.a
 example8: example8.cpp sevenzip.h libsevenzip.a
 
 example: example.cpp sevenzip.h libsevenzip.a
+exampleT: exampleT.cpp sevenzip.h libsevenzip.a
 exampleH: exampleH.cpp sevenzip.h libsevenzip.a
 	$(CXX17) $(CXXFLAGS) $(OBJS) -o $@ $< libsevenzip.a
 
 example_dir:
-	@echo "Example directory prepared."
 	-@rm -rf temps/example* >> /dev/null
-	-@mkdir -p temps
 	-@mkdir -p temps/example
 	@cd temps && seq 64 | sed -E 's/.+/0123456789ABCDEF/' > example.txt
-	@cd temps && 7zz a example1.7z example.txt >> /dev/null
-	@cd temps && 7zz a example2.7z example.txt >> /dev/null
-	@cd temps && 7zz a -pexample3 example3.7z example.txt >> /dev/null
-	@cd temps && 7zz a -mx0 -v500 example4.7z example.txt >> /dev/null	
-	@cd temps && 7zz a example5.7z example.txt >> /dev/null
+	@cd temps && $(SEVENZIPBIN) a example1.7z example.txt >> /dev/null
+	@cd temps && $(SEVENZIPBIN) a example2.7z example.txt >> /dev/null
+	@cd temps && $(SEVENZIPBIN) a -pexample3 example3.7z example.txt >> /dev/null
+	@cd temps && $(SEVENZIPBIN) a -mx0 -v500 example4.7z example.txt >> /dev/null	
+	@cd temps && $(SEVENZIPBIN) a example5.7z example.txt >> /dev/null
 	@cd temps && cp example.txt example6.txt >> /dev/null
 	@cd temps && cp example.txt example7.txt >> /dev/null
 	@cd temps && cp example.txt example8.txt >> /dev/null
-	@cd temps && 7z a example9.7z example.txt example >> /dev/null
+	@cd temps && $(SEVENZIPBIN) a example9.7z example.txt example >> /dev/null
 	@cd temps && rm -rf example.txt example/ >> /dev/null
 
 examples: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
 	    echo -n "Running test on $$ex ... "; \
-	    LD_LIBRARY_PATH=$(SEVENZIPPATH):. \
-	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH):. \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
+	    DYLD_LIBRARY_PATH=$(DYLD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	    ./$$ex 2>> /dev/null | grep "TEST"; \
 	done
 
 valgrind: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
 	    echo -n "Running valgrind on $$ex ... "; \
-	    LD_LIBRARY_PATH=$(SEVENZIPPATH):. \
-	    DYLD_LIBRARY_PATH=$(SEVENZIPPATH):. \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
+	    DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	    valgrind --leak-check=full --show-leak-kinds=all ./$$ex 2>&1 | grep "ERROR SUMMARY"; \
 	done
 
@@ -112,17 +136,24 @@ tests/tests: tests/tests.cpp tests/test_*.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^ libsevenzip.a
 
 tests: tests/tests
-	@env LD_LIBRARY_PATH=$(SEVENZIPPATH):. DYLD_LIBRARY_PATH=$(SEVENZIPPATH):. \
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
+	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 		./tests/tests
 
 $O/sevenzip_impl.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip_impl.cpp
 
 $O/sevenzip.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip.cpp
 
-7z: 7z.so
+7zip: 7z.so
 7z.so:
-	(cd $(SEVENZIPSRC)/CPP/7zip/Bundles/Format7zF && make -f makefile.gcc $(SEVENZIPFLAGS) O=$(CURDIR)/$O/7zip)
-	cp $O/7zip/7z.so $7z.so
+	cd $(SEVENZIPSRC)/CPP/7zip/Bundles/Format7zF && make -f makefile.gcc $(SEVENZIPFLAGS) O=$(CURDIR)/$O/7zip
+	test -f $O/7zip/7z.so && cp -p $O/7zip/7z.so 7z.so
+	#test -f $O/7zip/lib/7z.so && cp -p $O/7zip/lib/7z.so 7z.so
+	#test -d $O/7zip/lib/7z_addon_codec && cp -rp $O/7zip/lib/7z_addon_codec 7z_addon_codec
+
+#7z: 
+#	cd $(SEVENZIPSRC)/CPP/7zip/UI/Console && make -f makefile.gcc $(SEVENZIPFLAGS) O=$(CURDIR)/$O/7zip
+#	test -f $O/7zip/7z && cp -p $O/7zip/7z 7z
 
 VPATH = examples:tests:$(SEVENZIPSRC)/CPP/Common:$(SEVENZIPSRC)/CPP/Windows
 
@@ -130,7 +161,7 @@ VPATH = examples:tests:$(SEVENZIPSRC)/CPP/Common:$(SEVENZIPSRC)/CPP/Windows
 	$(CXX) $(CXXFLAGS) -o $@ $< libsevenzip.a
 
 $O/%.o: %.cpp | $O
-	$(CXX) -c $(CXXFLAGS) -o $@ $<
+	$(CXX) -c $(CXXFLAGS) -I$(SEVENZIPSRC) -o $@ $<
 
 $O:
 	mkdir -p $O

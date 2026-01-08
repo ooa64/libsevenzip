@@ -6,7 +6,7 @@ if(NOT SEVENZIPSRC)
 endif()
 
 if(NOT SEVENZIPSRC)
-    set(SEVENZIPSRC "externals/7zip")
+    set(SEVENZIPSRC "../7zip")
 endif()
 
 # add_compile_definitions(UNICODE _UNICODE)
