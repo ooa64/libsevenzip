@@ -41,6 +41,8 @@
 *.dwo
 
 # local
+7z*
+*.zip
 *.cmd
 *.sh
 *.bak
