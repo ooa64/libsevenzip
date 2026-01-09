@@ -68,33 +68,30 @@ Removed the standalone semicolons to follow consistent C++ style.
 
 ---
 
-## Potential Issues (NOT FIXED - Documented)
+## Style Issues (FIXED)
 
-### 4. Thread-Safety Issue in getMessage() (sevenzip_impl.cpp:35)
+### 4. Thread-Safety Issue in getMessage() (sevenzip_impl.cpp:43) ✅ FIXED
 **Severity:** Medium  
-**Location:** `sevenzip_impl.cpp`, line 35  
-**Issue:** Static buffer `lastMessage` is not thread-safe
+**Location:** `sevenzip_impl.cpp`, line 43  
+**Issue:** Static buffer `lastMessage` was not thread-safe
 
+**Fix Applied:**
 ```cpp
+// AFTER (FIXED):
 wchar_t* getMessage(HRESULT hr) {
-    static wchar_t lastMessage[128] = { L'\0' };
-    COPYWCHARS(lastMessage, NWindows::NError::MyFormatMessage(hr));
+    static thread_local wchar_t lastMessage[128] = { L'\0' };
+    // ... rest of implementation
     return lastMessage;
 }
 ```
 
-**Recommendation:** Consider using thread-local storage (`thread_local`) or returning a `std::wstring` instead:
-```cpp
-// Option 1: Thread-local storage
-thread_local wchar_t lastMessage[128] = { L'\0' };
+The code now uses `thread_local` storage qualifier, which ensures each thread has its own copy of the buffer, making the function thread-safe.
 
-// Option 2: Return by value (C++11 move semantics make this efficient)
-std::wstring getMessage(HRESULT hr) {
-    return NWindows::NError::MyFormatMessage(hr);
-}
-```
+---
 
-### 5. Ownership Transfer Not Documented (sevenzip_impl.cpp:162, 222)
+## Potential Issues (NOT FIXED - Documented)
+
+### 1. Ownership Transfer Not Documented (sevenzip_impl.cpp:162, 222)
 **Severity:** Medium  
 **Location:** `sevenzip_impl.cpp`, lines 162 and 222  
 **Issue:** `CInStream` and `COutStream` delete their respective stream pointers in destructors, but ownership semantics are not clearly documented
@@ -116,7 +113,7 @@ COutStream::~COutStream() {
 - Consider using `std::unique_ptr<Istream>` and `std::unique_ptr<Ostream>` for clearer ownership semantics
 - Document in header file that users should not delete the stream objects after passing them
 
-### 6. Known Limitation: Signature Detection (sevenzip_impl.cpp:1109)
+### 2. Known Limitation: Signature Detection (sevenzip_impl.cpp:1109)
 **Severity:** Low  
 **Location:** `sevenzip_impl.cpp`, line 1109  
 **Issue:** FIXME comment indicates incomplete implementation
@@ -134,7 +131,7 @@ int Lib::Impl::getFormatBySignature(Istream& stream) {
 - Implementing multi-pass signature detection for formats with signatures beyond 1024 bytes
 - Making buffer size configurable
 
-### 7. No Null Pointer Checks for pimpl
+### 3. No Null Pointer Checks for pimpl
 **Severity:** Low  
 **Location:** Multiple locations in `sevenzip.cpp`  
 **Issue:** Methods directly dereference `pimpl` without null checks
@@ -202,22 +199,22 @@ bool Lib::load(const wchar_t* libname) {
 
 1. Build and run existing tests to verify fixes
 2. Add unit tests for `getIntValue` function to ensure proper handling of all PROPVARIANT types
-3. Add multi-threading tests to verify thread-safety issues
+3. Add multi-threading tests to verify the thread-local fix in getMessage() works correctly
 4. Test with various archive formats, especially those with signatures > 1024 bytes
 
 ---
 
 ## Conclusion
 
-The code review identified and fixed 3 issues:
+The code review identified and fixed 4 issues:
 - 1 critical bug (duplicate condition)
 - 1 critical logic error (incorrect control flow)
 - 1 style issue (standalone semicolons)
+- 1 medium priority issue (thread-safety in getMessage)
 
-Additionally, several medium and low priority issues were documented for future consideration:
-- Thread-safety concern in `getMessage()`
+Additionally, several low priority issues were documented for future consideration:
 - Unclear ownership semantics
 - Known limitation in signature detection
 - Missing null pointer checks (though generally safe)
 
-The overall code quality is good with proper resource management and cross-platform support. The fixes applied improve correctness and maintainability.
+The overall code quality is good with proper resource management and cross-platform support. The fixes applied improve correctness, maintainability, and thread-safety.
