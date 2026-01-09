@@ -44,6 +44,9 @@ LDFLAGS +=
 # NOTE: uncomment to build p7zip compatible 7z.so using 7-Zip SDK v.23+
 # SEVENZIPFLAGS += LOCAL_FLAGS="-DZ7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN"
 
+# NOTE: workaround for addon codecs linking issue (p7zip)
+SEVENZIPFLAGS += MY_LIBS="-L$(CURDIR)/$O/7zip/lib/7z_addon_codec"
+
 OBJS = \
 	$O/sevenzip.o \
 	$O/sevenzip_impl.o \
@@ -155,13 +158,14 @@ $O/sevenzip.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip.cpp
 7zip: 7z.so
 7z.so:
 	cd $(SEVENZIPSRC)/CPP/7zip/Bundles/Format7zF && make -f makefile.gcc $(SEVENZIPFLAGS) O=$(CURDIR)/$O/7zip
-	test -f $O/7zip/7z.so && cp -p $O/7zip/7z.so 7z.so
-	#test -f $O/7zip/lib/7z.so && cp -p $O/7zip/lib/7z.so 7z.so
-	#test -d $O/7zip/lib/7z_addon_codec && cp -rp $O/7zip/lib/7z_addon_codec 7z_addon_codec
+	-test -f $O/7zip/7z.so && cp -p $O/7zip/7z.so 7z.so
+	-test -f $O/7zip/lib/7z.so && cp -p $O/7zip/lib/7z.so 7z.so
+	-test -d $O/7zip/lib/7z_addon_codec && cp -rp $O/7zip/lib/7z_addon_codec 7z_addon_codec
 
 7z: 
 	cd $(SEVENZIPSRC)/CPP/7zip/UI/Console && make -f makefile.gcc $(SEVENZIPFLAGS) O=$(CURDIR)/$O/7zip
-	test -f $O/7zip/7z && cp -p $O/7zip/7z 7z && chmod +x 7z
+	-test -f $O/7zip/7z && cp -p $O/7zip/7z 7z && chmod +x 7z
+	-test -f $O/7zip/lib/7z && cp -p $O/7zip/lib/7z 7z && chmod +x 7z
 
 VPATH = examples:tests:$(SEVENZIPSRC)/CPP/Common:$(SEVENZIPSRC)/CPP/Windows
 
