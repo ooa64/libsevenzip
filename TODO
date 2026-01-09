@@ -1,3 +1,4 @@
+real 7z.so/7z.dll unload (with reference counter)
 improve time handling, switch 32->64bit, set atime/ctime/btime
 improve attribute handling, use windows attributes
 add tests (from examples and new)
