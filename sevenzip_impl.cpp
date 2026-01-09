@@ -1115,15 +1115,12 @@ namespace sevenzip {
     void Lib::Impl::unload() {
         DEBUGLOG(this << " Lib::Impl::unload");
         if (lib) {
-            // NOTE: HMODULE must be preserved to avoid dependent modules crashes
-            // NOTE: we need to count references to the HMODULE if we want to unload it safely
+            // NOTE: library handle must be preserved to avoid dependent modules crashes
+            // NOTE: we need to count references to the library handle if we want to unload it safely
 #ifdef _WIN32
-            // NOTE: HMODULE can be detached from lib on Windows to minimize memory leak
-            lib->Detach();
-            delete lib;
+            // FreeLibrary((HMODULE)lib);
 #else
-            // NOTE: Memory leak (8 bytes in 1 blocks).
-            // delete lib;
+            // dlclose(lib);
 #endif
             lib = nullptr;
         }
@@ -1136,28 +1133,32 @@ namespace sevenzip {
             return true;
         if (!libname)
             return false;
-		lib = new NWindows::NDLL::CLibrary();
         do {
-            if (!lib->Load(us2fs(libname)))
+#ifdef _WIN32
+            lib = ::LoadLibraryW(libname);
+#else
+            lib = dlopen(us2as(libname), RTLD_NOW);
+#endif
+            if (!lib)
                 break;
-            GetModuleProp = (Func_GetModuleProp)GETPROCADDRESS(lib, "GetModuleProp");
+            GetModuleProp = (Func_GetModuleProp)GetProcAddress("GetModuleProp");
             if (!checkInterfaceType()) {
                 COPYACHARS(loadMessage, "Library interface type mismatch");
                 return false;
             }
-            CreateObjectFunc = (Func_CreateObject)GETPROCADDRESS(lib, "CreateObject");
+            CreateObjectFunc = (Func_CreateObject)GetProcAddress("CreateObject");
             if (!CreateObjectFunc)
                 break;
-            GetNumberOfMethods = (Func_GetNumberOfMethods)GETPROCADDRESS(lib, "GetNumberOfMethods");
+            GetNumberOfMethods = (Func_GetNumberOfMethods)GetProcAddress("GetNumberOfMethods");
             if (!GetNumberOfMethods)
                 break;
-            GetNumberOfFormats = (Func_GetNumberOfFormats)GETPROCADDRESS(lib, "GetNumberOfFormats");
+            GetNumberOfFormats = (Func_GetNumberOfFormats)GetProcAddress("GetNumberOfFormats");
             if (!GetNumberOfFormats)
                 break;
-            GetHandlerProperty = (Func_GetHandlerProperty)GETPROCADDRESS(lib, "GetHandlerProperty");
+            GetHandlerProperty = (Func_GetHandlerProperty)GetProcAddress("GetHandlerProperty");
             if (!GetHandlerProperty)
                 break;
-            GetHandlerProperty2 = (Func_GetHandlerProperty2)GETPROCADDRESS(lib, "GetHandlerProperty2");
+            GetHandlerProperty2 = (Func_GetHandlerProperty2)GetProcAddress("GetHandlerProperty2");
             if (!GetHandlerProperty2)
                 break;
             return true;
@@ -1362,4 +1363,14 @@ namespace sevenzip {
             << " vs " << flags);
         return flags == NModuleInterfaceType::k_IUnknown_VirtDestructor_ThisModule;
     };
+
+    void* Lib::Impl::GetProcAddress(const char* proc) {
+        if (!lib)
+            return nullptr;
+#ifdef _WIN32
+        return (void*)GetProcAddress(lib, proc);
+#else
+        return dlsym(lib, proc);
+#endif
+    }
 }

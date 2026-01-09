@@ -2,12 +2,6 @@
 #define SEVENZIP_COMPAT_H
 
 #if MY_VER_MAJOR < 23
-#define GETPROCADDRESS(_l_,_n_) (_l_->GetProc(_n_))
-#else
-#define GETPROCADDRESS(_l_,_n_) (GetProcAddress(_l_->Get_HMODULE(),_n_))
-#endif
-
-#if MY_VER_MAJOR < 23
 extern "C" {
     typedef HRESULT (WINAPI *Func_GetModuleProp)(PROPID propID, PROPVARIANT *value);
 }

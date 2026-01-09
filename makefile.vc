@@ -51,8 +51,7 @@ OBJS = \
 	$O\UTFConvert.obj \
 	$O\PropVariant.obj \
 	$O\TimeUtils.obj \
-	$O\ErrorMsg.obj \
-	$O\DLL.obj
+	$O\ErrorMsg.obj
 
 TARGET = library
 EXAMPLES = $O\example0.exe $O\example1.exe $O\example2.exe $O\example3.exe $O\example4.exe $O\example5.exe $O\example6.exe $O\example7.exe $O\example8.exe $O\example9.exe

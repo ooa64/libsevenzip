@@ -9,12 +9,15 @@
 #include "CPP/Common/Common.h"
 #include "CPP/Common/MyCom.h"
 #include "CPP/Common/MyBuffer.h"
+#include "CPP/Common/MyString.h"
 
 #include "CPP/7zip/ICoder.h"
 #include "CPP/7zip/IPassword.h"
 #include "CPP/7zip/Archive/IArchive.h"
 
-#include "CPP/Windows/DLL.h"
+#ifndef _WIN32
+typedef void * HMODULE;
+#endif
 
 #include "sevenzip_compat.h"
 #include "sevenzip.h"
@@ -229,7 +232,8 @@ namespace sevenzip {
 
     private:
 
-        NWindows::NDLL::CLibrary *lib = nullptr;
+        HMODULE lib = nullptr;
+        void* GetProcAddress(const char* proc);
 
         wchar_t loadMessage[128] = { L'\0' };
         wchar_t lastFormatExtensions[128] = { L'\0' };

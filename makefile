@@ -54,8 +54,7 @@ OBJS = \
 	$O/TimeUtils.o \
 	$O/StringConvert.o \
 	$O/UTFConvert.o \
-	$O/ErrorMsg.o \
-	$O/DLL.o
+	$O/ErrorMsg.o
 
 all: $(TARGET)
 
@@ -126,7 +125,7 @@ examples: $(EXAMPLES) example_dir
 
 valgrind: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
-	    echo -n "Running valgrind on $$ex (1 leak for 8-16 bytes is known)... "; \
+	    echo -n "Running valgrind on $$ex ... "; \
 	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	    DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	    valgrind --leak-check=full --show-leak-kinds=all ./$$ex 2>&1 | grep "ERROR SUMMARY"; \
@@ -134,7 +133,7 @@ valgrind: $(EXAMPLES) example_dir
 
 leaks: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
-	    echo "Running leaks on $$ex (1 leak for 8-16 bytes is known) ... "; \
+	    echo "Running leaks on $$ex ... "; \
 	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	    DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	    leaks -list -quiet -atExit -- ./$$ex 2>$O/leaks.log >$O/leaks.lst; \
