@@ -13,15 +13,13 @@
 #include <dlfcn.h>
 #endif
 
-#ifndef UNUSED
-#define UNUSED(x) [&x]{}()
-#endif
-
 #ifdef DEBUG_IMPL
 #   include <iostream>
 #   define DEBUGLOG(_x_) (std::wcerr << "DEBUG: " << _x_ << "\n")
+#   define UNUSED(_x_) _x_
 #else
 #   define DEBUGLOG(_x_)
+#   define UNUSED(_x_)
 #endif
 
 namespace sevenzip {
@@ -331,17 +329,13 @@ namespace sevenzip {
         DEBUGLOG(this << " ~COpenCallback");
     };
 
-    STDMETHODIMP COpenCallback::SetTotal(const UInt64* files, const UInt64* bytes)  throw() {
+    STDMETHODIMP COpenCallback::SetTotal(const UInt64* UNUSED(files), const UInt64* UNUSED(bytes))  throw() {
         DEBUGLOG(this << " COpenCallback::SetTotal " << (files ? *files : -1) << "/" << (bytes ? *bytes : -1));
-        UNUSED(files);
-        UNUSED(bytes);
         return S_OK;
     };
 
-    STDMETHODIMP COpenCallback::SetCompleted(const UInt64* files, const UInt64* bytes) throw() {
+    STDMETHODIMP COpenCallback::SetCompleted(const UInt64* UNUSED(files), const UInt64* UNUSED(bytes)) throw() {
         DEBUGLOG(this << " COpenCallback::SetCompleted " << (files ? *files : -1) << "/" << (bytes ? *bytes : -1));
-        UNUSED(files);
-        UNUSED(bytes);
         return S_OK;
     };
 
@@ -428,15 +422,13 @@ namespace sevenzip {
         DEBUGLOG(this << " CExtractCallback::~CExtractCallback");
     };
 
-    STDMETHODIMP CExtractCallback::SetTotal(UInt64 size) throw() {
+    STDMETHODIMP CExtractCallback::SetTotal(UInt64 UNUSED(size)) throw() {
         DEBUGLOG(this << " CExtractCallback::SetTotal " << size);
-        UNUSED(size);
         return S_OK;
     };
 
-    STDMETHODIMP CExtractCallback::SetCompleted(const UInt64* completeValue) throw() {
+    STDMETHODIMP CExtractCallback::SetCompleted(const UInt64* UNUSED(completeValue)) throw() {
         DEBUGLOG(this << " CExtractCallback::SetCompleted " << (completeValue ? *completeValue : -1));
-        UNUSED(completeValue);
         return S_OK;
     };
 
@@ -482,9 +474,8 @@ namespace sevenzip {
         return FAILED(hr) ? hr : S_OK;
     };
 
-    STDMETHODIMP CExtractCallback::PrepareOperation(Int32 askExtractMode) throw() {
+    STDMETHODIMP CExtractCallback::PrepareOperation(Int32 UNUSED(askExtractMode)) throw() {
         DEBUGLOG(this << " CExtractCallback::PrepareOperation " << askExtractMode);
-        UNUSED(askExtractMode);
         return S_OK;
     };
 
@@ -539,22 +530,19 @@ namespace sevenzip {
         DEBUGLOG(this << " ~CUpdateCallback");
     };
 
-    STDMETHODIMP CUpdateCallback::SetTotal(UInt64 size) throw() {
+    STDMETHODIMP CUpdateCallback::SetTotal(UInt64 UNUSED(size)) throw() {
         DEBUGLOG(this << " CUpdateCallback::SetTotal " << size);
-        UNUSED(size);
         return S_OK;
     };
 
-    STDMETHODIMP CUpdateCallback::SetCompleted(const UInt64* completeValue) throw() {
+    STDMETHODIMP CUpdateCallback::SetCompleted(const UInt64* UNUSED(completeValue)) throw() {
         DEBUGLOG(this << " CUpdateCallback::SetCompleted " << (completeValue ? *completeValue : 0));
-        UNUSED(completeValue);
         return S_OK;
     };
 
-    STDMETHODIMP CUpdateCallback::GetUpdateItemInfo(UInt32 index,
+    STDMETHODIMP CUpdateCallback::GetUpdateItemInfo(UInt32 UNUSED(index),
             Int32* newData, Int32* newProperties, UInt32* indexInArchive) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetUpdateItemInfo " << index);
-        UNUSED(index);
 
         if (newData)
             *newData = BoolToInt(true);
@@ -620,24 +608,19 @@ namespace sevenzip {
         return FAILED(hr) ? hr : S_OK;
     };
 
-    STDMETHODIMP CUpdateCallback::SetOperationResult(Int32 operationResult) throw() {
+    STDMETHODIMP CUpdateCallback::SetOperationResult(Int32 UNUSED(operationResult)) throw() {
         DEBUGLOG(this << " CUpdateCallback::SetOperationResult " << operationResult);
-        UNUSED(operationResult);
         CINSTREAM(instream)->Close();
         return S_OK;
     };
 
-    STDMETHODIMP CUpdateCallback::GetVolumeSize(UInt32 index, UInt64* size) throw() {
+    STDMETHODIMP CUpdateCallback::GetVolumeSize(UInt32 UNUSED(index), UInt64* /*size*/) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetVolumeSize " << index);
-        UNUSED(index);
-        UNUSED(size);
         return S_FALSE;
     };
 
-    STDMETHODIMP CUpdateCallback::GetVolumeStream(UInt32 index, ISequentialOutStream** volumeStream) throw() {
+    STDMETHODIMP CUpdateCallback::GetVolumeStream(UInt32 UNUSED(index), ISequentialOutStream** /*volumeStream*/) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetVolumeStream " << index);
-        UNUSED(index);
-        UNUSED(volumeStream);
         return S_FALSE;
     };
 
