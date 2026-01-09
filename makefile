@@ -74,10 +74,10 @@ release: example
 	cd $O && $(SEVENZIPBIN) a $(CURDIR)/$R.zip $R > /dev/null
 	               
 clean:
-	-rm -fr $O temps/example.txt 2> /dev/null
+	-rm -fr $O temps/example.txt
 
 cleanall: clean
-	-rm -f libsevenzip.a 7z.so example[0-9H] example
+	-rm -f libsevenzip.a example[0-9H] example
 	-rm -fr C temps example[0-9H].dSYM example.dSYM
 
 libsevenzip.a: $(OBJS)
@@ -126,10 +126,19 @@ examples: $(EXAMPLES) example_dir
 
 valgrind: $(EXAMPLES) example_dir
 	@for ex in $(EXAMPLES); do \
-	    echo -n "Running valgrind on $$ex ... "; \
+	    echo -n "Running valgrind on $$ex (1 leak for 8-16 bytes is known)... "; \
 	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	    DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	    valgrind --leak-check=full --show-leak-kinds=all ./$$ex 2>&1 | grep "ERROR SUMMARY"; \
+	done
+
+leaks: $(EXAMPLES) example_dir
+	@for ex in $(EXAMPLES); do \
+	    echo "Running leaks on $$ex (1 leak for 8-16 bytes is known) ... "; \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
+	    DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
+	    leaks -list -quiet -atExit -- ./$$ex 2>$O/leaks.log >$O/leaks.lst; \
+	    grep "^Process .* leak" <$O/leaks.lst; \
 	done
 
 tests/tests: tests/tests.cpp tests/test_*.cpp
@@ -151,9 +160,9 @@ $O/sevenzip.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip.cpp
 	#test -f $O/7zip/lib/7z.so && cp -p $O/7zip/lib/7z.so 7z.so
 	#test -d $O/7zip/lib/7z_addon_codec && cp -rp $O/7zip/lib/7z_addon_codec 7z_addon_codec
 
-#7z: 
-#	cd $(SEVENZIPSRC)/CPP/7zip/UI/Console && make -f makefile.gcc $(SEVENZIPFLAGS) O=$(CURDIR)/$O/7zip
-#	test -f $O/7zip/7z && cp -p $O/7zip/7z 7z
+7z: 
+	cd $(SEVENZIPSRC)/CPP/7zip/UI/Console && make -f makefile.gcc $(SEVENZIPFLAGS) O=$(CURDIR)/$O/7zip
+	test -f $O/7zip/7z && cp -p $O/7zip/7z 7z && chmod +x 7z
 
 VPATH = examples:tests:$(SEVENZIPSRC)/CPP/Common:$(SEVENZIPSRC)/CPP/Windows
 
