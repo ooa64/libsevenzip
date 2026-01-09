@@ -37,6 +37,21 @@ make release
 ### Build Options
 
 - `SEVENZIPSRC=path` - path to the 7zip/p7zip source
+- `SEVENZIPBIN=executable` - name of the 7zip/p7zip executable (usually 7z or 7zz)
 - `ASAN=1` - with address sanitizer
 - `DEBUG=1` - with debug info
 - `DEBUG_IMPL=1` - with callbacks trace
+
+### Build Targets
+
+- `all` - build library (default)
+- `release` - create zipped release
+- `examples` - build and test examples (example[0-9])
+- `example` - build demo program (example)
+- `valgrind` - check memory usage of running examples
+- `leaks` - check memory usage of running examples (macOS)
+- `tests` - build and run tests
+- `7z` - try to build 7zip executable
+- `7zip` - try to build 7zip dynamic library
+- `clean` - remove temporary objects
+- `cleanall` - remove all artifacts created except 7zip and zipped release
