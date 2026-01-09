@@ -113,18 +113,19 @@ COutStream::~COutStream() {
 - Consider using `std::unique_ptr<Istream>` and `std::unique_ptr<Ostream>` for clearer ownership semantics
 - Document in header file that users should not delete the stream objects after passing them
 
-### 2. Known Limitation: Signature Detection (sevenzip_impl.cpp:1109)
+### 2. Known Limitation: Signature Detection (sevenzip_impl.cpp:1266-1270)
 **Severity:** Low  
-**Location:** `sevenzip_impl.cpp`, line 1109  
-**Issue:** FIXME comment indicates incomplete implementation
+**Location:** `sevenzip_impl.cpp`, lines 1266-1270  
+**Issue:** The `getFormatBySignature` function only reads the first 1024 bytes of a file to detect the archive format
 
 ```cpp
-// FIXME: iso, udf and others with signature outside first 1024 bytes
-int Lib::Impl::getFormatBySignature(Istream& stream) {
+int Lib::Impl::getFormatBySignature(Istream* stream) {
     UInt32 bufsize = 1024;
     // ... only reads first 1024 bytes
 }
 ```
+
+This limitation means that some archive formats with signatures located beyond the first 1024 bytes (e.g., ISO, UDF) may not be detected correctly.
 
 **Recommendation:** Consider:
 - Documenting this limitation in the public API
