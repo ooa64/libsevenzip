@@ -91,27 +91,22 @@ The code now uses `thread_local` storage qualifier, which ensures each thread ha
 
 ## Potential Issues (NOT FIXED - Documented)
 
-### 1. Ownership Transfer Not Documented (sevenzip_impl.cpp:162, 222)
+### 1. Ownership Transfer Not Documented (sevenzip_impl.cpp:217-220)
 **Severity:** Medium  
-**Location:** `sevenzip_impl.cpp`, lines 162 and 222  
-**Issue:** `CInStream` and `COutStream` delete their respective stream pointers in destructors, but ownership semantics are not clearly documented
+**Location:** `sevenzip_impl.cpp`, lines 217-220  
+**Issue:** `CInStream` conditionally deletes its stream pointer in the destructor, but ownership semantics are not clearly documented
 
 ```cpp
 CInStream::~CInStream() {
-    if (istream)
-        delete istream;  // Takes ownership
-}
-
-COutStream::~COutStream() {
-    if (ostream)
-        delete ostream;  // Takes ownership
+    if (cloned && istream)
+        delete istream;  // Takes ownership only when cloned
 }
 ```
 
 **Recommendation:** Add documentation to clarify ownership:
-- Add comments to constructors explaining that these classes take ownership
-- Consider using `std::unique_ptr<Istream>` and `std::unique_ptr<Ostream>` for clearer ownership semantics
-- Document in header file that users should not delete the stream objects after passing them
+- Add comments to constructors explaining when these classes take ownership
+- Consider using `std::unique_ptr<Istream>` for clearer ownership semantics
+- Document in header file the ownership semantics based on the `cloned` flag
 
 ### 2. Known Limitation: Signature Detection (sevenzip_impl.cpp:1266-1270)
 **Severity:** Low  
