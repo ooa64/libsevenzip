@@ -1144,6 +1144,7 @@ namespace sevenzip {
             GetModuleProp = (Func_GetModuleProp)GetProcAddress("GetModuleProp");
             if (!checkInterfaceType()) {
                 COPYACHARS(loadMessage, "Library interface type mismatch");
+                unload();
                 return false;
             }
             CreateObjectFunc = (Func_CreateObject)GetProcAddress("CreateObject");
