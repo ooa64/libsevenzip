@@ -43,6 +43,14 @@ static char charbuffer[1024];
 using namespace std;
 using namespace sevenzip;
 
+wstring dirname(const wstring& path) {
+    size_t pos = path.find_last_of(L"/\\");
+    if (pos == wstring::npos)
+        return L"";
+    return path.substr(0, pos);
+}
+
+
 bool mkpath(std::wstring path) {
     if (path.empty())
         return true;
@@ -51,16 +59,9 @@ bool mkpath(std::wstring path) {
     if (errno == EEXIST)
         return true;
     if (errno == ENOENT)
-        if (mkpath(path.substr(0, path.find_last_of('/'))))
+        if (mkpath(dirname(path)))
             return MKDIR(path.c_str(), 0775) == 0;
     return false;
-}
-
-wstring dirname(const wstring& path) {
-    size_t pos = path.find_last_of(L"/\\");
-    if (pos == wstring::npos)
-        return L"";
-    return path.substr(0, pos);
 }
 
 struct Inputstream: public Istream {
@@ -215,7 +216,7 @@ int MAIN(argc, argv) {
         return 1;
     }
 
-    wcout << "7-Zip " << (getVersion() >> 16) << "." << (getVersion() & 0xffff)  << " example "
+    wcout << "7-Zip " << (getVersion() >> 16) << "." << (getVersion() & 0xffff) << " example "
             << "(" SEVENZIPDLL " " << (l.getVersion() >> 16) << "." << (l.getVersion() & 0xffff) << ")\n\n";
 
     HRESULT hr;
