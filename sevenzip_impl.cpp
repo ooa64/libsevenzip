@@ -1118,7 +1118,7 @@ namespace sevenzip {
             // NOTE: library handle must be preserved to avoid dependent modules crashes
             // NOTE: we need to count references to the library handle if we want to unload it safely
 #ifdef _WIN32
-            // FreeLibrary((HMODULE)lib);
+            // ::FreeLibrary((HMODULE)lib);
 #else
             // dlclose(lib);
 #endif
@@ -1369,7 +1369,7 @@ namespace sevenzip {
         if (!lib)
             return nullptr;
 #ifdef _WIN32
-        return (void*)GetProcAddress(lib, proc);
+        return (void*)::GetProcAddress(lib, proc);
 #else
         return dlsym(lib, proc);
 #endif
