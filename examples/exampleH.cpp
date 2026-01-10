@@ -52,18 +52,18 @@ struct Compressstream: public Inputstream {
         return filesystem::is_directory(pn);
     };
 
-    virtual UInt32 GetMode(const wchar_t* pathname) const override {
+    virtual UInt32 GetMode(const wchar_t* /*pathname*/) const override {
         // TODO: implement file mode conversion to POSIX
-        filesystem::path pn(pathname);
-        auto perm = filesystem::status(pn).permissions();
+        // filesystem::path pn(pathname);
+        // auto perm = filesystem::status(pn).permissions();
         // wcout << "Getting perm for " << pathname << " : " << perm << "\n";
         return 0;
     };
 
-    virtual UInt32 GetTime(const wchar_t* pathname) const override {
-        // TODO: implement file time comversion to POSIX
-        filesystem::path pn(pathname);
-        auto mtime = std::filesystem::last_write_time(pn);
+    virtual UInt32 GetTime(const wchar_t* /*pathname*/) const override {
+        // TODO: implement file time conversion to POSIX
+        // filesystem::path pn(pathname);
+        // auto mtime = std::filesystem::last_write_time(pn);
         // wcout << "Getting mtime for " << pathname << " : " << mtime << "\n";
         return 0;
     };
@@ -101,7 +101,9 @@ struct Extractstream: public Outputstream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
         wcout << "Extracting " << filename << "\n";
-        return Outputstream::Open(fullname(filename).c_str());
+        filesystem::path fn(fullname(filename));
+        filesystem::create_directories(fn.parent_path());
+        return Outputstream::Open(fn.c_str());
     };
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {
@@ -111,7 +113,7 @@ struct Extractstream: public Outputstream {
         return S_OK;
     };
 
-    virtual HRESULT SetMode(const wchar_t* pathname, UInt32 mode) override {
+    virtual HRESULT SetMode(const wchar_t* pathname, UInt32 /*mode*/) override {
         // TODO: implement file mode conversion from POSIX
         filesystem::path pn(fullname(pathname));
         filesystem::perms perm = filesystem::perms::owner_read
@@ -122,7 +124,7 @@ struct Extractstream: public Outputstream {
         return S_OK; 
     };
     
-    virtual HRESULT SetTime(const wchar_t* pathname, UInt32 time) override {
+    virtual HRESULT SetTime(const wchar_t* pathname, UInt32 /*time*/) override {
         // TODO: implement file time conversion from POSIX
         const filesystem::file_time_type mtime = filesystem::file_time_type::clock::now(); 
         filesystem::path pn(fullname(pathname));
