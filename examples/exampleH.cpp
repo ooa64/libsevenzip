@@ -52,6 +52,11 @@ struct Compressstream: public Inputstream {
         return filesystem::is_directory(pn);
     };
 
+    virtual UInt64 GetSize(const wchar_t* pathname) const override {
+        filesystem::path pn(pathname);
+        return std::filesystem::file_size(pn);
+    };
+
     virtual UInt32 GetMode(const wchar_t* /*pathname*/) const override {
         // TODO: implement file mode conversion to POSIX
         // filesystem::path pn(pathname);

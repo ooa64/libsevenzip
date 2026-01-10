@@ -340,13 +340,13 @@ namespace sevenzip {
             case kpidPath: prop = pathname; break;
             case kpidName: prop = pathname; break;
             case kpidIsDir: prop = istream->IsDir(pathname); break;
-            case kpidSize: prop = (UInt64)1 /*istream->GetFileSize(pathname)*/; break;
+            case kpidSize: prop = istream->GetSize(pathname); break;
             case kpidCTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(pathname)); break;
             case kpidATime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(pathname)); break;
             case kpidMTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(pathname)); break;
             case kpidAttrib: prop = ((istream->GetMode(pathname) & 0xffff) << 16) | 0x8000; break;
             case kpidPosixAttrib: prop = istream->GetMode(pathname); break;
-            default: return S_FALSE;
+            default: break;
             }
         }
         prop.Detach(value);
@@ -566,13 +566,13 @@ namespace sevenzip {
             switch (propID) {
             case kpidPath: prop = items[index]; break;
             case kpidIsDir: prop = CINSTREAM(instream)->IsDir(items[index]); break;
-            case kpidSize: prop = (UInt64)1 /*CINSTREAM(instream)->GetSize(items[index])*/; break;
+            case kpidSize: prop = CINSTREAM(instream)->GetSize(items[index]); break;
             case kpidCTime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
             case kpidATime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
             case kpidMTime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
             case kpidAttrib: prop = ((CINSTREAM(instream)->GetMode(items[index]) & 0xffff) << 16) | 0x8000; break;
             case kpidPosixAttrib: prop = CINSTREAM(instream)->GetMode(items[index]); break;
-            default: return S_FALSE;
+            default: break;
             }
         }
         prop.Detach(value);

@@ -51,8 +51,8 @@ namespace sevenzip {
         // Used by the open handler
         virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64& /*position*/) { return S_FALSE; };
 
-        // Looks like unused at this time, but left for possible future use
-        virtual UInt64 GetSize(const wchar_t* /*filename*/) const { return 0; };
+		// Used by update handler. Default works in some cases, but it's better to reimplement it
+        virtual UInt64 GetSize(const wchar_t* /*filename*/) const { return 1; };
 
         // Used by the update handler
         virtual bool IsDir(const wchar_t* /*filename*/) const { return false; };

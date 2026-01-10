@@ -114,6 +114,13 @@ struct Compressstream: public Inputstream {
         return 0;
     };
 
+    virtual UInt64 GetSize(const wchar_t* pathname) const override {
+        STRUCT_STAT s;
+        if (STAT(pathname, &s) == 0)
+            return s.st_size;
+        return 0;
+    };
+
     virtual UInt32 GetMode(const wchar_t* pathname) const override {
         STRUCT_STAT s;
         if (STAT(pathname, &s) == 0)
