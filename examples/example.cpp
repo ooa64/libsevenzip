@@ -44,6 +44,8 @@ using namespace std;
 using namespace sevenzip;
 
 bool mkpath(std::wstring path) {
+    if (path.empty())
+        return true;
     if (MKDIR(path.c_str(), 0775) == 0)
         return true;
     if (errno == EEXIST)
@@ -52,6 +54,13 @@ bool mkpath(std::wstring path) {
         if (mkpath(path.substr(0, path.find_last_of('/'))))
             return MKDIR(path.c_str(), 0775) == 0;
     return false;
+}
+
+wstring dirname(const wstring& path) {
+    size_t pos = path.find_last_of(L"/\\");
+    if (pos == wstring::npos)
+        return L"";
+    return path.substr(0, pos);
 }
 
 struct Inputstream: public Istream {
@@ -153,12 +162,12 @@ struct Extractstream: public Outputstream {
 
     virtual HRESULT Open(const wchar_t* filename) override {
         wcout << "Extracting " << filename << "\n";
+        mkpath(dirname(fullname(filename)));
         return Outputstream::Open(fullname(filename).c_str());
     };
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {
         wcout << "Creating " << dirname << "\n";
-        // (void)MKDIR(fullname(dirname).c_str(), 0755);
         return mkpath(fullname(dirname)) ? S_OK : S_FALSE;
     };
 
