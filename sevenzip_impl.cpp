@@ -91,16 +91,6 @@ namespace sevenzip {
         return n.Ptr((unsigned)(dot + 1));
     };
 
-    static UString getFilenameDir(const wchar_t* filename) {
-        if (!filename)
-            return L"";
-        UString n(filename);
-        int sep = n.ReverseFind_PathSepar();
-        if (sep < 0)
-            return L"";
-        return n.Left((unsigned)sep);
-    };
-
     static HRESULT getStringValue(NWindows::NCOM::CPropVariant& prop, UString& propValue) {
         if (prop.vt == VT_EMPTY)
             return S_FALSE;
