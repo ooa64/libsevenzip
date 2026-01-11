@@ -1,3 +1,4 @@
+#pragma warning(disable: 4530)
 #include <iostream>
 #include "sevenzip.h"
 
