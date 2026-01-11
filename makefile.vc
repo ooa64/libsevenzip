@@ -81,6 +81,7 @@ release: example
 	@copy $L $O\$R
 	@copy $E\example.cpp $O\$R
 	@copy $O\example.exe $O\$R
+	@if exist 7z.dll copy 7z.dll $O\$R
 	@cd $O && 7z a %CD%\$R.zip $R > NUL
 
 $L: $(OBJS)
