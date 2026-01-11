@@ -1095,7 +1095,7 @@ namespace sevenzip {
     };
 
     void Lib::Impl::unload() {
-        DEBUGLOG(this << " Lib::Impl::unload");
+        DEBUGLOG(this << " Lib::Impl::unload" << lib);
         if (lib) {
             // NOTE: library handle must be preserved to avoid dependent modules crashes
             // NOTE: we need to count references to the library handle if we want to unload it safely
@@ -1107,6 +1107,20 @@ namespace sevenzip {
             lib = nullptr;
         }
     };
+
+    // NOTE: used internally instead of incomplete unload
+    void Lib::Impl::_unload() {
+        DEBUGLOG(this << " Lib::Impl::_unload " << lib);
+        if (lib) {
+#ifdef _WIN32
+            ::FreeLibrary((HMODULE)lib);
+#else
+            dlclose(lib);
+#endif
+            lib = nullptr;
+        }
+    }
+
 
     bool Lib::Impl::load(const wchar_t* libname) {
         DEBUGLOG(this << " Lib::Impl::Load " << (libname ? libname : L"NULL"));
@@ -1126,7 +1140,7 @@ namespace sevenzip {
             GetModuleProp = (Func_GetModuleProp)GetProcAddress("GetModuleProp");
             if (!checkInterfaceType()) {
                 COPYACHARS(loadMessage, "Library interface type mismatch");
-                unload();
+                _unload();
                 return false;
             }
             CreateObjectFunc = (Func_CreateObject)GetProcAddress("CreateObject");
@@ -1144,6 +1158,7 @@ namespace sevenzip {
             GetHandlerProperty2 = (Func_GetHandlerProperty2)GetProcAddress("GetHandlerProperty2");
             if (!GetHandlerProperty2)
                 break;
+            DEBUGLOG(this << " Lib::Impl::Load success : " << lib);
             return true;
         } while (0);
 #ifdef _WIN32
@@ -1151,15 +1166,14 @@ namespace sevenzip {
 #else
         COPYACHARS(loadMessage, dlerror());
 #endif
-        // NOTE: to be perfected - unset all function pointers on failure
-        // GetModuleProp = nullptr;
-        // CreateObjectFunc = nullptr;
-        // GetNumberOfMethods = nullptr;
-        // GetNumberOfFormats = nullptr;
-        // GetHandlerProperty = nullptr;
-        // GetHandlerProperty2 = nullptr;
+        GetModuleProp = nullptr;
+        CreateObjectFunc = nullptr;
+        GetNumberOfMethods = nullptr;
+        GetNumberOfFormats = nullptr;
+        GetHandlerProperty = nullptr;
+        GetHandlerProperty2 = nullptr;
         DEBUGLOG(this << " Lib::Impl::Load error : " << loadMessage);
-        unload();
+        _unload();
         return false;
     };
 

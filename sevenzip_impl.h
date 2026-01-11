@@ -235,6 +235,8 @@ namespace sevenzip {
         HMODULE lib = nullptr;
         void* GetProcAddress(const char* proc);
 
+        void _unload();
+
         wchar_t loadMessage[128] = { L'\0' };
         wchar_t lastFormatExtensions[128] = { L'\0' };
         wchar_t lastFormatName[128] = { L'\0' };
