@@ -22,6 +22,7 @@ struct Inputstream: public Istream, public std::ifstream {
 }; 
 
 int main() {
+    setlocale(LC_ALL, "");
     wcout << "Library functions\n\n";
 
     Lib l;

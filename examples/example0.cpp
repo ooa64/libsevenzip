@@ -6,6 +6,7 @@ using namespace std;
 using namespace sevenzip;
 
 int main() {
+    setlocale(LC_ALL, "");
     wcout << "Library formats\n\n";
 
     Lib l;

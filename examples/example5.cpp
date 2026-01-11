@@ -61,6 +61,7 @@ private:
 };
 
 int main() {
+    setlocale(LC_ALL, "");
     wcout << "Extract from simple archive\n\n";
 
     Lib l;

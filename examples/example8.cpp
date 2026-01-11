@@ -80,6 +80,7 @@ struct Extractstream_preopen : public Ostream {
 };
 
 int main() {
+    setlocale(LC_ALL, "");
     wcout << "Create/extract simple archive using preopen streams\n\n";
 
     Lib l;

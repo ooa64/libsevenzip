@@ -156,6 +156,7 @@ struct Inputstream: public Istream, private std::ifstream {
 };
 
 int main() {
+    setlocale(LC_ALL, "");
     wcout << "Show archive props\n\n";
 
     Lib l;

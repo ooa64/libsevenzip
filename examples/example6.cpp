@@ -51,6 +51,7 @@ struct Outputstream: public Ostream, private std::ofstream {
 };
 
 int main() {
+    setlocale(LC_ALL, "");
     wcout << "Create simple archive\n\n";
 
     Lib l;

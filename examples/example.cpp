@@ -8,7 +8,6 @@
 #include <direct.h>
 #include <sys/utime.h>
 #define MAIN(_c_,_v_) wmain(int _c_, wchar_t** _v_)
-#define SETLOCALE
 #define U2F(_s_) (_s_)
 #define F2U(_s_) (_s_)
 #define FOPEN(_f_,_m_) (_wfopen((_f_),(_m_)))
@@ -24,7 +23,6 @@
 #include <utime.h>
 static char charbuffer[1024];
 #define MAIN(_c_,_v_) main(int _c_, char** _v_)
-#define SETLOCALE (setlocale(LC_ALL, ""))
 #define U2F(_s_) (toBytes(_s_))
 #define U2F2(_s_) (toBytes(charbuffer, sizeof(charbuffer), (_s_)))
 #define F2U(_s_) (fromBytes(_s_))
@@ -211,7 +209,7 @@ L"  example.exe x archive.7z dir  : eXtract files from archive.7z\n"
 L"  example.exe l archive.7z   : List contents of archive.7z\n";
 
 int MAIN(argc, argv) {
-    SETLOCALE;
+    setlocale(LC_ALL, "");
 
     if (argc < 3) {
         wcout << "\n" << usage;

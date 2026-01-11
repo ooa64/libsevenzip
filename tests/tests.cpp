@@ -5,6 +5,7 @@ void run_iarchive_tests();
 void run_oarchive_tests();
 
 int main() {
+    setlocale(LC_ALL, "");
     int failures = 0;
     try {
         run_lib_tests();

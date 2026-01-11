@@ -33,6 +33,7 @@ struct Inputstream: public Istream, private std::ifstream {
 };
 
 int main() {
+    setlocale(LC_ALL, "");
     wcout << "Open simple archive\n\n";
 
     Lib l;
