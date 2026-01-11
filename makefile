@@ -4,8 +4,11 @@ VER_MAJOR = 1
 VER_MINOR = 0
 
 SEVENZIPSRC ?= ../7zip
-SEVENZIPBIN ?= 7z
-SEVENZIPPATH ?= .
+SEVENZIPBIN ?= env PATH=$(PATH):$(CURDIR) \
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
+	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
+	7z
+SEVENZIPPATH ?= $(CURDIR)
 
 ifdef UNICODE
 	CFLAGS += -DUNICODE -D_UNICODE
@@ -73,6 +76,7 @@ release: example
 	cp -p libsevenzip.a $O/$R
 	cp -p example $O/$R
 	cp -p examples/example.cpp $O/$R
+	test -f $(CURDIR)/7z.so && cp -p $(CURDIR)/7z.so $O/$R || true
 	cd $O && $(SEVENZIPBIN) a $(CURDIR)/$R.zip $R > /dev/null
 	               
 clean:
