@@ -14,4 +14,5 @@ example l example.exe
 Usage (Linux)
 ```
 gcc example.cpp -o example -L. -lsevenzip -lstdc++
+example l example
 ```
