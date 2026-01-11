@@ -1243,19 +1243,24 @@ namespace sevenzip {
     };
 
     int Lib::Impl::getFormatByExtension(const wchar_t* ext) {
+        if (!ext || ext[0] == L'\0')
+            return -1;
+        size_t len = wcslen(ext);
         for (int i = 0; i < getNumberOfFormats(); i++) {
             UString exts = getStringProperty(i, NArchive::NHandlerPropID::kExtension);
             if (exts.Len() == 0)
                 continue;
-            size_t len = wcslen(ext);
-            int pos = exts.Find(ext);
-            if (pos < 0)
-                continue;
-            if ((pos > 0) && (exts[pos - 1] != L' '))
-                continue;
-            if ((pos + len < exts.Len()) && (exts[pos + len] != L' '))
-                continue;
-            return i;
+            int pos = -1;
+            while (true) {
+                pos = exts.Find(ext, pos + 1);
+                if (pos < 0)
+                    break;
+                if ((pos > 0) && (exts[pos - 1] != L' '))
+                    continue;
+                if ((pos + len < exts.Len()) && (exts[pos + len] != L' '))
+                    continue;
+                return i;
+            }
         }
         return -1;
     };
