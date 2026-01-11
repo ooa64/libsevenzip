@@ -1,4 +1,6 @@
+#ifdef _WIN32
 #pragma warning(disable: 4530)
+#endif
 #include <iostream>
 #include "sevenzip.h"
 
