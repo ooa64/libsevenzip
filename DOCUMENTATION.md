@@ -120,28 +120,44 @@ virtual HRESULT Seek(Int64 offset, UInt32 origin, UInt64& position);
 - **Returns:** `S_OK` on success, error code otherwise
 
 ```cpp
+virtual UInt64 GetSize(const wchar_t* filename);
+```
+- **Purpose:** Get file size for archiving
+- **Required for:** Archive creation (Oarchive update method)
+- **Default:** Returns 1, but it's recommended to reimplement for proper operation
+- **Returns:** File size in bytes
+
+```cpp
 virtual Istream* Clone() const;
 ```
 - **Purpose:** Create a clone of the stream
 - **Required for:** Opening multi-volume archives
+- **Default:** Returns nullptr, implement when multi-volume support is needed
+- **Returns:** Pointer to new cloned Istream instance
 
 ```cpp
 virtual bool IsDir(const wchar_t* filename) const;
 ```
 - **Purpose:** Check if path is a directory
 - **Required for:** Archive creation
+- **Default:** Returns false
+- **Returns:** true if path is a directory, false otherwise
 
 ```cpp
 virtual UInt32 GetMode(const wchar_t* filename) const;
 ```
 - **Purpose:** Get file mode/permissions
 - **Required for:** Archive creation
+- **Default:** Returns 0
+- **Returns:** File mode bits (Unix-style permissions)
 
 ```cpp
 virtual UInt32 GetTime(const wchar_t* filename) const;
 ```
 - **Purpose:** Get file timestamp
 - **Required for:** Archive creation
+- **Default:** Returns 0
+- **Returns:** Unix timestamp (seconds since epoch)
 
 ---
 
@@ -319,11 +335,12 @@ int getFormatByExtension(const wchar_t* ext);
 
 ##### `getFormatBySignature()`
 ```cpp
-int getFormatBySignature(Istream& stream);
+int getFormatBySignature(Istream& stream, const wchar_t* ext = nullptr);
 ```
 - **Purpose:** Detect format by reading file signature
 - **Parameters:**
   - `stream`: Input stream positioned at archive start
+  - `ext`: Optional file extension hint for ambiguous signatures
 - **Returns:** Format index or -1 if not recognized
 
 ---
@@ -774,6 +791,13 @@ public:
     HRESULT Read(void* data, UInt32 size, UInt32& processed) override {
         processed = (UInt32)fread(data, 1, size, f);
         return S_OK;
+    }
+    
+    UInt64 GetSize(const wchar_t* filename) override {
+        struct _stat64 st;
+        if (_wstat64(filename, &st) == 0)
+            return st.st_size;
+        return 0;
     }
     
     bool IsDir(const wchar_t* filename) const override {
