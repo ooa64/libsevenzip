@@ -216,10 +216,11 @@ namespace sevenzip {
         wchar_t* getFormatName(int index);
         bool getFormatUpdatable(int index);
         int getFormatByExtension(const wchar_t* ext);
-        int getFormatBySignature(Istream* stream);
+        int getFormatBySignature(Istream* stream, const wchar_t* ext);
 
         // for internal use
         GUID getFormatGUID(int index);
+        bool isExtensionSupported(int index, const wchar_t* ext);
         UString getStringProperty(int propIndex, PROPID propID);
         bool checkInterfaceType() const;
 

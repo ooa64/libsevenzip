@@ -40,8 +40,8 @@ namespace sevenzip {
         return pimpl->getFormatByExtension(ext);
     }
 
-    int Lib::getFormatBySignature(Istream& stream) {
-        return pimpl->getFormatBySignature(&stream);
+    int Lib::getFormatBySignature(Istream& stream, const wchar_t* ext) {
+        return pimpl->getFormatBySignature(&stream, ext);
     }
 
     wchar_t* Lib::getFormatName(int index) {

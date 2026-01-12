@@ -113,7 +113,7 @@ namespace sevenzip {
         wchar_t* getFormatExtensions(int index);
         bool getFormatUpdatable(int index);
         int getFormatByExtension(const wchar_t* ext);
-        int getFormatBySignature(Istream& stream);
+        int getFormatBySignature(Istream& stream, const wchar_t* ext = nullptr);
 
     private:
 

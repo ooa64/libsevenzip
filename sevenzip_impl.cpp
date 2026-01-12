@@ -656,7 +656,9 @@ namespace sevenzip {
             if (formatIndex == -1)
                 formatIndex = libimpl->getFormatByExtension(getFilenameExt(name));
             if (formatIndex < 0)
-                formatIndex = libimpl->getFormatBySignature(istream);
+                formatIndex = libimpl->getFormatBySignature(istream, getFilenameExt(name));
+            if (formatIndex < 0)
+                formatIndex = libimpl->getFormatBySignature(istream, nullptr);
             if (formatIndex < 0)
                 return E_NOTSUPPORTED;
 
@@ -1243,30 +1245,17 @@ namespace sevenzip {
     };
 
     int Lib::Impl::getFormatByExtension(const wchar_t* ext) {
-        if (!ext || ext[0] == L'\0')
+        if (!ext)
             return -1;
-        size_t len = wcslen(ext);
         for (int i = 0; i < getNumberOfFormats(); i++) {
-            UString exts = getStringProperty(i, NArchive::NHandlerPropID::kExtension);
-            if (exts.Len() == 0)
-                continue;
-            int pos = -1;
-            while (true) {
-                pos = exts.Find(ext, pos + 1);
-                if (pos < 0)
-                    break;
-                if ((pos > 0) && (exts[pos - 1] != L' '))
-                    continue;
-                if ((pos + len < exts.Len()) && (exts[pos + len] != L' '))
-                    continue;
+            if (isExtensionSupported(i, ext))
                 return i;
-            }
         }
         return -1;
     };
 
     // TODO: iso, udf and others with signature outside first 1024 bytes
-    int Lib::Impl::getFormatBySignature(Istream* stream) {
+    int Lib::Impl::getFormatBySignature(Istream* stream, const wchar_t* ext) {
         if (!GetHandlerProperty2)
             return -1;
         UInt64 pos = 0, dummy;
@@ -1283,6 +1272,12 @@ namespace sevenzip {
             return -1;
 
         for (int i = 0; i < getNumberOfFormats(); i++) {
+            // DEBUGLOG(this << "::getFormatBySignature checking format " << i << " "
+            //     << getFormatName(i) << " ext " << (ext ? ext : L"NULL"));
+
+            if (ext && ext[0] && !isExtensionSupported(i, ext))
+                continue;
+
             NWindows::NCOM::CPropVariant prop, prop1, prop2;
             UINT len1 = 0, len2 = 0;
             ULONG offs = 0;
@@ -1317,6 +1312,8 @@ namespace sevenzip {
                     rest -= len;
                 }
             }
+
+            // DEBUGLOG(this << "::getFormatBySignature " << i << " not detected ");
         }
         return -1;
     };
@@ -1332,6 +1329,18 @@ namespace sevenzip {
         if (SysStringByteLen(prop.bstrVal) != sizeof(GUID))
             return IID_IUnknown;
         return *(const GUID*)(const void*)prop.bstrVal;
+    };
+
+    bool Lib::Impl::isExtensionSupported(int index, const wchar_t* ext) {    
+        wchar_t* exts = getFormatExtensions(index);
+        wchar_t* state;
+        wchar_t* token = wcstok(exts, L" ", &state);
+        while (token) {
+            if (wcscmp(token, ext) == 0)
+                return true;
+            token = wcstok(NULL, L" ", &state);
+        }
+        return false;
     };
 
     UString Lib::Impl::getStringProperty(int propIndex, PROPID propID) {
