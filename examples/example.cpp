@@ -108,28 +108,28 @@ struct Compressstream: public Inputstream {
         return new Compressstream();
     };
 
-    virtual bool IsDir(const wchar_t* pathname) const override {
+    virtual bool IsDir(const wchar_t* pathname) override {
         STRUCT_STAT s;
         if (STAT(pathname, &s) == 0)
             return s.st_mode & S_IFDIR;
         return 0;
     };
 
-    virtual UInt64 GetSize(const wchar_t* pathname) const override {
+    virtual UInt64 GetSize(const wchar_t* pathname) override {
         STRUCT_STAT s;
         if (STAT(pathname, &s) == 0)
             return s.st_size;
         return 0;
     };
 
-    virtual UInt32 GetMode(const wchar_t* pathname) const override {
+    virtual UInt32 GetMode(const wchar_t* pathname) override {
         STRUCT_STAT s;
         if (STAT(pathname, &s) == 0)
             return s.st_mode;
         return 0;
     };
 
-    virtual UInt32 GetTime(const wchar_t* pathname) const override {
+    virtual UInt32 GetTime(const wchar_t* pathname) override {
         STRUCT_STAT s;
         if (STAT(pathname, &s) == 0)
             return static_cast<UInt32>(s.st_mtime);

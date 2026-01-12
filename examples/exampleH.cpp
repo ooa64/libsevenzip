@@ -47,17 +47,17 @@ struct Compressstream: public Inputstream {
         return new Compressstream();
     };
 
-    virtual bool IsDir(const wchar_t* pathname) const override {
+    virtual bool IsDir(const wchar_t* pathname) override {
         filesystem::path pn(pathname);
         return filesystem::is_directory(pn);
     };
 
-    virtual UInt64 GetSize(const wchar_t* pathname) const override {
+    virtual UInt64 GetSize(const wchar_t* pathname) override {
         filesystem::path pn(pathname);
         return std::filesystem::file_size(pn);
     };
 
-    virtual UInt32 GetMode(const wchar_t* /*pathname*/) const override {
+    virtual UInt32 GetMode(const wchar_t* /*pathname*/) override {
         // TODO: implement file mode conversion to POSIX
         // filesystem::path pn(pathname);
         // auto perm = filesystem::status(pn).permissions();
@@ -65,7 +65,7 @@ struct Compressstream: public Inputstream {
         return 0;
     };
 
-    virtual UInt32 GetTime(const wchar_t* /*pathname*/) const override {
+    virtual UInt32 GetTime(const wchar_t* /*pathname*/) override {
         // TODO: implement file time conversion to POSIX
         // filesystem::path pn(pathname);
         // auto mtime = std::filesystem::last_write_time(pn);
@@ -108,7 +108,7 @@ struct Extractstream: public Outputstream {
         wcout << "Extracting " << filename << "\n";
         filesystem::path fn(fullname(filename));
         filesystem::create_directories(fn.parent_path());
-        return Outputstream::Open(fn.c_str());
+        return Outputstream::Open(filename);
     };
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {

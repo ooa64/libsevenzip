@@ -52,12 +52,12 @@ namespace sevenzip {
         virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64& /*position*/) { return S_FALSE; };
 
 		// Used by update handler. Default works in some cases, but it's better to reimplement it
-        virtual UInt64 GetSize(const wchar_t* /*filename*/) const { return 1; };
+        virtual UInt64 GetSize(const wchar_t* /*filename*/) { return 1; };
 
         // Used by the update handler
-        virtual bool IsDir(const wchar_t* /*filename*/) const { return false; };
-        virtual UInt32 GetMode(const wchar_t* /*filename*/) const { return 0; };
-        virtual UInt32 GetTime(const wchar_t* /*filename*/) const { return 0; };
+        virtual bool IsDir(const wchar_t* /*filename*/) { return false; };
+        virtual UInt32 GetMode(const wchar_t* /*filename*/) { return 0; };
+        virtual UInt32 GetTime(const wchar_t* /*filename*/) { return 0; };
 
         // Used by open multivolume handler
         virtual Istream* Clone() const { return nullptr; };
