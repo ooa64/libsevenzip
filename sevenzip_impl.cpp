@@ -86,7 +86,7 @@ namespace sevenzip {
             return L"";
         UString n(filename);
         int dot = n.ReverseFind_Dot();
-        if (dot < n.ReverseFind_PathSepar())
+        if (dot < 0 || dot < n.ReverseFind_PathSepar())
             return L"";
         return n.Ptr((unsigned)(dot + 1));
     };
