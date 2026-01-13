@@ -936,7 +936,10 @@ Platform-specific types are defined for compatibility:
 ## Additional Resources
 
 - 7-Zip SDK Documentation: https://www.7-zip.org/sdk.html
-- 7-Zip Source Repository https://github.com/ip7z/7zip
+- 7-Zip Source Repository: https://github.com/ip7z/7zip
+- Lib7zip C++ Wrapper Library 7-Zip: https://github.com/stonewell/lib7zip
+- Libsevenzip Source Repository: https://github.com/ooa64/libsevenzip
+- Libsevenzip additional tests: https://github.com/ooa64/tclsevenzip
 
 ---
 
