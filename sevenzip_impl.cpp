@@ -463,7 +463,7 @@ namespace sevenzip {
 
     STDMETHODIMP CExtractCallback::SetOperationResult(Int32 operationResult) throw() {
         DEBUGLOG(this << " CExtractCallback::SetOperationResult " << operationResult << " item " << index);
-        if (operationResult == NArchive::NExtract::NOperationResult::kOK)
+        if (operationResult == NArchive::NExtract::NOperationResult::kOK) {
             if (outstream && index >= 0) {
                 COUTSTREAM(outstream)->Close();
 
@@ -489,7 +489,13 @@ namespace sevenzip {
                             << " time " << time << " mode " << std::oct << mode);
                 }
             }
-        return S_OK;
+            return S_OK;
+        }
+        if (operationResult == NArchive::NExtract::NOperationResult::kWrongPassword)
+            return E_NEEDPASSWORD;
+        if (operationResult == NArchive::NExtract::NOperationResult::kUnsupportedMethod)
+            return E_NOTSUPPORTED;
+        return E_FAIL;
     };
 
     STDMETHODIMP CExtractCallback::CryptoGetTextPassword(BSTR* password) throw() {
