@@ -108,6 +108,9 @@ namespace sevenzip {
         wchar_t* getLoadMessage(); // lib.load() error message
         unsigned getVersion();
 
+        int getNumberOfMethods();
+        wchar_t* getMethodName(int index);
+
         int getNumberOfFormats();
         wchar_t* getFormatName(int index);
         wchar_t* getFormatExtensions(int index);

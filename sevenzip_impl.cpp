@@ -1172,6 +1172,9 @@ namespace sevenzip {
             GetNumberOfFormats = (Func_GetNumberOfFormats)GetProcAddress("GetNumberOfFormats");
             if (!GetNumberOfFormats)
                 break;
+            GetMethodProperty = (Func_GetMethodProperty)GetProcAddress("GetMethodProperty");
+            if (!GetMethodProperty)
+                break;
             GetHandlerProperty = (Func_GetHandlerProperty)GetProcAddress("GetHandlerProperty");
             if (!GetHandlerProperty)
                 break;
@@ -1191,6 +1194,7 @@ namespace sevenzip {
         GetNumberOfMethods = nullptr;
         GetNumberOfFormats = nullptr;
         GetHandlerProperty = nullptr;
+        GetMethodProperty = nullptr;
         GetHandlerProperty2 = nullptr;
         DEBUGLOG(this << " Lib::Impl::Load error : " << loadMessage);
         _unload();
@@ -1215,6 +1219,40 @@ namespace sevenzip {
             return 0;
         return prop.ulVal;
     };
+
+    int Lib::Impl::getNumberOfMethods() {
+        UInt32 n = 1;
+        if (!GetNumberOfMethods)
+            return 0;
+        if (GetNumberOfMethods(&n) != S_OK)
+            return 0;
+        return n;
+    };
+
+    wchar_t* Lib::Impl::getMethodName(int index) {
+        lastMethodName[0] = L'\0';
+        NWindows::NCOM::CPropVariant prop;
+        if (!GetMethodProperty)
+            return lastMethodName;
+        if (GetMethodProperty(index, NMethodPropID::kName, &prop) != S_OK)
+            return lastMethodName;
+        if (prop.vt != VT_BSTR)
+            return lastMethodName;
+        COPYWCHARS(lastMethodName, prop.bstrVal);
+        return lastMethodName;
+    };
+
+    // NOTE: usable props - kDecoderIsAssigned, kEncoderIsAssigned, kIsFilter
+    // bool Lib::Impl::getMethodIsEncoder(int index) {
+    //     NWindows::NCOM::CPropVariant prop;
+    //     if (!GetMethodProperty)
+    //         return false;
+    //     if (GetMethodProperty(index, NMethodPropID::kEncoderIsAssigned, &prop) != S_OK)
+    //         return false;
+    //     if (prop.vt != VT_BOOL)
+    //         return false;
+    //     return prop.boolVal;
+    // };
 
     int Lib::Impl::getNumberOfFormats() {
         UInt32 n = 1;

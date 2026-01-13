@@ -211,6 +211,10 @@ namespace sevenzip {
         wchar_t* getLoadMessage();
         unsigned getVersion();
 
+        int getNumberOfMethods();
+        wchar_t* getMethodName(int index);
+        // bool getMethodIsEncoder(int index);
+
         int getNumberOfFormats();
         wchar_t* getFormatExtensions(int index);
         wchar_t* getFormatName(int index);
@@ -227,6 +231,7 @@ namespace sevenzip {
         Func_CreateObject CreateObjectFunc = nullptr;
         Func_GetNumberOfMethods GetNumberOfMethods = nullptr;
         Func_GetNumberOfFormats GetNumberOfFormats = nullptr;
+        Func_GetMethodProperty GetMethodProperty = nullptr;
         Func_GetHandlerProperty GetHandlerProperty = nullptr;
         Func_GetHandlerProperty2 GetHandlerProperty2 = nullptr;
         Func_GetModuleProp GetModuleProp = nullptr;
@@ -239,8 +244,9 @@ namespace sevenzip {
         void _unload();
 
         wchar_t loadMessage[128] = { L'\0' };
-        wchar_t lastFormatExtensions[128] = { L'\0' };
+        wchar_t lastMethodName[128] = { L'\0' };
         wchar_t lastFormatName[128] = { L'\0' };
+        wchar_t lastFormatExtensions[128] = { L'\0' };
     };
 
 

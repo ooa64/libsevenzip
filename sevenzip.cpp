@@ -32,6 +32,14 @@ namespace sevenzip {
         return pimpl->getVersion();
     }
 
+    int Lib::getNumberOfMethods() {
+        return pimpl->getNumberOfMethods();
+    }
+
+    wchar_t* Lib::getMethodName(int index) {
+        return pimpl->getMethodName(index);
+    }
+
     int Lib::getNumberOfFormats() {
         return pimpl->getNumberOfFormats();
     }

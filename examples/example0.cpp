@@ -24,8 +24,13 @@ int main() {
             << l.getFormatName(i) << (l.getFormatUpdatable(i) ? "(updatable)" : "") << ": "
             << l.getFormatExtensions(i) << "\n";
     }
-
-    if (n > 0) {
+    wcout << "methods :\n";
+    int m = l.getNumberOfMethods();
+    for (int i = 0; i < m; i++) {
+        wcout << i+1 << " : "
+            << l.getMethodName(i) << "\n";
+    }
+    if (n > 0 && m > 0) {
         wcout << "TEST PASSED\n";
     }
     return 0;
