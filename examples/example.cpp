@@ -51,8 +51,7 @@ wstring dirname(const wstring& path) {
     return path.substr(0, pos);
 }
 
-
-bool mkpath(std::wstring path) {
+bool mkpath(const std::wstring& path) {
     if (path.empty())
         return true;
     if (MKDIR(path.c_str(), 0775) == 0)
