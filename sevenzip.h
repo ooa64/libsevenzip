@@ -57,6 +57,7 @@ namespace sevenzip {
         // Used by the update handler
         virtual bool IsDir(const wchar_t* /*filename*/) { return false; };
         virtual UInt32 GetMode(const wchar_t* /*filename*/) { return 0; };
+        virtual UInt32 GetAttr(const wchar_t* /*filename*/) { return 0; };
         virtual UInt32 GetTime(const wchar_t* /*filename*/) { return 0; };
 
         // Used by open multivolume handler
@@ -85,6 +86,7 @@ namespace sevenzip {
         // Used by extract handler
         virtual HRESULT Mkdir(const wchar_t* /*dirname*/) { return S_FALSE; };
         virtual HRESULT SetMode(const wchar_t* /*path*/, UInt32 /*mode*/) { return S_FALSE; };
+        virtual HRESULT SetAttr(const wchar_t* /*filename*/, UInt32 /*attr*/) { return S_FALSE; };
         virtual HRESULT SetTime(const wchar_t* /*filename*/, UInt32 /*time*/) { return S_FALSE; };
 
         virtual ~Ostream() = default;
@@ -160,6 +162,7 @@ namespace sevenzip {
         const wchar_t* getItemPath(int index);
         UInt64 getItemSize(int index);
         UInt32 getItemMode(int index);
+        UInt32 getItemAttr(int index);
         UInt32 getItemTime(int index);
         bool getItemIsDir(int index);
 

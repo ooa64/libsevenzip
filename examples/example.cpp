@@ -1,5 +1,6 @@
 #ifdef _WIN32
 #pragma warning(disable: 4530)
+#include <windows.h>
 #endif
 #include <iostream>
 #include "sevenzip.h"
@@ -7,7 +8,6 @@
 #include <sys/stat.h>
 
 #ifdef _WIN32
-#include <direct.h>
 #include <sys/utime.h>
 #define MAIN(_c_,_v_) wmain(int _c_, wchar_t** _v_)
 #define U2F(_s_) (_s_)
@@ -128,6 +128,12 @@ struct Compressstream: public Inputstream {
         return 0;
     };
 
+#ifdef _WIN32
+    virtual UInt32 GetAttr(const wchar_t* pathname) override {
+        return GetFileAttributesW(pathname);
+    };
+#endif
+
     virtual UInt32 GetTime(const wchar_t* pathname) override {
         STRUCT_STAT s;
         if (STAT(pathname, &s) == 0)
@@ -183,7 +189,13 @@ struct Extractstream: public Outputstream {
         (void)CHMOD(fullname(pathname).c_str(), mode);
         return S_OK; 
     };
-    
+
+#ifdef _WIN32
+    virtual HRESULT SetAttr(const wchar_t* pathname, UInt32 attr) override {
+        return getResult(SetFileAttributesW(pathname, attr));
+    };
+#endif
+
     virtual HRESULT SetTime(const wchar_t* pathname, UInt32 time) override {
         STRUCT_UTIMBUF t;
         t.actime = 0;

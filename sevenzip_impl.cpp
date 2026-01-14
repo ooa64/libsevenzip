@@ -256,13 +256,18 @@ namespace sevenzip {
     }
 
     UInt32 CInStream::GetTime(const wchar_t* pathname) {
-        DEBUGLOG(this << " CInStream::GetFileTime " << pathname);
+        DEBUGLOG(this << " CInStream::GetTime " << pathname);
         return istream ? istream->GetTime(pathname) : 0;
     };
 
     UInt32 CInStream::GetMode(const wchar_t* pathname) {
-        DEBUGLOG(this << " CInStream::GetFileMode " << pathname);
+        DEBUGLOG(this << " CInStream::GetMode " << pathname);
         return istream ? istream->GetMode(pathname) : 0;
+    };
+
+    UInt32 CInStream::GetAttr(const wchar_t* pathname) {
+        DEBUGLOG(this << " CInStream::GetAttr " << pathname);
+        return istream ? istream->GetAttr(pathname) : 0;
     };
 
     COutStream::COutStream(Ostream* ostream): ostream(ostream) {
@@ -296,8 +301,13 @@ namespace sevenzip {
     };
     
     HRESULT COutStream::SetMode(const wchar_t* pathname, UInt32 mode) {
-        DEBUGLOG(this << " COutStream::SetMode " << pathname << " " << std::oct << mode);
+        DEBUGLOG(this << " COutStream::SetMode " << pathname << " " << std::oct << mode << std::dec);
         return ostream ? ostream->SetMode(pathname, mode) : S_FALSE;
+    };
+    
+    HRESULT COutStream::SetAttr(const wchar_t* pathname, UInt32 attr) {
+        DEBUGLOG(this << " COutStream::SetAttr " << pathname << " " << std::hex << attr << std::dec);
+        return ostream ? ostream->SetAttr(pathname, attr) : S_FALSE;
     };
     
     HRESULT COutStream::SetTime(const wchar_t* pathname, UInt32 time) {
@@ -356,7 +366,7 @@ namespace sevenzip {
             case kpidCTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(pathname)); break;
             case kpidATime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(pathname)); break;
             case kpidMTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(pathname)); break;
-            case kpidAttrib: prop = ((istream->GetMode(pathname) & 0xffff) << 16) | 0x8000; break;
+            case kpidAttrib: prop = istream->GetAttr(pathname); break;
             case kpidPosixAttrib: prop = istream->GetMode(pathname); break;
             default: break;
             }
@@ -486,19 +496,28 @@ namespace sevenzip {
                     getArchiveBoolItemProperty(archive, index, kpidIsDir, isdir);
 
                     UInt32 time = 0;
-                    if (getArchiveTimeItemProperty(archive, index, kpidMTime, time) == S_OK)
+                    getArchiveTimeItemProperty(archive, index, kpidMTime, time);
+                    if (time != 0)
                         COUTSTREAM(outstream)->SetTime(pathname, time);
                     
-                    UInt32 mode = 0700;
-                    if (getArchiveIntItemProperty(archive, index, kpidPosixAttrib, mode) == S_OK)
-                        mode |= (isdir ? 0700 : 0);
-                    else if (getArchiveIntItemProperty(archive, index, kpidAttrib, mode) == S_OK)
-                        if (mode & 0x8000)
-                            mode = (mode >> 16) | (isdir ? 0700 : 0);
-                    COUTSTREAM(outstream)->SetMode(pathname, mode);
+                    UInt32 attr = 0;
+                    getArchiveIntItemProperty(archive, index, kpidAttrib, attr);
+                    if (attr != 0)
+                        COUTSTREAM(outstream)->SetAttr(pathname, attr & 0x8000 ? attr & 0x7FFF : attr);
+
+                    UInt32 mode = 0;
+                    getArchiveIntItemProperty(archive, index, kpidPosixAttrib, mode);
+                    if (mode != 0)
+                        COUTSTREAM(outstream)->SetMode(pathname, mode);
+                    else if (attr & 0x8000)
+                        COUTSTREAM(outstream)->SetMode(pathname, (attr >> 16));
+                    else if (isdir)
+                        COUTSTREAM(outstream)->SetMode(pathname, 0700);
 
                     DEBUGLOG(this << " CExtractCallback::SetOperationResult set " << pathname.Ptr()
-                            << " time " << time << " mode " << std::oct << mode);
+                            << " time " << time
+                            << " mode " << std::oct << mode
+                            << " attr " << std::hex << attr << std::dec);
                 }
             }
             return S_OK;
@@ -588,7 +607,7 @@ namespace sevenzip {
             case kpidCTime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
             case kpidATime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
             case kpidMTime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
-            case kpidAttrib: prop = ((CINSTREAM(instream)->GetMode(items[index]) & 0xffff) << 16) | 0x8000; break;
+            case kpidAttrib: prop = CINSTREAM(instream)->GetAttr(items[index]); break;
             case kpidPosixAttrib: prop = CINSTREAM(instream)->GetMode(items[index]); break;
             default: break;
             }
@@ -821,6 +840,13 @@ namespace sevenzip {
         if (getArchiveIntItemProperty(inarchive, index, kpidAttrib, mode) == S_OK)
             if (mode & 0x8000)
                 return mode >> 16; // p7zip posix feature
+        return 0;
+    };
+
+    UInt32 Iarchive::Impl::getItemAttr(int index) {
+        UInt32 attr;
+        if (getArchiveIntItemProperty(inarchive, index, kpidAttrib, attr) == S_OK)
+            return (attr & 0x8000) ? attr & 0x7FFF : attr;
         return 0;
     };
 

@@ -205,6 +205,8 @@ int main() {
         wcout << "\t" << i+1 << " : " << a.getItemPath(i) << "\t";
         wcout << ftime(a.getItemTime(i)) << "\t";
         wcout << oct << a.getItemMode(i) << "\t";
+        wcout << hex << a.getItemAttr(i) << "\t";
+        wcout << dec;
         if (a.getItemIsDir(i))
             wcout << "DIR\n";
         else

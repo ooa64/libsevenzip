@@ -45,6 +45,7 @@ namespace sevenzip {
         bool IsDir(const wchar_t* pathname);
         UInt64 GetSize(const wchar_t* pathname);
         UInt32 GetMode(const wchar_t* pathname);
+        UInt32 GetAttr(const wchar_t* pathname);
         UInt32 GetTime(const wchar_t* pathname);
 
     private:
@@ -76,6 +77,7 @@ namespace sevenzip {
 
         HRESULT Mkdir(const wchar_t* dirname);
         HRESULT SetMode(const wchar_t* pathname, UInt32 mode);
+        HRESULT SetAttr(const wchar_t* pathname, UInt32 attr);
         HRESULT SetTime(const wchar_t* pathname, UInt32 time);
 
     private:
@@ -268,6 +270,7 @@ namespace sevenzip {
         const wchar_t* getItemPath(int index);
         UInt64 getItemSize(int index);
         UInt32 getItemMode(int index);
+        UInt32 getItemAttr(int index);
         UInt32 getItemTime(int index);
         bool getItemIsDir(int index);
 
