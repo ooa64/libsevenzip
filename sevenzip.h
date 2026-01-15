@@ -159,7 +159,7 @@ namespace sevenzip {
         // archive items listing
 
         int getNumberOfItems();
-        const wchar_t* getItemPath(int index);
+        wchar_t* getItemPath(int index);
         UInt64 getItemSize(int index);
         UInt32 getItemMode(int index);
         UInt32 getItemAttr(int index);

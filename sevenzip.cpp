@@ -94,7 +94,7 @@ namespace sevenzip {
         return pimpl->getNumberOfItems();
     };
 
-    const wchar_t* Iarchive::getItemPath(int index) {
+    wchar_t* Iarchive::getItemPath(int index) {
         return pimpl->getItemPath(index);
     };
 

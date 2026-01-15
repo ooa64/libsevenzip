@@ -809,7 +809,7 @@ namespace sevenzip {
         return 0;
     };
 
-    const wchar_t* Iarchive::Impl::getItemPath(int index) {
+    wchar_t* Iarchive::Impl::getItemPath(int index) {
         UString path;
 		lastItemPath[0] = L'\0';
         if (!inarchive)
