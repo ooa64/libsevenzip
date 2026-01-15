@@ -4,7 +4,7 @@
 
 **libsevenzip** is a C++ wrapper library for the 7-Zip archive format library. It provides a simplified interface for working with various archive formats supported by 7-Zip, including reading, extracting, creating, and updating archives.
 
-**Version:** 1.0
+**Version:** 1.1
 
 ---
 
@@ -152,6 +152,14 @@ virtual UInt32 GetMode(const wchar_t* filename) const;
 - **Returns:** File mode bits (Unix-style permissions)
 
 ```cpp
+virtual UInt32 GetAttr(const wchar_t* filename) const;
+```
+- **Purpose:** Get file attributes
+- **Required for:** Archive creation (Windows)
+- **Default:** Returns 0
+- **Returns:** File attributes (Windows file attributes)
+
+```cpp
 virtual UInt32 GetTime(const wchar_t* filename) const;
 ```
 - **Purpose:** Get file timestamp
@@ -220,6 +228,13 @@ virtual HRESULT SetMode(const wchar_t* path, UInt32 mode);
 ```
 - **Purpose:** Set file permissions
 - **Required for:** Restoring files permission after extraction
+
+```cpp
+virtual HRESULT SetAttr(const wchar_t* filename, UInt32 attr);
+```
+- **Purpose:** Set file attributes
+- **Required for:** Restoring file attributes after extraction (Windows)
+- **Default:** Returns S_FALSE
 
 ```cpp
 virtual HRESULT SetTime(const wchar_t* filename, UInt32 time);

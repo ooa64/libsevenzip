@@ -6,6 +6,10 @@
 #error outdated 7zip
 #endif
 
+#if !defined(PROJECT_VER_MAJOR) || !defined(PROJECT_VER_MINOR)
+#error unknown PROJECT_VER_MAJOR or PROJECT_VER_MINOR
+#endif
+
 #include "CPP/Common/Common.h"
 #include "CPP/Common/MyCom.h"
 #include "CPP/Common/MyBuffer.h"
@@ -21,6 +25,10 @@ typedef void * HMODULE;
 
 #include "sevenzip_compat.h"
 #include "sevenzip.h"
+
+#if PROJECT_VER_MAJOR != LIBSEVENZIP_VER_MAJOR || PROJECT_VER_MINOR != LIBSEVENZIP_VER_MINOR
+#error mismatched PROJECT_VER_MAJOR and/or PROJECT_VER_MINOR
+#endif
 
 namespace sevenzip {
 

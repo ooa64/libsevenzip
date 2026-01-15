@@ -9,6 +9,8 @@ if(NOT SEVENZIPSRC)
     set(SEVENZIPSRC "../7zip")
 endif()
 
+add_compile_definitions(PUBLIC PROJECT_VER_MAJOR=1)
+add_compile_definitions(PUBLIC PROJECT_VER_MINOR=1)
 # add_compile_definitions(UNICODE _UNICODE)
 # add_compile_definitions(DEBUG_IMPL)
 # add_compile_options(-fsanitize=address -Zi)

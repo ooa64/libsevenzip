@@ -2,7 +2,7 @@
 #define SEVENZIP_H
 
 #define LIBSEVENZIP_VER_MAJOR 1
-#define LIBSEVENZIP_VER_MINOR 0
+#define LIBSEVENZIP_VER_MINOR 1
 
 #include "C/7zTypes.h"
 

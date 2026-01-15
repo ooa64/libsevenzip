@@ -1,7 +1,7 @@
 # makefile
 
-VER_MAJOR = 1
-VER_MINOR = 0
+PROJECT_VER_MAJOR = 1
+PROJECT_VER_MINOR = 1
 
 SEVENZIPSRC ?= ../7zip
 SEVENZIPBIN ?= env PATH=$(PATH):$(CURDIR) \
@@ -15,12 +15,12 @@ ifdef UNICODE
 endif
 
 ifdef DEBUG
-	R = libsevenzip$(VER_MAJOR).$(VER_MINOR)d
+	R = libsevenzip$(PROJECT_VER_MAJOR).$(PROJECT_VER_MINOR)d
 	O = outputs/debug
 	CFLAGS += -ggdb -O0
 	SEVENZIPFLAGS += DEBUG_BUILD=1
 else
-	R = libsevenzip$(VER_MAJOR).$(VER_MINOR)
+	R = libsevenzip$(PROJECT_VER_MAJOR).$(PROJECT_VER_MINOR)
 	O = outputs/release
 endif
 
@@ -32,17 +32,15 @@ ifdef ASAN
 	CFLAGS += -fsanitize=address -fno-omit-frame-pointer -fno-common -g3
 endif
 
-#CXX=g++-13
-#CXX17=g++-13 -std=c++17
-CXX17=$(CXX) -std=c++17
-
 TARGET = libsevenzip.a
 EXAMPLES = example0 example1 example2 example3 example4 example5 example6 example7 example8 example9
 
 CFLAGS += -fPIC -Wall -Wextra -I.
-CFLAGS += -DLIBSEVENZIP_VER_MAJOR=$(VER_MAJOR) -DLIBSEVENZIP_VER_MINOR=$(VER_MINOR)
-CXXFLAGS += $(CFLAGS)
+CFLAGS += -DPROJECT_VER_MAJOR=$(PROJECT_VER_MAJOR) -DPROJECT_VER_MINOR=$(PROJECT_VER_MINOR)
 LDFLAGS +=
+
+CXX17 ?= $(CXX) -std=c++17
+CXXFLAGS += $(CFLAGS)
 
 # NOTE: uncomment to build p7zip compatible 7z.so using 7-Zip SDK v.23+
 # SEVENZIPFLAGS += LOCAL_FLAGS="-DZ7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN"
