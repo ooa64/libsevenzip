@@ -1375,6 +1375,9 @@ namespace sevenzip {
                     len2 = SysStringByteLen(prop2.bstrVal);
 
             // DEBUGLOG(this << "::getFormatBySignature " << i << ". " << offs << "/" << len1 << "/" <<  len2);
+            
+            if (ext && ext[0] && len1 == 0 && len2 == 0)
+                return i;
 
             if (len1 > 0 && offs + len1 <= bufsize) {
                 if (memcmp(prop1.bstrVal, buf + offs, len1) == 0)
