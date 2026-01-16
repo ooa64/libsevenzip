@@ -4,3 +4,4 @@ wipe passwords after use
 add tests (from examples and new)
 add progress callbacks
 add multivolume creation
+add embedded archives detection by signature

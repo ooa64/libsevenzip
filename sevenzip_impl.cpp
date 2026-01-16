@@ -690,18 +690,26 @@ namespace sevenzip {
         const UInt64 scan = (UInt64)1 << 23;
         while (true) {
 
+            UString ext = getFilenameExt(name.Ptr());
+
+            // DEBUGLOG(this << " Iarchive::Impl::open name " << name.Ptr() << " formatIndex " << formatIndex);
+
+            // search signature for given ext
             if (formatIndex == -1)
-                formatIndex = libimpl->getFormatByExtension(getFilenameExt(name));
-            if (formatIndex < 0)
-                formatIndex = libimpl->getFormatBySignature(istream, getFilenameExt(name));
+                formatIndex = libimpl->getFormatBySignature(istream, ext.Ptr());
+            // signature not found, embedded archive? let 7z detect
+            if (formatIndex == -1)
+                formatIndex = libimpl->getFormatByExtension(ext.Ptr());
+            // scan all signatures 
             if (formatIndex < 0)
                 formatIndex = libimpl->getFormatBySignature(istream, nullptr);
+            // unknown stream
             if (formatIndex < 0)
                 return E_NOTSUPPORTED;
 
             this->formatIndex = formatIndex;
 
-            // DEBUGLOG(this << " arc name " << name.Ptr() << " formatIndex " << formatIndex
+            // DEBUGLOG(this << " Iarchive::Impl::open found formatIndex " << formatIndex
             //         << L" (" << libimpl->getStringProperty(formatIndex, NArchive::NHandlerPropID::kName) << L")");
 
             GUID guid = libimpl->getFormatGUID(formatIndex);
