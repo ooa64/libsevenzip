@@ -231,11 +231,12 @@ namespace sevenzip {
         bool getFormatUpdatable(int index);
         int getFormatByExtension(const wchar_t* ext);
         int getFormatBySignature(Istream* stream, const wchar_t* ext);
+        int getFormatBySignature(IInStream* stream, const wchar_t* ext);
 
         // for internal use
         GUID getFormatGUID(int index);
-        bool isExtensionSupported(int index, const wchar_t* ext);
         UString getStringProperty(int propIndex, PROPID propID);
+        bool isExtensionSupported(int index, const wchar_t* ext);
         bool checkInterfaceType() const;
 
         Func_CreateObject CreateObjectFunc = nullptr;

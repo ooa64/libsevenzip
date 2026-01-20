@@ -692,48 +692,48 @@ namespace sevenzip {
 
             UString ext = getFilenameExt(name.Ptr());
 
-            // DEBUGLOG(this << " Iarchive::Impl::open name " << name.Ptr() << " formatIndex " << formatIndex);
+            // DEBUGLOG(this << " Iarchive::open name " << name.Ptr() << " formatIndex " << formatIndex);
 
-            // search signature for given ext
+            // search for signature for a given ext
             if (formatIndex == -1)
-                formatIndex = libimpl->getFormatBySignature(istream, ext.Ptr());
+                formatIndex = libimpl->getFormatBySignature(instream, ext.Ptr());
             // signature not found, embedded archive? let 7z detect
             if (formatIndex == -1)
                 formatIndex = libimpl->getFormatByExtension(ext.Ptr());
-            // scan all signatures 
+            // detect by ext is not requested or supported, check all signatures 
             if (formatIndex < 0)
-                formatIndex = libimpl->getFormatBySignature(istream, nullptr);
+                formatIndex = libimpl->getFormatBySignature(instream, nullptr);
             // unknown stream
             if (formatIndex < 0)
                 return E_NOTSUPPORTED;
 
             this->formatIndex = formatIndex;
 
-            // DEBUGLOG(this << " Iarchive::Impl::open found formatIndex " << formatIndex
-            //         << L" (" << libimpl->getStringProperty(formatIndex, NArchive::NHandlerPropID::kName) << L")");
+            DEBUGLOG(this << " Iarchive::open format " << formatIndex
+                    << L" (" << libimpl->getFormatName(formatIndex) << L")");
 
             GUID guid = libimpl->getFormatGUID(formatIndex);
             inarchive = nullptr; // input stream leak w/o this assignment
 
-            // DEBUGLOG(this << " Iarchive::Impl::open CreateObjectFunc guid " << guid.Data1 << "-" << guid.Data2 << "-" << guid.Data3);
+            // DEBUGLOG(this << " Iarchive::open CreateObjectFunc guid " << guid.Data1 << "-" << guid.Data2 << "-" << guid.Data3);
             hr = libimpl->CreateObjectFunc(&guid, &IID_IInArchive, (void**)&inarchive);
             if (hr != S_OK)
                 return hr;
 
-            // DEBUGLOG(this << " Iarchive::Impl::open inarchive->Open");
+            // DEBUGLOG(this << " Iarchive::open inarchive->Open");
             hr = inarchive->Open(instream, &scan, opencallback);
             if (hr == S_FALSE)
                 return E_NOTSUPPORTED;
             if (hr != S_OK)
                 return hr;
 
-            // DEBUGLOG(this << " Iarchive::Impl::open inarchive->GetNumberOfItems");
+            // DEBUGLOG(this << " Iarchive::open inarchive->GetNumberOfItems");
             UInt32 nitems = 0;
             hr = inarchive->GetNumberOfItems(&nitems);
             if (hr != S_OK)
                 return hr;
 
-            // DEBUGLOG(this << " Iarchive::Impl::open getIntProperty kpidMainSubfile");
+            // DEBUGLOG(this << " Iarchive::open getIntProperty kpidMainSubfile");
             UInt32 mainsubfile = (UInt32)(Int32)- 1;
             hr = getIntProperty(kpidMainSubfile, mainsubfile);
             if (hr == S_FALSE)
@@ -741,12 +741,12 @@ namespace sevenzip {
             if (hr != S_OK)
                 return hr;
 
-            // DEBUGLOG(this << " Iarchive::Impl::open getArchiveStringItemProperty kpidPath " << mainsubfile);
+            // DEBUGLOG(this << " Iarchive::open getArchiveStringItemProperty kpidPath " << mainsubfile);
             hr = getArchiveStringItemProperty(inarchive, mainsubfile, kpidPath, name);
             if (hr != S_OK)
                 return hr;
 
-            // DEBUGLOG(this << " Iarchive::Impl::open QueryInterface IID_IInArchiveGetStream");
+            // DEBUGLOG(this << " Iarchive::open QueryInterface IID_IInArchiveGetStream");
             CMyComPtr<IInArchiveGetStream> getStream = nullptr;
             hr = inarchive->QueryInterface(IID_IInArchiveGetStream, (void**)&getStream);
             if (hr != S_OK)
@@ -754,7 +754,7 @@ namespace sevenzip {
             if (!getStream)
                 return S_FALSE;
 
-            // DEBUGLOG(this << " Iarchive::Impl::open getStream->GetStream");
+            // DEBUGLOG(this << " Iarchive::open getStream->GetStream");
             CMyComPtr<ISequentialInStream> insubstream = nullptr;
             hr = getStream->GetStream(mainsubfile, &insubstream);
             if (hr != S_OK)
@@ -762,7 +762,7 @@ namespace sevenzip {
             if (!insubstream)
                 return S_FALSE;
 
-            // DEBUGLOG(this << " Iarchive::Impl::open insubstream->QueryInterface IID_IInStream");
+            // DEBUGLOG(this << " Iarchive::open insubstream->QueryInterface IID_IInStream");
             instream = nullptr;
             hr = insubstream.QueryInterface(IID_IInStream, &instream);
             if (hr != S_OK)
@@ -770,7 +770,7 @@ namespace sevenzip {
             if (!instream)
                 return S_FALSE;
 
-            // DEBUGLOG(this << " Iarchive::Impl::open QueryInterface IID_IArchiveOpenSetSubArchiveName");
+            // DEBUGLOG(this << " Iarchive::open QueryInterface IID_IArchiveOpenSetSubArchiveName");
             CMyComPtr<IArchiveOpenSetSubArchiveName> insetsubname;
             hr = opencallback->QueryInterface(IID_IArchiveOpenSetSubArchiveName, (void**)&insetsubname);
             if (hr != S_OK)
@@ -1043,7 +1043,10 @@ namespace sevenzip {
         if (formatIndex < 0)
             formatIndex = libimpl->getFormatByExtension(L"7z");
         if (formatIndex < 0)
-            return E_NOTIMPL;
+            return E_NOTSUPPORTED;
+
+        DEBUGLOG(this << " Oarchive::open format " << formatIndex
+                << L" (" << libimpl->getFormatName(formatIndex) << L")");
 
         this->formatIndex = formatIndex;
 
@@ -1344,27 +1347,35 @@ namespace sevenzip {
         return -1;
     };
 
-    // TODO: iso, udf and others with signature outside first 1024 bytes
     int Lib::Impl::getFormatBySignature(Istream* stream, const wchar_t* ext) {
+        CInStream instream(stream);
+        return getFormatBySignature(&instream, ext);
+    };
+
+    int Lib::Impl::getFormatBySignature(IInStream* stream, const wchar_t* ext) {
         if (!GetHandlerProperty2)
             return -1;
-        UInt64 pos = 0, dummy;
-        UInt32 bufsize = 1024;
+        UInt64 pos = 0, end;
+        UInt32 bufsize = 2048;
         CByteBuffer buf(bufsize);
         buf.Wipe();
-        if (stream->Seek(0, SZ_SEEK_CUR, pos) != S_OK)
+        if (stream->Seek(0, SZ_SEEK_CUR, &pos) != S_OK)
             return -1;
-        if (stream->Seek(0, SZ_SEEK_SET, dummy) != S_OK)
+        if (stream->Seek(0, SZ_SEEK_END, &end) != S_OK)
             return -1;
-        if (stream->Read(buf, bufsize, bufsize) != S_OK)
+        if (stream->Seek(0, SZ_SEEK_SET, nullptr) != S_OK)
             return -1;
-        if (stream->Seek(pos, SZ_SEEK_SET, dummy) != S_OK)
+        if (stream->Read(buf, bufsize, nullptr) != S_OK)
             return -1;
+        if (stream->Seek(pos, SZ_SEEK_SET, nullptr) != S_OK)
+            return -1;
+        CByteBuffer buf2; // dynamic buffer
 
         for (int i = 0; i < getNumberOfFormats(); i++) {
-            // DEBUGLOG(this << "::getFormatBySignature checking format " << i << " "
+            // DEBUGLOG(this << " getFormatBySignature checking format " << i << " "
             //     << getFormatName(i) << " ext " << (ext ? ext : L"NULL"));
 
+            // restrict detection to a given extension if is not empty
             if (ext && ext[0] && !isExtensionSupported(i, ext))
                 continue;
 
@@ -1382,16 +1393,45 @@ namespace sevenzip {
                 if (prop2.vt == VT_BSTR)
                     len2 = SysStringByteLen(prop2.bstrVal);
 
-            // DEBUGLOG(this << "::getFormatBySignature " << i << ". " << offs << "/" << len1 << "/" <<  len2);
+            DEBUGLOG(this << " getFormatBySignature " << i << " " << offs << "/" << len1 << "/" <<  len2);
             
+            // signature not defined, return the first format that matches the extension
             if (ext && ext[0] && len1 == 0 && len2 == 0)
                 return i;
 
-            if (len1 > 0 && offs + len1 <= bufsize) {
-                if (memcmp(prop1.bstrVal, buf + offs, len1) == 0)
+            CByteBuffer *bufptr = &buf;
+            bool isdmg = getFormatGUID(i).Data4[5] == 0xE4;
+
+            // process dmg or other format with signature after first 2048 bytes (iso, udf)
+            if (offs + max(len1, len2) > bufsize || isdmg) {
+
+                DEBUGLOG(this << " getFormatBySignature " << i << " using dynamic buffer, isdmg " << isdmg);
+
+                if (isdmg) {
+                    if (end < 512)
+                        continue;
+                    if (stream->Seek(-512, SZ_SEEK_END, nullptr) != S_OK)
+                        return -1;
+                } else {
+                    if (end < offs + max(len1, len2))
+                        continue;
+                    if (stream->Seek(offs, SZ_SEEK_SET, nullptr) != S_OK)
+                        return -1;
+                }
+                buf2.AllocAtLeast(max(max(len1, len2), 64));
+                buf2.Wipe();
+                if (stream->Read(buf2, max(len1, len2), nullptr) != S_OK)
+                    return -1;
+                if (stream->Seek(pos, SZ_SEEK_SET, nullptr) != S_OK)
+                    return -1;
+                bufptr = &buf2;
+                offs = 0;
+            }
+            if (len1 > 0) {
+                if (memcmp(prop1.bstrVal, *bufptr + offs, len1) == 0)
                     return i;
             }
-            if (len2 > 0 && offs + len2 <= bufsize) {
+            if (len2 > 0) {
                 auto sign = reinterpret_cast<const Byte*>(prop2.bstrVal);
                 auto rest = len2;
                 while (rest > 0) {
@@ -1399,14 +1439,14 @@ namespace sevenzip {
                     rest--;
                     if (len > rest)
                         break;
-                    if (len > 0 && memcmp(sign, buf + offs, len) == 0)
+                    if (len > 0 && memcmp(sign, *bufptr + offs, len) == 0)
                         return i;
                     sign += len;
                     rest -= len;
                 }
             }
 
-            // DEBUGLOG(this << "::getFormatBySignature " << i << " not detected ");
+            // DEBUGLOG(this << " getFormatBySignature " << i << " not detected ");
         }
         return -1;
     };
