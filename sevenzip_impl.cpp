@@ -673,6 +673,9 @@ namespace sevenzip {
         if (!libimpl || !libimpl->CreateObjectFunc)
             return S_FALSE;
 
+        if (inarchive)
+            return S_FALSE;
+
         HRESULT hr = S_OK;
         UString name = filename ? filename : L"";
         hr = istream->Open(name);
@@ -682,8 +685,6 @@ namespace sevenzip {
         // hr = istream->Seek(0, SZ_SEEK_SET, nullptr);
         // if (FAILED(hr))
         //     return hr;
-
-        close();
 
         instream = new CInStream(istream);
         opencallback = new COpenCallback(istream, name, password);
@@ -1036,6 +1037,9 @@ namespace sevenzip {
         if (!libimpl || !libimpl->CreateObjectFunc)
             return S_FALSE;
 
+        if (outarchive)
+            return S_FALSE;
+
         HRESULT hr = ostream->Open(filename);
         if (FAILED(hr))
             return hr;
@@ -1063,8 +1067,8 @@ namespace sevenzip {
     
     void Oarchive::Impl::close() {
         DEBUGLOG(this << " Oarchive::close");
-        outstream = nullptr;
         outarchive = nullptr;
+        outstream = nullptr;
         updatecallback = nullptr;
         formatIndex = -1;
     };
