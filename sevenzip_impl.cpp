@@ -1380,7 +1380,7 @@ namespace sevenzip {
         CByteBuffer buf2; // dynamic buffer
 
         for (int i = 0; i < getNumberOfFormats(); i++) {
-            // DEBUGLOG(this << " getFormatBySignature checking format " << i << " "
+            // DEBUGLOG(this << " Lib::Impl::getFormatBySignature checking format " << i << " "
             //     << getFormatName(i) << " ext " << (ext ? ext : L"NULL"));
 
             // restrict detection to a given extension if is not empty
@@ -1401,7 +1401,7 @@ namespace sevenzip {
                 if (prop2.vt == VT_BSTR)
                     len2 = SysStringByteLen(prop2.bstrVal);
 
-            DEBUGLOG(this << " getFormatBySignature " << i << " " << offs << "/" << len1 << "/" <<  len2);
+            DEBUGLOG(this << " Lib::Impl::getFormatBySignature " << i << " " << offs << "/" << len1 << "/" <<  len2);
             
             // signature not defined, return the first format that matches the extension
             if (ext && ext[0] && len1 == 0 && len2 == 0)
@@ -1413,7 +1413,7 @@ namespace sevenzip {
             // process dmg or other format with signature after first 2048 bytes (iso, udf)
             if (offs + max(len1, len2) > bufsize || isdmg) {
 
-                DEBUGLOG(this << " getFormatBySignature " << i << " using dynamic buffer, isdmg " << isdmg);
+                DEBUGLOG(this << " Lib::Impl::getFormatBySignature " << i << " using dynamic buffer, isdmg " << isdmg);
 
                 if (isdmg) {
                     if (end < 512)
@@ -1454,7 +1454,7 @@ namespace sevenzip {
                 }
             }
 
-            // DEBUGLOG(this << " getFormatBySignature " << i << " not detected ");
+            // DEBUGLOG(this << " Lib::Impl::getFormatBySignature " << i << " not detected ");
         }
         return -1;
     };
@@ -1510,7 +1510,7 @@ namespace sevenzip {
                     flags = prop.ulVal;
             }
         }
-        DEBUGLOG(this << " interface flags "
+        DEBUGLOG(this << " Lib::Impl::checkInterfaceType flags "
             << NModuleInterfaceType::k_IUnknown_VirtDestructor_ThisModule
             << " vs " << flags);
         return flags == NModuleInterfaceType::k_IUnknown_VirtDestructor_ThisModule;
