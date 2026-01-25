@@ -22,6 +22,10 @@
 #   define UNUSED(_x_)
 #endif
 
+#ifndef max
+#define max(_a_,_b_) (((_a_) > (_b_)) ? (_a_) : (_b_))
+#endif
+
 namespace sevenzip {
 
     static const wchar_t * const kEmptyFileAlias = L"[Content]";
