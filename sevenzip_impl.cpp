@@ -660,6 +660,7 @@ namespace sevenzip {
 
     Iarchive::Impl::~Impl() {
         DEBUGLOG(this << " Iarchive::Impl::~Impl");
+        close();
     };
 
     HRESULT Iarchive::Impl::open(Lib::Impl* libimpl, Istream* istream,
@@ -713,7 +714,6 @@ namespace sevenzip {
                     << L" (" << libimpl->getFormatName(formatIndex) << L")");
 
             GUID guid = libimpl->getFormatGUID(formatIndex);
-            inarchive = nullptr; // input stream leak w/o this assignment
 
             // DEBUGLOG(this << " Iarchive::open CreateObjectFunc guid " << guid.Data1 << "-" << guid.Data2 << "-" << guid.Data3);
             hr = libimpl->CreateObjectFunc(&guid, &IID_IInArchive, (void**)&inarchive);
@@ -779,15 +779,19 @@ namespace sevenzip {
                 return S_FALSE;
 
             insetsubname->SetSubArchiveName(name);
-
+            inarchives.Add(inarchive);
+            inarchive = nullptr; // input stream leak w/o this assignment
             formatIndex = -1;
         }
     };
 
     void Iarchive::Impl::close() {
         DEBUGLOG(this << " Iarchive::close");
-        instream = nullptr;
+        for (int i = inarchives.Size(); i-- > 0; )
+            inarchives[i] = nullptr;
+        inarchives.Clear();
         inarchive = nullptr;
+        instream = nullptr;
         opencallback = nullptr;
         formatIndex = -1;
     }

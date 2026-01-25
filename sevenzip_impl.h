@@ -304,6 +304,7 @@ namespace sevenzip {
         CMyComPtr<IInStream> instream;
         CMyComPtr<IInArchive> inarchive;
         CMyComPtr<IArchiveOpenCallback> opencallback;
+        CObjectVector<CMyComPtr<IInArchive>> inarchives;
         int formatIndex = -1;
 
         wchar_t lastItemPath[1024] = { L'\0' };
