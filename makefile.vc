@@ -13,6 +13,9 @@ CFLAGS = $(CFLAGS) -DUNICODE -D_UNICODE
 
 !ifdef ASAN
 CFLAGS = $(CFLAGS) -fsanitize=address -Zi
+LFLAGS = $(LFLAGS) -DEBUG
+SEVENZIPCFLAGS = $(SEVENZIPCFLAGS) -fsanitize=address -Zi
+SEVENZIPLFLAGS = $(SEVENZIPLFLAGS) -DEBUG
 !endif
 
 !ifdef DEBUG
@@ -20,8 +23,7 @@ L = sevenzipd.lib
 R = libsevenzip$(PROJECT_VER_MAJOR).$(PROJECT_VER_MINOR)d
 O = outputs\debug
 CFLAGS = $(CFLAGS) -MDd
-LFLAGS = $(LFLAGS) /DEBUG
-SEVENZIPFLAGS = $(SEVENZIPFLAGS) DEBUG_BUILD=1
+LFLAGS = $(LFLAGS) -DEBUG
 !else
 L = sevenzip.lib
 R = libsevenzip$(PROJECT_VER_MAJOR).$(PROJECT_VER_MINOR)
@@ -140,8 +142,13 @@ $O\sevenzip.obj: sevenzip.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h
 
 7zip: 7z.dll
 7z.dll: $(SEVENZIPSRC)\CPP\7zip\Bundles\Format7zF\makefile
-	@cd $(SEVENZIPSRC)\CPP\7zip\Bundles\Format7zF && nmake -f makefile $(SEVENZIPFLAGS) O=%CD%\$O\7zip
-	@cp $O\7zip\7z.dll .
+	@setlocal
+	@set CFLAGS=$(SEVENZIPCFLAGS)
+	@set LFLAGS=$(SEVENZIPLFLAGS)
+	@cd $(SEVENZIPSRC)\CPP\7zip\Bundles\Format7zF && nmake -f makefile MY_DYNAMIC_LINK=1 O=%CD%\$O\7zip
+	@endlocal
+	@if exist $O\7zip\7z.dll copy $O\7zip\7z.dll .
+	@if exist $O\7zip\7z.pdb copy $O\7zip\7z.pdb .
 
 {$(SEVENZIPSRC)\CPP\Common}.cpp{$O}.obj:
 	$(CXX) -c $(CXXFLAGS) -I$(SEVENZIPSRC) $<
