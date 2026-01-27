@@ -24,6 +24,8 @@ R = libsevenzip$(PROJECT_VER_MAJOR).$(PROJECT_VER_MINOR)d
 O = outputs\debug
 CFLAGS = $(CFLAGS) -MDd
 LFLAGS = $(LFLAGS) -DEBUG
+SEVENZIPCFLAGS = $(SEVENZIPCFLAGS) -Zi
+SEVENZIPLFLAGS = $(SEVENZIPLFLAGS) -DEBUG
 !else
 L = sevenzip.lib
 R = libsevenzip$(PROJECT_VER_MAJOR).$(PROJECT_VER_MINOR)
@@ -68,7 +70,7 @@ clean:
 
 cleanall: clean
 	-@del /q/s $L $O\example*.exe $O\example*.pdb $O\tests*.exe $O\tests*.pdb > NUL 2>>&1
-	-@rd /q/s $O C temps
+	-@rd /q/s $O C temps > NUL 2>>&1
 
 library: prepare $L
 
@@ -149,6 +151,15 @@ $O\sevenzip.obj: sevenzip.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h
 	@endlocal
 	@if exist $O\7zip\7z.dll copy $O\7zip\7z.dll .
 	@if exist $O\7zip\7z.pdb copy $O\7zip\7z.pdb .
+
+7z: 7z.exe
+7z.exe:
+	@setlocal
+	@set CFLAGS=$(SEVENZIPCFLAGS)
+	@set LFLAGS=$(SEVENZIPLFLAGS)
+	@cd $(SEVENZIPSRC)\CPP\7zip\UI\Console && nmake -f makefile MY_DYNAMIC_LINK=1 O=%CD%\$O\7z
+	@endlocal
+	@if exist $O\7z\7z.exe copy $O\7z\7z.exe .
 
 {$(SEVENZIPSRC)\CPP\Common}.cpp{$O}.obj:
 	$(CXX) -c $(CXXFLAGS) -I$(SEVENZIPSRC) $<
