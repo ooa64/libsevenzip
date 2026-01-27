@@ -5,3 +5,4 @@ add tests (from examples and new)
 add progress callbacks
 add multivolume creation
 add embedded archives detection by signature
+add unsigned tar detection (without "ustar" at offset 257)
