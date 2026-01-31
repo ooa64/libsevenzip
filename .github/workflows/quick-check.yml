@@ -21,7 +21,7 @@ jobs:
             test_cmd: ./tests/tests
           - os: windows-latest
             build_cmd: nmake -f makefile.vc
-            test_cmd: tests\tests.exe
+            test_cmd: .\outputs\release\tests.exe
     
     name: Quick (${{ matrix.os }})
     

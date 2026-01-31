@@ -147,8 +147,8 @@ leaks: $(EXAMPLES) example_dir
 	    grep "^Process .* leak" <$O/leaks.lst; \
 	done
 
-tests/tests: tests/tests.cpp tests/test_*.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $^ libsevenzip.a
+tests/tests: tests/tests.cpp tests/test_*.cpp libsevenzip.a
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 tests: tests/tests
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
