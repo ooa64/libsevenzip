@@ -13,11 +13,11 @@ jobs:
     strategy:
       matrix:
         compiler: [gcc, clang]
-        7zip_repo: 
+        sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
     
-    name: Linux (${{ matrix.compiler }}, ${{ matrix.7zip_repo.name }})
+    name: Linux (${{ matrix.compiler }}, ${{ matrix.sevenzip_repo.name }})
     
     steps:
     - name: Checkout libsevenzip
@@ -28,7 +28,7 @@ jobs:
     - name: Checkout 7-Zip dependency
       uses: actions/checkout@v4
       with:
-        repository: ${{ matrix.7zip_repo.url }}
+        repository: ${{ matrix.sevenzip_repo.url }}
         path: 7zip
 
     - name: Install dependencies
@@ -60,7 +60,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: linux-${{ matrix.compiler }}-${{ matrix.7zip_repo.name }}-build
+        name: linux-${{ matrix.compiler }}-${{ matrix.sevenzip_repo.name }}-build
         path: |
           libsevenzip/libsevenzip.a
           libsevenzip/tests/tests
@@ -72,11 +72,11 @@ jobs:
     strategy:
       matrix:
         build_type: [Debug, Release]
-        7zip_repo: 
+        sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
     
-    name: Linux CMake (${{ matrix.build_type }}, ${{ matrix.7zip_repo.name }})
+    name: Linux CMake (${{ matrix.build_type }}, ${{ matrix.sevenzip_repo.name }})
     
     steps:
     - name: Checkout libsevenzip
@@ -87,7 +87,7 @@ jobs:
     - name: Checkout 7-Zip dependency
       uses: actions/checkout@v4
       with:
-        repository: ${{ matrix.7zip_repo.url }}
+        repository: ${{ matrix.sevenzip_repo.url }}
         path: 7zip
 
     - name: Install dependencies
@@ -113,7 +113,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: linux-cmake-${{ matrix.build_type }}-${{ matrix.7zip_repo.name }}-build
+        name: linux-cmake-${{ matrix.build_type }}-${{ matrix.sevenzip_repo.name }}-build
         path: |
           libsevenzip/build/libsevenzip.a
           libsevenzip/build/tests
@@ -124,11 +124,11 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        7zip_repo: 
+        sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
     
-    name: macOS (${{ matrix.7zip_repo.name }})
+    name: macOS (${{ matrix.sevenzip_repo.name }})
     
     steps:
     - name: Checkout libsevenzip
@@ -139,7 +139,7 @@ jobs:
     - name: Checkout 7-Zip dependency
       uses: actions/checkout@v4
       with:
-        repository: ${{ matrix.7zip_repo.url }}
+        repository: ${{ matrix.sevenzip_repo.url }}
         path: 7zip
 
     - name: Build with Make
@@ -157,7 +157,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: macos-${{ matrix.7zip_repo.name }}-build
+        name: macos-${{ matrix.sevenzip_repo.name }}-build
         path: |
           libsevenzip/libsevenzip.a
           libsevenzip/tests/tests
@@ -169,11 +169,11 @@ jobs:
     strategy:
       matrix:
         build_type: [Debug, Release]
-        7zip_repo: 
+        sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
     
-    name: macOS CMake (${{ matrix.build_type }}, ${{ matrix.7zip_repo.name }})
+    name: macOS CMake (${{ matrix.build_type }}, ${{ matrix.sevenzip_repo.name }})
     
     steps:
     - name: Checkout libsevenzip
@@ -184,7 +184,7 @@ jobs:
     - name: Checkout 7-Zip dependency
       uses: actions/checkout@v4
       with:
-        repository: ${{ matrix.7zip_repo.url }}
+        repository: ${{ matrix.sevenzip_repo.url }}
         path: 7zip
 
     - name: Install dependencies
@@ -209,7 +209,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: macos-cmake-${{ matrix.build_type }}-${{ matrix.7zip_repo.name }}-build
+        name: macos-cmake-${{ matrix.build_type }}-${{ matrix.sevenzip_repo.name }}-build
         path: |
           libsevenzip/build/libsevenzip.a
           libsevenzip/build/tests
@@ -221,11 +221,11 @@ jobs:
     strategy:
       matrix:
         platform: [x64, Win32]
-        7zip_repo: 
+        sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
     
-    name: Windows (${{ matrix.platform }}, ${{ matrix.7zip_repo.name }})
+    name: Windows (${{ matrix.platform }}, ${{ matrix.sevenzip_repo.name }})
     
     steps:
     - name: Checkout libsevenzip
@@ -236,7 +236,7 @@ jobs:
     - name: Checkout 7-Zip dependency
       uses: actions/checkout@v4
       with:
-        repository: ${{ matrix.7zip_repo.url }}
+        repository: ${{ matrix.sevenzip_repo.url }}
         path: 7zip
 
     - name: Setup MSVC
@@ -260,7 +260,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: windows-${{ matrix.platform }}-${{ matrix.7zip_repo.name }}-build
+        name: windows-${{ matrix.platform }}-${{ matrix.sevenzip_repo.name }}-build
         path: |
           libsevenzip/sevenzip.lib
           libsevenzip/tests/tests.exe
@@ -273,11 +273,11 @@ jobs:
       matrix:
         build_type: [Debug, Release]
         platform: [x64, Win32]
-        7zip_repo: 
+        sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
     
-    name: Windows CMake (${{ matrix.platform }}, ${{ matrix.build_type }}, ${{ matrix.7zip_repo.name }})
+    name: Windows CMake (${{ matrix.platform }}, ${{ matrix.build_type }}, ${{ matrix.sevenzip_repo.name }})
     
     steps:
     - name: Checkout libsevenzip
@@ -288,7 +288,7 @@ jobs:
     - name: Checkout 7-Zip dependency
       uses: actions/checkout@v4
       with:
-        repository: ${{ matrix.7zip_repo.url }}
+        repository: ${{ matrix.sevenzip_repo.url }}
         path: 7zip
 
     - name: Setup MSVC
@@ -312,7 +312,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: windows-cmake-${{ matrix.platform }}-${{ matrix.build_type }}-${{ matrix.7zip_repo.name }}-build
+        name: windows-cmake-${{ matrix.platform }}-${{ matrix.build_type }}-${{ matrix.sevenzip_repo.name }}-build
         path: |
           libsevenzip/build/${{ matrix.build_type }}/sevenzip.lib
           libsevenzip/build/${{ matrix.build_type }}/tests.exe

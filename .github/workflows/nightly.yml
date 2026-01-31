@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        7zip_repo: 
+        sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
         build_system: [make, cmake]
@@ -22,7 +22,7 @@ jobs:
           - os: windows-latest
             build_system: make
     
-    name: Nightly (${{ matrix.os }}, ${{ matrix.build_system }}, ${{ matrix.7zip_repo.name }})
+    name: Nightly (${{ matrix.os }}, ${{ matrix.build_system }}, ${{ matrix.sevenzip_repo.name }})
     
     steps:
     - name: Checkout libsevenzip
@@ -33,7 +33,7 @@ jobs:
     - name: Checkout 7-Zip dependency
       uses: actions/checkout@v4
       with:
-        repository: ${{ matrix.7zip_repo.url }}
+        repository: ${{ matrix.sevenzip_repo.url }}
         path: 7zip
 
     - name: Install dependencies (Linux)
