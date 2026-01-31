@@ -1,0 +1,350 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        7zip_repo: 
+          - { url: 'ip7z/7zip', name: 'ip7z' }
+          - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
+    
+    name: Linux (${{ matrix.compiler }}, ${{ matrix.7zip_repo.name }})
+    
+    steps:
+    - name: Checkout libsevenzip
+      uses: actions/checkout@v4
+      with:
+        path: libsevenzip
+
+    - name: Checkout 7-Zip dependency
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ matrix.7zip_repo.url }}
+        path: 7zip
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake
+
+    - name: Build with Make (GCC)
+      if: matrix.compiler == 'gcc'
+      working-directory: libsevenzip
+      run: |
+        make SEVENZIPSRC=../7zip
+        make examples SEVENZIPSRC=../7zip
+        make tests SEVENZIPSRC=../7zip
+
+    - name: Build with Make (Clang)
+      if: matrix.compiler == 'clang'
+      working-directory: libsevenzip
+      run: |
+        make CC=clang CXX=clang++ SEVENZIPSRC=../7zip
+        make examples CC=clang CXX=clang++ SEVENZIPSRC=../7zip
+        make tests CC=clang CXX=clang++ SEVENZIPSRC=../7zip
+
+    - name: Run tests
+      working-directory: libsevenzip
+      run: |
+        ./tests/tests
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-${{ matrix.compiler }}-${{ matrix.7zip_repo.name }}-build
+        path: |
+          libsevenzip/libsevenzip.a
+          libsevenzip/tests/tests
+          libsevenzip/example*
+        retention-days: 7
+
+  build-linux-cmake:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        7zip_repo: 
+          - { url: 'ip7z/7zip', name: 'ip7z' }
+          - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
+    
+    name: Linux CMake (${{ matrix.build_type }}, ${{ matrix.7zip_repo.name }})
+    
+    steps:
+    - name: Checkout libsevenzip
+      uses: actions/checkout@v4
+      with:
+        path: libsevenzip
+
+    - name: Checkout 7-Zip dependency
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ matrix.7zip_repo.url }}
+        path: 7zip
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake ninja-build
+
+    - name: Configure CMake
+      working-directory: libsevenzip
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DSEVENZIPSRC=../7zip
+
+    - name: Build
+      working-directory: libsevenzip
+      run: cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: libsevenzip/build
+      run: ctest --output-on-failure -C ${{ matrix.build_type }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-cmake-${{ matrix.build_type }}-${{ matrix.7zip_repo.name }}-build
+        path: |
+          libsevenzip/build/libsevenzip.a
+          libsevenzip/build/tests
+          libsevenzip/build/example*
+        retention-days: 7
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        7zip_repo: 
+          - { url: 'ip7z/7zip', name: 'ip7z' }
+          - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
+    
+    name: macOS (${{ matrix.7zip_repo.name }})
+    
+    steps:
+    - name: Checkout libsevenzip
+      uses: actions/checkout@v4
+      with:
+        path: libsevenzip
+
+    - name: Checkout 7-Zip dependency
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ matrix.7zip_repo.url }}
+        path: 7zip
+
+    - name: Build with Make
+      working-directory: libsevenzip
+      run: |
+        make SEVENZIPSRC=../7zip
+        make examples SEVENZIPSRC=../7zip
+        make tests SEVENZIPSRC=../7zip
+
+    - name: Run tests
+      working-directory: libsevenzip
+      run: |
+        ./tests/tests
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-${{ matrix.7zip_repo.name }}-build
+        path: |
+          libsevenzip/libsevenzip.a
+          libsevenzip/tests/tests
+          libsevenzip/example*
+        retention-days: 7
+
+  build-macos-cmake:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        7zip_repo: 
+          - { url: 'ip7z/7zip', name: 'ip7z' }
+          - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
+    
+    name: macOS CMake (${{ matrix.build_type }}, ${{ matrix.7zip_repo.name }})
+    
+    steps:
+    - name: Checkout libsevenzip
+      uses: actions/checkout@v4
+      with:
+        path: libsevenzip
+
+    - name: Checkout 7-Zip dependency
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ matrix.7zip_repo.url }}
+        path: 7zip
+
+    - name: Install dependencies
+      run: |
+        brew install cmake ninja
+
+    - name: Configure CMake
+      working-directory: libsevenzip
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DSEVENZIPSRC=../7zip
+
+    - name: Build
+      working-directory: libsevenzip
+      run: cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: libsevenzip/build
+      run: ctest --output-on-failure -C ${{ matrix.build_type }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-cmake-${{ matrix.build_type }}-${{ matrix.7zip_repo.name }}-build
+        path: |
+          libsevenzip/build/libsevenzip.a
+          libsevenzip/build/tests
+          libsevenzip/build/example*
+        retention-days: 7
+
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        platform: [x64, Win32]
+        7zip_repo: 
+          - { url: 'ip7z/7zip', name: 'ip7z' }
+          - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
+    
+    name: Windows (${{ matrix.platform }}, ${{ matrix.7zip_repo.name }})
+    
+    steps:
+    - name: Checkout libsevenzip
+      uses: actions/checkout@v4
+      with:
+        path: libsevenzip
+
+    - name: Checkout 7-Zip dependency
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ matrix.7zip_repo.url }}
+        path: 7zip
+
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build with NMAKE
+      shell: cmd
+      working-directory: libsevenzip
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.platform }}
+        nmake -f makefile.vc SEVENZIPSRC=..\7zip
+        nmake -f makefile.vc examples SEVENZIPSRC=..\7zip
+        nmake -f makefile.vc tests SEVENZIPSRC=..\7zip
+
+    - name: Run tests
+      shell: cmd
+      working-directory: libsevenzip
+      run: |
+        tests\tests.exe
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-${{ matrix.platform }}-${{ matrix.7zip_repo.name }}-build
+        path: |
+          libsevenzip/sevenzip.lib
+          libsevenzip/tests/tests.exe
+          libsevenzip/example*.exe
+        retention-days: 7
+
+  build-windows-cmake:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        platform: [x64, Win32]
+        7zip_repo: 
+          - { url: 'ip7z/7zip', name: 'ip7z' }
+          - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
+    
+    name: Windows CMake (${{ matrix.platform }}, ${{ matrix.build_type }}, ${{ matrix.7zip_repo.name }})
+    
+    steps:
+    - name: Checkout libsevenzip
+      uses: actions/checkout@v4
+      with:
+        path: libsevenzip
+
+    - name: Checkout 7-Zip dependency
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ matrix.7zip_repo.url }}
+        path: 7zip
+
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Configure CMake
+      working-directory: libsevenzip
+      run: |
+        cmake -B build -A ${{ matrix.platform }} `
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+          -DSEVENZIPSRC=../7zip
+
+    - name: Build
+      working-directory: libsevenzip
+      run: cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: libsevenzip/build
+      run: ctest --output-on-failure -C ${{ matrix.build_type }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-cmake-${{ matrix.platform }}-${{ matrix.build_type }}-${{ matrix.7zip_repo.name }}-build
+        path: |
+          libsevenzip/build/${{ matrix.build_type }}/sevenzip.lib
+          libsevenzip/build/${{ matrix.build_type }}/tests.exe
+          libsevenzip/build/${{ matrix.build_type }}/example*.exe
+        retention-days: 7
+
+  summary:
+    needs: [build-linux, build-linux-cmake, build-macos, build-macos-cmake, build-windows, build-windows-cmake]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Check build results
+      run: |
+        echo "CI Build Summary:"
+        echo "================="
+        echo "Linux Make: ${{ needs.build-linux.result }}"
+        echo "Linux CMake: ${{ needs.build-linux-cmake.result }}"
+        echo "macOS Make: ${{ needs.build-macos.result }}"
+        echo "macOS CMake: ${{ needs.build-macos-cmake.result }}"
+        echo "Windows NMAKE: ${{ needs.build-windows.result }}"
+        echo "Windows CMake: ${{ needs.build-windows-cmake.result }}"
+        
+        # Fail if any job failed
+        if [ "${{ needs.build-linux.result }}" == "failure" ] || \
+           [ "${{ needs.build-linux-cmake.result }}" == "failure" ] || \
+           [ "${{ needs.build-macos.result }}" == "failure" ] || \
+           [ "${{ needs.build-macos-cmake.result }}" == "failure" ] || \
+           [ "${{ needs.build-windows.result }}" == "failure" ] || \
+           [ "${{ needs.build-windows-cmake.result }}" == "failure" ]; then
+          echo "One or more builds failed!"
+          exit 1
+        fi
+        
+        echo "All builds passed!"

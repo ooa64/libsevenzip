@@ -1,0 +1,62 @@
+name: Quick Check
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  quick-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            build_cmd: make
+            test_cmd: ./tests/tests
+          - os: macos-latest
+            build_cmd: make
+            test_cmd: ./tests/tests
+          - os: windows-latest
+            build_cmd: nmake -f makefile.vc
+            test_cmd: tests\tests.exe
+    
+    name: Quick (${{ matrix.os }})
+    
+    steps:
+    - name: Checkout libsevenzip
+      uses: actions/checkout@v4
+      with:
+        path: libsevenzip
+
+    - name: Checkout 7-Zip (ip7z)
+      uses: actions/checkout@v4
+      with:
+        repository: ip7z/7zip
+        path: 7zip
+
+    - name: Setup MSVC (Windows)
+      if: runner.os == 'Windows'
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build (Unix)
+      if: runner.os != 'Windows'
+      working-directory: libsevenzip
+      run: |
+        ${{ matrix.build_cmd }} SEVENZIPSRC=../7zip
+        ${{ matrix.build_cmd }} tests SEVENZIPSRC=../7zip
+
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      shell: cmd
+      working-directory: libsevenzip
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        ${{ matrix.build_cmd }} SEVENZIPSRC=..\7zip
+        ${{ matrix.build_cmd }} tests SEVENZIPSRC=..\7zip
+
+    - name: Run tests
+      working-directory: libsevenzip
+      run: ${{ matrix.test_cmd }}
