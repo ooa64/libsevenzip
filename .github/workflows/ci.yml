@@ -48,7 +48,7 @@ jobs:
       if: matrix.compiler == 'clang'
       working-directory: libsevenzip
       run: |
-        make CC=clang CXX=clang++ SEVENZIPSRC=../7zip
+        make 7zip CC=clang CXX=clang++ SEVENZIPSRC=../7zip
         make examples CC=clang CXX=clang++ SEVENZIPSRC=../7zip
         make tests CC=clang CXX=clang++ SEVENZIPSRC=../7zip
 
@@ -145,7 +145,7 @@ jobs:
     - name: Build with Make
       working-directory: libsevenzip
       run: |
-        make SEVENZIPSRC=../7zip
+        make 7zip SEVENZIPSRC=../7zip
         make examples SEVENZIPSRC=../7zip
         make tests SEVENZIPSRC=../7zip
 
@@ -220,7 +220,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        platform: [x64, Win32]
+        platform: [x86_amd64, amd64_arm64]
         sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
@@ -247,7 +247,7 @@ jobs:
       working-directory: libsevenzip
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.platform }}
-        nmake -f makefile.vc SEVENZIPSRC=..\7zip
+        nmake -f makefile.vc 7zip SEVENZIPSRC=..\7zip
         nmake -f makefile.vc examples SEVENZIPSRC=..\7zip
         nmake -f makefile.vc tests SEVENZIPSRC=..\7zip
 
@@ -272,7 +272,7 @@ jobs:
     strategy:
       matrix:
         build_type: [Debug, Release]
-        platform: [x64, Win32]
+        platform: [x86_amd64, amd64_arm64]
         sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }

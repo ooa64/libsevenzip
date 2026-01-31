@@ -45,7 +45,6 @@ jobs:
       if: runner.os != 'Windows'
       working-directory: libsevenzip
       run: |
-        ${{ matrix.build_cmd }} SEVENZIPSRC=../7zip
         ${{ matrix.build_cmd }} tests SEVENZIPSRC=../7zip
 
     - name: Build (Windows)
@@ -53,8 +52,7 @@ jobs:
       shell: cmd
       working-directory: libsevenzip
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        ${{ matrix.build_cmd }} SEVENZIPSRC=..\7zip
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
         ${{ matrix.build_cmd }} tests SEVENZIPSRC=..\7zip
 
     - name: Run tests

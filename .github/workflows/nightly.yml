@@ -3,7 +3,7 @@ name: Nightly Build
 on:
   schedule:
     # Run at 2 AM UTC every day
-    - cron: '0 2 * * *'
+    # - cron: '0 2 * * *'
   workflow_dispatch:
 
 jobs:
@@ -56,7 +56,7 @@ jobs:
       if: matrix.build_system == 'make' && runner.os != 'Windows'
       working-directory: libsevenzip
       run: |
-        make SEVENZIPSRC=../7zip DEBUG=1
+        make 7zip SEVENZIPSRC=../7zip DEBUG=1
         make tests SEVENZIPSRC=../7zip DEBUG=1
         make examples SEVENZIPSRC=../7zip DEBUG=1
 
