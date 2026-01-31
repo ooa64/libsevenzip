@@ -40,7 +40,7 @@ jobs:
       if: matrix.compiler == 'gcc'
       working-directory: libsevenzip
       run: |
-        make SEVENZIPSRC=../7zip
+        make 7zip SEVENZIPSRC=../7zip
         make examples SEVENZIPSRC=../7zip
         make tests SEVENZIPSRC=../7zip
 
