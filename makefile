@@ -30,7 +30,8 @@ endif
 
 ifdef ASAN
 	CFLAGS += -fsanitize=address -fno-omit-frame-pointer -fno-common -g3
-	SEVENZIPFLAGS += LOCAL_FLAGS="-fsanitize=address -fno-omit-frame-pointer -fno-common -g3"
+	SEVENZIPFLAGS += LOCAL_FLAGS="-fsanitize=address -fno-omit-frame-pointer -fno-common -g3" \
+		LDFLAGS_STATIC_3="-fsanitize=address -fno-omit-frame-pointer -fno-common -g3"
 endif
 
 TARGET = libsevenzip.a
