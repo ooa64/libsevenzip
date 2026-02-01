@@ -1,15 +1,14 @@
 name: CI
 
 on:
-  # push:
-  #   branches: [ main, master, develop ]
-  # pull_request:
-  #   branches: [ main, master, develop ]
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
   workflow_dispatch:
 
 jobs:
   build-linux:
-    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -63,7 +62,6 @@ jobs:
         retention-days: 7
 
   build-linux-cmake:
-    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -117,7 +115,6 @@ jobs:
         retention-days: 7
 
   build-macos:
-    if: false
     runs-on: macos-latest
     strategy:
       matrix:
@@ -218,7 +215,6 @@ jobs:
         retention-days: 7
 
   build-windows:
-    if: false
     runs-on: windows-latest
     strategy:
       matrix:
@@ -301,12 +297,7 @@ jobs:
 
     - name: Configure CMake
       working-directory: libsevenzip
-      run: |
-        echo %CD%
-        dir
-        cmake -B build -A ${{ matrix.platform }} `
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
-          -DSEVENZIPSRC=../7zip
+      run: cmake -B build -A ${{ matrix.platform }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSEVENZIPSRC=../7zip
 
     - name: Build
       working-directory: libsevenzip
