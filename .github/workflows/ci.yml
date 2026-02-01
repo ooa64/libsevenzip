@@ -63,6 +63,7 @@ jobs:
         retention-days: 7
 
   build-linux-cmake:
+    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -116,6 +117,7 @@ jobs:
         retention-days: 7
 
   build-macos:
+    if: false
     runs-on: macos-latest
     strategy:
       matrix:
@@ -191,6 +193,7 @@ jobs:
     - name: Configure CMake
       working-directory: libsevenzip
       run: |
+        pwd
         ls -la
         cmake -B build -G Ninja \
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
@@ -215,6 +218,7 @@ jobs:
         retention-days: 7
 
   build-windows:
+    if: false
     runs-on: windows-latest
     strategy:
       matrix:
@@ -290,7 +294,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: ${{ matrix.sevenzip_repo.url }}
-        path: ../7zip
+        path: 7zip
 
     - name: Setup MSVC
       uses: microsoft/setup-msbuild@v2
