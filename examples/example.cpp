@@ -238,7 +238,7 @@ int MAIN(argc, argv) {
     wcout << "7-Zip " << (getVersion() >> 16) << "." << (getVersion() & 0xffff) << " example "
             << "(" SEVENZIPDLL " " << (l.getVersion() >> 16) << "." << (l.getVersion() & 0xffff) << ")\n\n";
 
-    HRESULT hr;
+    HRESULT hr = 0;
     switch (argv[1][0]) {
 
         case 'a': {
@@ -284,5 +284,5 @@ int MAIN(argc, argv) {
             return 1;
     }
     wcout << "\nHRESULT " << hex << hr << " : " << getMessage(hr) << "\n\n";
-    return 0;
+    return hr == 0 ? 0 : 1;
 }

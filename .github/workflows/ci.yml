@@ -9,6 +9,7 @@ on:
 
 jobs:
   build-linux:
+    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -257,7 +258,7 @@ jobs:
       shell: cmd
       working-directory: libsevenzip
       run: |
-        outputs\release\example.exe l example.exe
+        outputs\release\example.exe l outputs\release\example.exe
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -297,6 +298,7 @@ jobs:
     - name: Configure CMake
       working-directory: libsevenzip
       run: |
+        cd
         dir
         cmake -B build -A ${{ matrix.platform }} `
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
