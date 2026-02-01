@@ -34,37 +34,31 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake
+        sudo apt-get install -y build-essential
 
     - name: Build with Make (GCC)
       if: matrix.compiler == 'gcc'
       working-directory: libsevenzip
       run: |
-        make 7zip SEVENZIPSRC=../7zip
-        make examples SEVENZIPSRC=../7zip
-        make tests SEVENZIPSRC=../7zip
+        make 7zip 7z release example SEVENZIPSRC=../7zip
 
     - name: Build with Make (Clang)
       if: matrix.compiler == 'clang'
       working-directory: libsevenzip
       run: |
-        make 7zip CC=clang CXX=clang++ SEVENZIPSRC=../7zip
-        make examples CC=clang CXX=clang++ SEVENZIPSRC=../7zip
-        make tests CC=clang CXX=clang++ SEVENZIPSRC=../7zip
+        make 7zip 7z release example CC=clang CXX=clang++ SEVENZIPSRC=../7zip
 
     - name: Run tests
       working-directory: libsevenzip
       run: |
-        ./tests/tests
+        ./example l example
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: linux-${{ matrix.compiler }}-${{ matrix.sevenzip_repo.name }}-build
         path: |
-          libsevenzip/libsevenzip.a
-          libsevenzip/tests/tests
-          libsevenzip/example*
+          libsevenzip/libsevenzip*.zip
         retention-days: 7
 
   build-linux-cmake:
@@ -142,26 +136,27 @@ jobs:
         repository: ${{ matrix.sevenzip_repo.url }}
         path: 7zip
 
+    - name: Install dependencies
+      run: |
+        brew install sevenzip
+        find /usr/local/Cellar/sevenzip -name 7z.so -exec cp {} libsevenzip/ \;
+
     - name: Build with Make
       working-directory: libsevenzip
       run: |
-        make 7zip SEVENZIPSRC=../7zip
-        make examples SEVENZIPSRC=../7zip
-        make tests SEVENZIPSRC=../7zip
+        make release example SEVENZIPSRC=../7zip SEVENZIPBIN=7zz
 
     - name: Run tests
       working-directory: libsevenzip
       run: |
-        ./tests/tests
+        ./example l example
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: macos-${{ matrix.sevenzip_repo.name }}-build
         path: |
-          libsevenzip/libsevenzip.a
-          libsevenzip/tests/tests
-          libsevenzip/example*
+          libsevenzip/libsevenzip*.zip
         retention-days: 7
 
   build-macos-cmake:
@@ -220,7 +215,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        platform: [amd64_arm64]
+        platform: [x64]
         sevenzip_repo: 
           - { url: 'ip7z/7zip', name: 'ip7z' }
           - { url: 'mcmilk/7-Zip-zstd', name: 'mcmilk' }
@@ -256,23 +251,20 @@ jobs:
       working-directory: libsevenzip
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.platform }}
-        nmake -f makefile.vc examples SEVENZIPSRC=..\7zip
-        nmake -f makefile.vc tests SEVENZIPSRC=..\7zip
+        nmake -f makefile.vc release example SEVENZIPSRC=..\7zip
 
     - name: Run tests
       shell: cmd
       working-directory: libsevenzip
       run: |
-        tests\tests.exe
-
+        example.exe l example.exe
+        
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: windows-${{ matrix.platform }}-${{ matrix.sevenzip_repo.name }}-build
         path: |
-          libsevenzip/sevenzip.lib
-          libsevenzip/tests/tests.exe
-          libsevenzip/example*.exe
+          libsevenzip/libsevenzip*.zip
         retention-days: 7
 
   build-windows-cmake:
