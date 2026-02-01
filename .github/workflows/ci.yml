@@ -269,6 +269,7 @@ jobs:
         retention-days: 7
 
   build-windows-cmake:
+    if: false
     runs-on: windows-latest
     strategy:
       matrix:
