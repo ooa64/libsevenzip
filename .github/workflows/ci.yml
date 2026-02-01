@@ -51,7 +51,7 @@ jobs:
     - name: Run tests
       working-directory: libsevenzip
       run: |
-        ./example l example
+        env LD_LIBRARY_PATH=. ./example l example
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -149,7 +149,7 @@ jobs:
     - name: Run tests
       working-directory: libsevenzip
       run: |
-        ./example l example
+        env DYLD_LIBRARY_PATH=. ./example l example
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -239,12 +239,10 @@ jobs:
 
     - name: Setup 7-Zip
       shell: cmd
-      working-directory: libsevenzip
       run: |
-        curl -L -o 7z.msi https://github.com/ip7z/7zip/releases/download/25.01/7z2501-x64.msi
-        msiexec /a "%CD%\7z.msi" /qb "TARGETDIR=%CD%\msi" /q /lv "%CD%\7z.log"
-        copy msi\Files\7-Zip\7z.dll .
-        copy msi\Files\7-Zip\7z.exe .
+        choco install 7zip -yes
+        copy "C:\Program Files\7-Zip\7z.dll" libsevenzip\
+        copy "C:\Program Files\7-Zip\7z.exe" libsevenzip\
 
     - name: Build with NMAKE
       shell: cmd
@@ -257,7 +255,7 @@ jobs:
       shell: cmd
       working-directory: libsevenzip
       run: |
-        example.exe l example.exe
+        outputs\release\example.exe l example.exe
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
