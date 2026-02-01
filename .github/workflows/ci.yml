@@ -302,7 +302,7 @@ jobs:
     - name: Configure CMake
       working-directory: libsevenzip
       run: |
-        cd
+        echo %CD%
         dir
         cmake -B build -A ${{ matrix.platform }} `
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
