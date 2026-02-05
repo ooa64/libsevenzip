@@ -19,6 +19,8 @@
 #include "CPP/7zip/IPassword.h"
 #include "CPP/7zip/Archive/IArchive.h"
 
+#include "CPP/Windows/PropVariant.h"
+
 #ifndef _WIN32
 typedef void * HMODULE;
 #endif
@@ -199,6 +201,8 @@ namespace sevenzip {
         virtual ~CUpdateCallback();
 
         CObjectVector<UString> items;
+        CObjectVector<UString> propnames;
+        CObjectVector<NWindows::NCOM::CPropVariant> propvalues;
 
     private:
 
@@ -324,15 +328,13 @@ namespace sevenzip {
 
         void close();
 
-        void addItem(const wchar_t* pathname);
-
         HRESULT update();
-
-        HRESULT setStringProperty(const wchar_t* name, const wchar_t* value);
-        HRESULT setBoolProperty(const wchar_t* name, bool value);
-        HRESULT setIntProperty(const wchar_t* name, UInt32 value);
-        HRESULT setWideProperty(const wchar_t* name, UInt64 value);
-        HRESULT setEmptyProperty(const wchar_t* name);
+        
+        void addItem(const wchar_t* pathname);
+        void addStringProperty(const wchar_t* name, const wchar_t* value);
+        void addBoolProperty(const wchar_t* name, bool value);
+        void addIntProperty(const wchar_t* name, UInt32 value);
+        void addWideProperty(const wchar_t* name, UInt64 value);
 
     private:
 

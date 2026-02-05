@@ -192,31 +192,27 @@ namespace sevenzip {
         pimpl->close();
     };
 
+    HRESULT Oarchive::update() {
+        return pimpl->update();
+    };
+
     void Oarchive::addItem(const wchar_t* pathname) {
         pimpl->addItem(pathname);
     };
 
-    HRESULT Oarchive::update() {
-        return pimpl->update();
-    };
-    
-    HRESULT Oarchive::setStringProperty(const wchar_t* name, const wchar_t* value) {
-        return pimpl->setStringProperty(name, value);
+    void Oarchive::addStringProperty(const wchar_t* name, const wchar_t* value) {
+        pimpl->addStringProperty(name, value);
     };
 
-    HRESULT Oarchive::setBoolProperty(const wchar_t* name, bool value) {
-        return pimpl->setBoolProperty(name, value);
+    void Oarchive::addBoolProperty(const wchar_t* name, bool value) {
+        pimpl->addBoolProperty(name, value);
     };
 
-    HRESULT Oarchive::setIntProperty(const wchar_t* name, UInt32 value) {
-        return pimpl->setIntProperty(name, value);
+    void Oarchive::addIntProperty(const wchar_t* name, UInt32 value) {
+        pimpl->addIntProperty(name, value);
     };
 
-    HRESULT Oarchive::setWideProperty(const wchar_t* name, UInt64 value) {
-        return pimpl->setWideProperty(name, value);
-    };
-
-    HRESULT Oarchive::setEmptyProperty(const wchar_t* name) {
-        return pimpl->setEmptyProperty(name);
+    void Oarchive::addWideProperty(const wchar_t* name, UInt64 value) {
+        pimpl->addWideProperty(name, value);
     };
 }
