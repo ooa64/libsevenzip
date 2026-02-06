@@ -182,7 +182,8 @@ struct Extractstream: public Outputstream {
 
     virtual HRESULT Mkdir(const wchar_t* dirname) override {
         wcout << "Creating " << dirname << "\n";
-        return mkpath(fullname(dirname)) ? S_OK : S_FALSE;
+        mkpath(fullname(dirname));
+        return S_OK;
     };
 
     virtual HRESULT SetMode(const wchar_t* pathname, UInt32 mode) override {
