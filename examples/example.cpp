@@ -204,6 +204,10 @@ struct Extractstream: public Outputstream {
         return S_OK;
     };
 
+    virtual Ostream* Clone() const override {
+        return new Extractstream(basepath.c_str());
+    };
+
 private:
 
     wstring fullname(const wchar_t* filename) const {

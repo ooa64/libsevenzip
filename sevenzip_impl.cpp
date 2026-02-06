@@ -281,12 +281,14 @@ namespace sevenzip {
         return istream ? istream->GetAttr(pathname) : 0;
     };
 
-    COutStream::COutStream(Ostream* ostream): ostream(ostream) {
+    COutStream::COutStream(Ostream* ostream, bool cloned): ostream(ostream), cloned(cloned) {
         DEBUGLOG(this << " COutStream");
     };
 
     COutStream::~COutStream() {
         DEBUGLOG(this << " ~COutStream");
+        if (cloned && ostream)
+            delete ostream;
     };
 
     STDMETHODIMP COutStream::Write(const void* data, UInt32 size, UInt32* processedSize) throw() {
@@ -388,27 +390,25 @@ namespace sevenzip {
     };
 
     STDMETHODIMP COpenCallback::GetStream(const wchar_t* name, IInStream** inStream)  throw() {
-        DEBUGLOG(this << " COpenCallback::GetStream " << name << "/" << *inStream);
+        DEBUGLOG(this << " COpenCallback::GetStream " << (name ? name : L"NULL"));
         *inStream = nullptr;
-        pathname = L"";
-
         if (subarchivemode)
             return S_FALSE;
-
-        auto newIstream = istream->Clone();
-        if (!newIstream)
-            return E_FAIL;
-
-        CMyComPtr<IInStream> instream(new CInStream(newIstream, true));
-        *inStream = instream.Detach();
+        
         pathname = name ? name : L"";
 
-        HRESULT hr = newIstream->Open(name);
+        // NOTE: multivolume support, clone the istream from second volume onwards
+        CMyComPtr<IInStream> instreamPtr(new CInStream(istream->Clone(), true));
+        HRESULT hr = CINSTREAM(instreamPtr)->Open(pathname);
+
+        DEBUGLOG(this << " COpenCallback::GetStream Open " << pathname.Ptr() << " hr " << hr);
 
         // NOTE: suppress FILE_NOT_FOUND so there is no fail after the last multivolume file
-        // DEBUGLOG(this << " COpenCallback::GetStream " << std::hex << hr << " vs " << std::hex << HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND));
-        // return  hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ? S_FALSE : hr;
-        return (hr & 0xffff) == ERROR_FILE_NOT_FOUND ? S_FALSE : hr;
+        if (FAILED(hr))
+            return  hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ? S_FALSE : hr;        
+
+        *inStream = instreamPtr.Detach();
+        return S_OK;
     };
 
     STDMETHODIMP COpenCallback::SetSubArchiveName(const wchar_t* name) throw() {
@@ -432,10 +432,12 @@ namespace sevenzip {
 
 
     CExtractCallback::CExtractCallback(Ostream* ostream, IInArchive* archive, const wchar_t* password) :
-            outstream(new COutStream(ostream)),
+            outstream(nullptr),
+            ostream(ostream),
             archive(archive),
             password(password ? password : L""),
             passworddefined(password != nullptr),
+            subsequent(false),
             index(-1) {
         DEBUGLOG(this << " CExtractCallback::CExtractCallback " << archive << " "
                 << (password ? password : L"NULL"));
@@ -456,15 +458,13 @@ namespace sevenzip {
     };
 
     STDMETHODIMP CExtractCallback::GetStream(UInt32 index, ISequentialOutStream** outStream, Int32 askExtractMode) throw() {
-        DEBUGLOG(this << " CExtractCallback::GetStream " << index << " stream " << *outStream << " mode " << askExtractMode);
+        DEBUGLOG(this << " CExtractCallback::GetStream " << index << " mode " << askExtractMode);
         *outStream = nullptr;
+        outstream.Release();
         this->index = -1;
 
         if (askExtractMode != NArchive::NExtract::NAskMode::kExtract)
             return S_OK;
-
-        if (!outstream)
-            return E_FAIL;
 
         HRESULT hr;
         UString pathname = kEmptyFileAlias;
@@ -478,15 +478,26 @@ namespace sevenzip {
             return hr;
 
         this->index = index;
+
         if (isdir)
-            return COUTSTREAM(outstream)->Mkdir(pathname);
+            return ostream->Mkdir(pathname);
 
-        *outStream = outstream;
-        outstream->AddRef();
+        // NOTE: use given ostream for first item, clone for subsequent items
+        CMyComPtr<IOutStream> outstreamPtr(!subsequent
+                ? new COutStream(ostream)
+                : new COutStream(ostream->Clone(), true));
+        subsequent = true;
 
-        hr = COUTSTREAM(outstream)->Open(pathname);
+        hr = COUTSTREAM(outstreamPtr)->Open(pathname);
+
         DEBUGLOG(this << " CExtractCallback::GetStream Open " << pathname.Ptr() << " hr " << hr);
-        return FAILED(hr) ? hr : S_OK;
+
+        if (FAILED(hr))
+            return hr;
+
+        outstream = outstreamPtr;
+        *outStream = outstreamPtr.Detach();
+        return S_OK;
     };
 
     STDMETHODIMP CExtractCallback::PrepareOperation(Int32 UNUSED(askExtractMode)) throw() {
@@ -531,6 +542,8 @@ namespace sevenzip {
                             << " attr " << std::hex << attr << std::dec);
                 }
             }
+            outstream.Release();
+            index = -1;
             return S_OK;
         }
         if (operationResult == NArchive::NExtract::NOperationResult::kWrongPassword)
@@ -550,7 +563,7 @@ namespace sevenzip {
 
 
     CUpdateCallback::CUpdateCallback(Istream* istream, const wchar_t* password) :
-            instream(new CInStream(istream)),
+            istream(istream),
             password(password ? password : L""),
             passworddefined(password != nullptr) {
         DEBUGLOG(this << " CUpdateCallback " << istream << " " << (password ? password : L"NULL"));
@@ -609,17 +622,15 @@ namespace sevenzip {
             prop = false;
         }
         else {
-            if (!instream)
-                return E_FAIL;
             switch (propID) {
             case kpidPath: prop = items[index]; break;
-            case kpidIsDir: prop = CINSTREAM(instream)->IsDir(items[index]); break;
-            case kpidSize: prop = CINSTREAM(instream)->GetSize(items[index]); break;
-            case kpidCTime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
-            case kpidATime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
-            case kpidMTime: PropVariant_SetFrom_UnixTime(prop, CINSTREAM(instream)->GetTime(items[index])); break;
-            case kpidAttrib: prop = CINSTREAM(instream)->GetAttr(items[index]); break;
-            case kpidPosixAttrib: prop = CINSTREAM(instream)->GetMode(items[index]); break;
+            case kpidIsDir: prop = istream->IsDir(items[index]); break;
+            case kpidSize: prop = istream->GetSize(items[index]); break;
+            case kpidCTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(items[index])); break;
+            case kpidATime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(items[index])); break;
+            case kpidMTime: PropVariant_SetFrom_UnixTime(prop, istream->GetTime(items[index])); break;
+            case kpidAttrib: prop = istream->GetAttr(items[index]); break;
+            case kpidPosixAttrib: prop = istream->GetMode(items[index]); break;
             default: break;
             }
         }
@@ -631,16 +642,25 @@ namespace sevenzip {
     STDMETHODIMP CUpdateCallback::GetStream(UInt32 index, ISequentialInStream** inStream) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetStream " << index);
         *inStream = nullptr;
-        *inStream = instream;
-        instream->AddRef();
 
-        HRESULT hr = CINSTREAM(instream)->Open(items[index]);
-        return FAILED(hr) ? hr : S_OK;
+        // NOTE: use given istream for first item, clone for subsequent items
+        CMyComPtr<IInStream> instreamPtr((index == 0)
+                ? new CInStream(istream)
+                : new CInStream(istream->Clone(), true));
+
+        HRESULT hr = CINSTREAM(instreamPtr)->Open(items[index]);
+
+        DEBUGLOG(this << " CUpdateCallback::GetStream Open " << items[index].Ptr() << " hr " << hr);
+
+        if (FAILED(hr))
+            return hr;
+
+        *inStream = instreamPtr.Detach();
+        return S_OK;
     };
 
     STDMETHODIMP CUpdateCallback::SetOperationResult(Int32 UNUSED(operationResult)) throw() {
         DEBUGLOG(this << " CUpdateCallback::SetOperationResult " << operationResult);
-        CINSTREAM(instream)->Close();
         return S_OK;
     };
 

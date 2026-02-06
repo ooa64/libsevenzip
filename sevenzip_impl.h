@@ -78,8 +78,8 @@ namespace sevenzip {
         STDMETHOD(Seek)(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) throw() Z7_override Z7_final;
         STDMETHOD(SetSize)(UInt64 size) throw() Z7_override Z7_final;
 
-        // NOTE: ostream is owned by caller
-        COutStream(Ostream* ostream);
+        // NOTE: ostream is owned by caller unless cloned is true
+        COutStream(Ostream* ostream, bool cloned = false);
         virtual ~COutStream();
 
         HRESULT Open(const wchar_t* filename);
@@ -93,6 +93,7 @@ namespace sevenzip {
     private:
 
         Ostream* ostream;
+        bool cloned;
     };
 
 
@@ -165,8 +166,10 @@ namespace sevenzip {
 
         CMyComPtr<ISequentialOutStream> outstream;
         IInArchive* archive;
+        Ostream *ostream;
         UString password;
         bool passworddefined;
+        bool subsequent;
         int index;
     };
 
@@ -206,7 +209,7 @@ namespace sevenzip {
 
     private:
 
-        CMyComPtr<ISequentialInStream> instream;
+        Istream* istream;
         UString password;
         bool passworddefined;
     };

@@ -60,7 +60,8 @@ namespace sevenzip {
         virtual UInt32 GetAttr(const wchar_t* /*filename*/) { return 0; };
         virtual UInt32 GetTime(const wchar_t* /*filename*/) { return 0; };
 
-        // Used by open multivolume handler
+        // Used by open multivolume handler for open second and subsequent volumes
+        // Used by update handler for reading second and subsequent items
         virtual Istream* Clone() const { return nullptr; };
         
         virtual ~Istream() = default;
@@ -88,6 +89,9 @@ namespace sevenzip {
         virtual HRESULT SetMode(const wchar_t* /*path*/, UInt32 /*mode*/) { return S_FALSE; };
         virtual HRESULT SetAttr(const wchar_t* /*filename*/, UInt32 /*attr*/) { return S_FALSE; };
         virtual HRESULT SetTime(const wchar_t* /*filename*/, UInt32 /*time*/) { return S_FALSE; };
+
+        // Used by extract handler for writing second and subsequent items
+        virtual Ostream* Clone() const { return nullptr; };
 
         virtual ~Ostream() = default;
     };
