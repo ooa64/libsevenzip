@@ -265,7 +265,6 @@ namespace sevenzip {
         return istream ? istream->IsDir(pathname) : false;
     };
 
-    // NOTE: not used at this time, but implemented for possible future use
     UInt64 CInStream::GetSize(const wchar_t* pathname) {
        DEBUGLOG(this << " CInStream::GetSize " << pathname);
        return istream ? istream->GetSize(pathname) : 0;
@@ -346,12 +345,12 @@ namespace sevenzip {
     // callbacks
 
     COpenCallback::COpenCallback(Istream* istream, const wchar_t* pathname, const wchar_t* password) :
-        istream(istream),
-        pathname(pathname ? pathname : L""),
-        password(password ? password : L""),
-        passworddefined(password),
-        subarchivename(L""),
-        subarchivemode(false) {
+            istream(istream),
+            pathname(pathname ? pathname : L""),
+            password(password ? password : L""),
+            passworddefined(password),
+            subarchivename(L""),
+            subarchivemode(false) {
         DEBUGLOG(this << " COpenCallback " << istream << " " << (password ? password : L"NULL"));
     };
 
@@ -374,8 +373,7 @@ namespace sevenzip {
         NWindows::NCOM::CPropVariant prop;
         if (subarchivemode && propID == kpidName) {
             prop = subarchivename;
-        }
-        else {
+        } else {
             switch (propID) {
             case kpidPath: prop = pathname; break;
             case kpidName: prop = pathname; break;
@@ -402,13 +400,13 @@ namespace sevenzip {
         
         pathname = name ? name : L"";
 
-        // NOTE: multivolume support, clone the istream from second volume onwards
+        // multivolume support, clone the istream from second volume onwards
         CMyComPtr<IInStream> instreamPtr(new CInStream(istream->Clone(), true));
         HRESULT hr = CINSTREAM(instreamPtr)->Open(pathname);
 
         DEBUGLOG(this << " COpenCallback::GetStream Open " << pathname.Ptr() << " hr " << hr);
 
-        // NOTE: suppress FILE_NOT_FOUND so there is no fail after the last multivolume file
+        // suppress FILE_NOT_FOUND so there is no fail after the last multivolume file
         if (FAILED(hr))
             return  hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ? S_FALSE : hr;        
 
@@ -487,7 +485,7 @@ namespace sevenzip {
         if (isdir)
             return ostream->Mkdir(pathname);
 
-        // NOTE: use given ostream for first item, clone for subsequent items
+        // use given ostream for first item, clone for subsequent items
         CMyComPtr<IOutStream> outstreamPtr(!subsequent
                 ? new COutStream(ostream)
                 : new COutStream(ostream->Clone(), true));
@@ -604,29 +602,10 @@ namespace sevenzip {
 
     STDMETHODIMP CUpdateCallback::GetProperty(UInt32 index, PROPID propID, PROPVARIANT* value) throw() {
         DEBUGLOG(this << " CUpdateCallback::GetProperty " << index << " id " << propID);
-
-        // NOTE: alternative implementation without prop variable
-        // if (propID == kpidIsAnti) {
-        //     NWindows::NCOM::PropVarEm_Set_Bool(value, false);
-        // } else {
-        //     switch (propID) {
-        //     // case kpidPath: value = (BSTR)items[index]; break;
-        //     case kpidIsDir: NWindows::NCOM::PropVarEm_Set_Bool(value, false); break;
-        //     case kpidSize: NWindows::NCOM::PropVarEm_Set_UInt64(value, 0); break;
-        //     case kpidCTime: NWindows::NCOM::PropVarEm_Set_FileTime64_Prec(value, 0, 0); break;
-        //     case kpidATime: NWindows::NCOM::PropVarEm_Set_FileTime64_Prec(value, 0, 0); break;
-        //     case kpidMTime: NWindows::NCOM::PropVarEm_Set_FileTime64_Prec(value, 0, 0); break;
-        //     case kpidAttrib: NWindows::NCOM::PropVarEm_Set_UInt32(value, 32); break;
-        //     case kpidPosixAttrib: NWindows::NCOM::PropVarEm_Set_UInt32(value, 0x816d); break;
-        //     default: return S_FALSE;
-        //     }
-        // }
-
         NWindows::NCOM::CPropVariant prop;
         if (propID == kpidIsAnti) {
             prop = false;
-        }
-        else {
+        } else {
             switch (propID) {
             case kpidPath: prop = items[index]; break;
             case kpidIsDir: prop = istream->IsDir(items[index]); break;
@@ -648,7 +627,7 @@ namespace sevenzip {
         DEBUGLOG(this << " CUpdateCallback::GetStream " << index);
         *inStream = nullptr;
 
-        // NOTE: use given istream for first item, clone for subsequent items
+        // use given istream for first item, clone for subsequent items
         CMyComPtr<IInStream> instreamPtr((index == 0)
                 ? new CInStream(istream)
                 : new CInStream(istream->Clone(), true));
@@ -717,7 +696,7 @@ namespace sevenzip {
         hr = istream->Open(name);
         if (FAILED(hr))
             return hr;
-        // NOTE: commented to allow preopen stream start at nonzero positions (not checked yet)
+        // commented out to allow preopen stream start at nonzero positions (not checked yet)
         // hr = istream->Seek(0, SZ_SEEK_SET, nullptr);
         // if (FAILED(hr))
         //     return hr;
@@ -834,14 +813,14 @@ namespace sevenzip {
     }
 
     HRESULT Iarchive::Impl::extract(Ostream* ostream, const wchar_t* password, int index) {
+        DEBUGLOG(this << " Iarchive::Impl::extract index " << index);
+
         if (!inarchive)
             return E_FAIL;
 
         CMyComPtr<IArchiveExtractCallback> extractcallback =
                 new CExtractCallback(ostream, inarchive,
                 password ? password : COPENCALLBACK(opencallback)->Password());
-
-        DEBUGLOG(this << " Iarchive::Impl::extract index " << index);
 
         HRESULT hr = S_OK;
         hr = setOptions(inarchive, optionNames, optionValues);
@@ -952,11 +931,6 @@ namespace sevenzip {
         else
             return E_FAIL;
         return S_OK;
-        // NOTE: alternative implementation
-        // UString us;
-        // if (getStringValue(prop, us) >= S_OK)
-        //    propValue = COPYWCHARS(lastStringProperty, us.Ptr());
-        // return hr;
     };
 
     HRESULT Iarchive::Impl::getBoolProperty(PROPID propId, bool& propValue) {
@@ -1030,12 +1004,6 @@ namespace sevenzip {
         else
             return E_FAIL;
         return S_OK;
-        // NOTE: alternative implementation
-        // UString us;
-        // HRESULT hr = getArchiveStringItemProperty(inarchive, index, propId, us);
-        // if (hr >= S_OK)
-        //    propValue = COPYWCHARS(lastStringProperty, us.Ptr());
-        // return hr;
     };
 
     HRESULT Iarchive::Impl::getBoolItemProperty(int index, PROPID propId, bool& propValue) {
@@ -1063,7 +1031,6 @@ namespace sevenzip {
     };
 
     void Iarchive::Impl::addStringOption(const wchar_t* name, const wchar_t* value) {
-        DEBUGLOG(this << " Iarchive::addStringOption " << name << " " << (value ? value : L"NULL"));
         NWindows::NCOM::CPropVariant prop = L"";
         if (value)            
             prop = value;
@@ -1072,21 +1039,18 @@ namespace sevenzip {
     };
 
    void Iarchive::Impl::addBoolOption(const wchar_t* name, bool value) {
-        DEBUGLOG(this << " Iarchive::addBoolOption " << name << " " << value);
         NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
 
    void Iarchive::Impl::addIntOption(const wchar_t* name, UInt32 value) {
-        DEBUGLOG(this << " Iarchive::addIntOption " << name << " " << value);
         NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
 
    void Iarchive::Impl::addWideOption(const wchar_t* name, UInt64 value) {
-        DEBUGLOG(this << " Iarchive::addWideOption " << name << " " << value);
         NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
@@ -1099,6 +1063,7 @@ namespace sevenzip {
 
     Oarchive::Impl::~Impl() {
         DEBUGLOG(this << " Oarchive::Impl::~Impl");
+        close();
     };
 
     HRESULT Oarchive::Impl::open(Lib::Impl* libimpl,  Istream* istream, Ostream* ostream,
@@ -1117,8 +1082,6 @@ namespace sevenzip {
         HRESULT hr = ostream->Open(filename);
         if (FAILED(hr))
             return hr;
-
-        close();
 
         if (formatIndex < 0)
             formatIndex = libimpl->getFormatByExtension(getFilenameExt(filename));
@@ -1163,9 +1126,9 @@ namespace sevenzip {
         if (FAILED(hr))
             return hr;
 
-            hr = outarchive->UpdateItems(outstream,
-                    CUPDATECALLBACK(updatecallback)->items.Size(), updatecallback);
-            CUPDATECALLBACK(updatecallback)->items.Clear();
+        hr = outarchive->UpdateItems(outstream,
+                CUPDATECALLBACK(updatecallback)->items.Size(), updatecallback);
+        CUPDATECALLBACK(updatecallback)->items.Clear();
         return hr;
     };
 
@@ -1176,31 +1139,27 @@ namespace sevenzip {
     };
 
     void Oarchive::Impl::addStringOption(const wchar_t* name, const wchar_t* value) {
-        DEBUGLOG(this << " Oarchive::addStringOption " << name << " " << (value ? value : L"NULL"));
-            NWindows::NCOM::CPropVariant prop = L"";
-            if (value)            
-                prop = value;
+        NWindows::NCOM::CPropVariant prop = L"";
+        if (value)            
+            prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
 
    void Oarchive::Impl::addBoolOption(const wchar_t* name, bool value) {
-        DEBUGLOG(this << " Oarchive::addBoolOption " << name << " " << value);
-            NWindows::NCOM::CPropVariant prop = value;
+        NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
 
    void Oarchive::Impl::addIntOption(const wchar_t* name, UInt32 value) {
-        DEBUGLOG(this << " Oarchive::addIntOption " << name << " " << value);
-            NWindows::NCOM::CPropVariant prop = value;
+        NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
 
    void Oarchive::Impl::addWideOption(const wchar_t* name, UInt64 value) {
-        DEBUGLOG(this << " Oarchive::addWideOption " << name << " " << value);
-            NWindows::NCOM::CPropVariant prop = value;
+        NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
@@ -1219,8 +1178,8 @@ namespace sevenzip {
     void Lib::Impl::unload() {
         DEBUGLOG(this << " Lib::Impl::unload" << lib);
         if (lib) {
-            // NOTE: library handle must be preserved to avoid dependent modules crashes
-            // NOTE: we need to count references to the library handle if we want to unload it safely
+            // library handle must be preserved to avoid dependent modules crashes,
+            // we need to count references to the library handle if we want to unload it safely
 #ifdef _WIN32
             // ::FreeLibrary((HMODULE)lib);
 #else
@@ -1230,7 +1189,7 @@ namespace sevenzip {
         }
     };
 
-    // NOTE: used internally instead of incomplete unload
+    // used internally instead of incomplete unload
     void Lib::Impl::_unload() {
         DEBUGLOG(this << " Lib::Impl::_unload " << lib);
         if (lib) {
@@ -1344,7 +1303,7 @@ namespace sevenzip {
         return lastMethodName;
     };
 
-    // NOTE: usable props - kDecoderIsAssigned, kEncoderIsAssigned, kIsFilter
+    // Note usable props - kDecoderIsAssigned, kEncoderIsAssigned, kIsFilter
     // bool Lib::Impl::getMethodIsEncoder(int index) {
     //     NWindows::NCOM::CPropVariant prop;
     //     if (!GetMethodProperty)
