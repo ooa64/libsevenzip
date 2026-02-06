@@ -155,6 +155,11 @@ namespace sevenzip {
 
         void close();
 
+        void addStringOption(const wchar_t* name, const wchar_t* value);
+        void addBoolOption(const wchar_t* name, bool value);
+        void addIntOption(const wchar_t* name, UInt32 value);
+        void addWideOption(const wchar_t* name, UInt64 value);
+
         // ostream can be preopened in the case of single item extraction (index > -1)
 
         HRESULT extract(Ostream& ostream, int index = -1);

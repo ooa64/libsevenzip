@@ -840,6 +840,14 @@ namespace sevenzip {
                 password ? password : COPENCALLBACK(opencallback)->Password());
 
         DEBUGLOG(this << " Iarchive::Impl::extract index " << index);
+
+        HRESULT hr = S_OK;
+        hr = setOptions(inarchive, optionNames, optionValues);
+        optionNames.Clear();
+        optionValues.Clear();
+        if (FAILED(hr))
+            return hr;
+
         UInt32 items[1] = {(UInt32)(Int32)index};
         if (index < 0)
             return inarchive->Extract(nullptr, (UInt32)(Int32)(-1), false, extractcallback);
@@ -1051,6 +1059,36 @@ namespace sevenzip {
             return E_FAIL;
         return getArchiveTimeItemProperty(inarchive, index, propId, propValue);
     };
+
+    void Iarchive::Impl::addStringOption(const wchar_t* name, const wchar_t* value) {
+        DEBUGLOG(this << " Iarchive::addStringOption " << name << " " << (value ? value : L"NULL"));
+        NWindows::NCOM::CPropVariant prop = L"";
+        if (value)            
+            prop = value;
+        optionNames.Add(name);
+        optionValues.Add(prop);
+    };
+
+   void Iarchive::Impl::addBoolOption(const wchar_t* name, bool value) {
+        DEBUGLOG(this << " Iarchive::addBoolOption " << name << " " << value);
+        NWindows::NCOM::CPropVariant prop = value;
+        optionNames.Add(name);
+        optionValues.Add(prop);
+    };
+
+   void Iarchive::Impl::addIntOption(const wchar_t* name, UInt32 value) {
+        DEBUGLOG(this << " Iarchive::addIntOption " << name << " " << value);
+        NWindows::NCOM::CPropVariant prop = value;
+        optionNames.Add(name);
+        optionValues.Add(prop);
+    };
+
+   void Iarchive::Impl::addWideOption(const wchar_t* name, UInt64 value) {
+        DEBUGLOG(this << " Iarchive::addWideOption " << name << " " << value);
+        NWindows::NCOM::CPropVariant prop = value;
+        optionNames.Add(name);
+        optionValues.Add(prop);
+    };    
 
 
     Oarchive::Impl::Impl() {

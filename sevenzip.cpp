@@ -174,6 +174,22 @@ namespace sevenzip {
         return pimpl->getTimeItemProperty(index, propId, propValue);
     };
 
+    void Iarchive::addStringOption(const wchar_t* name, const wchar_t* value) {
+        pimpl->addStringOption(name, value);
+    };
+
+    void Iarchive::addBoolOption(const wchar_t* name, bool value) {
+        pimpl->addBoolOption(name, value);
+    };
+
+    void Iarchive::addIntOption(const wchar_t* name, UInt32 value) {
+        pimpl->addIntOption(name, value);
+    };
+
+    void Iarchive::addWideOption(const wchar_t* name, UInt64 value) {
+        pimpl->addWideOption(name, value);
+    };
+
     Oarchive::Oarchive(): pimpl(new Impl()) {};
 
     Oarchive::~Oarchive() {delete pimpl;};

@@ -306,6 +306,11 @@ namespace sevenzip {
         HRESULT getWideItemProperty(int index, PROPID propId, UInt64& propValue);
         HRESULT getTimeItemProperty(int index, PROPID propId, UInt32& propValue);
 
+        void addStringOption(const wchar_t* name, const wchar_t* value);
+        void addBoolOption(const wchar_t* name, bool value);
+        void addIntOption(const wchar_t* name, UInt32 value);
+        void addWideOption(const wchar_t* name, UInt64 value);
+
     private:
 
         CMyComPtr<IInStream> instream;
@@ -313,6 +318,9 @@ namespace sevenzip {
         CMyComPtr<IArchiveOpenCallback> opencallback;
         CObjectVector<CMyComPtr<IInArchive>> inarchives;
         int formatIndex = -1;
+
+        CObjectVector<UString> optionNames;
+        CObjectVector<NWindows::NCOM::CPropVariant> optionValues;
 
         wchar_t lastItemPath[1024] = { L'\0' };
         wchar_t lastStringProperty[1024] = { L'\0' };
