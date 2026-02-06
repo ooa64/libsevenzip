@@ -200,19 +200,19 @@ namespace sevenzip {
         pimpl->addItem(pathname);
     };
 
-    void Oarchive::addStringProperty(const wchar_t* name, const wchar_t* value) {
-        pimpl->addStringProperty(name, value);
+    void Oarchive::addStringOption(const wchar_t* name, const wchar_t* value) {
+        pimpl->addStringOption(name, value);
     };
 
-    void Oarchive::addBoolProperty(const wchar_t* name, bool value) {
-        pimpl->addBoolProperty(name, value);
+    void Oarchive::addBoolOption(const wchar_t* name, bool value) {
+        pimpl->addBoolOption(name, value);
     };
 
-    void Oarchive::addIntProperty(const wchar_t* name, UInt32 value) {
-        pimpl->addIntProperty(name, value);
+    void Oarchive::addIntOption(const wchar_t* name, UInt32 value) {
+        pimpl->addIntOption(name, value);
     };
 
-    void Oarchive::addWideProperty(const wchar_t* name, UInt64 value) {
-        pimpl->addWideProperty(name, value);
+    void Oarchive::addWideOption(const wchar_t* name, UInt64 value) {
+        pimpl->addWideOption(name, value);
     };
 }

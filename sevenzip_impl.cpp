@@ -205,20 +205,23 @@ namespace sevenzip {
         return getTimeValue(prop, propValue);
     };
 
-    static HRESULT setProperties(IUnknown* archive, CObjectVector<UString>& names, CObjectVector<NWindows::NCOM::CPropVariant>& props) {
+    static HRESULT setOptions(IUnknown* archive, CObjectVector<UString>& names, CObjectVector<NWindows::NCOM::CPropVariant>& values) {
+        if (names.Size() == 0)
+            return S_OK;
+
         CMyComPtr<ISetProperties> setter;
         HRESULT hr = archive->QueryInterface(IID_ISetProperties, (void **)&setter);
         if (hr != S_OK)
             return hr;
 
         CRecordVector<const wchar_t *> namesArray;
-        NWindows::NCOM::CPropVariant* propsArray = new NWindows::NCOM::CPropVariant[names.Size()];
+        NWindows::NCOM::CPropVariant* valuesArray = new NWindows::NCOM::CPropVariant[names.Size()];
         for (unsigned i = 0; i < names.Size(); i++) {
             namesArray.Add(names[i]);
-            propsArray[i] = props[i];
-            // DEBUGLOG("setProperties " << i << " " << names[i].Ptr() << " = " << props[i].vt << "/" << props[i].ulVal);
+            valuesArray[i] = values[i];
+            // DEBUGLOG("setOptions " << i << " " << names[i].Ptr() << " = " << values[i].vt << "/" << values[i].ulVal);
         }
-        return setter->SetProperties(namesArray.ConstData(), propsArray, names.Size());
+        return setter->SetProperties(namesArray.ConstData(), valuesArray, names.Size());
     };
 
     // streams
@@ -1114,18 +1117,15 @@ namespace sevenzip {
         if (!updatecallback)
             return S_FALSE;
 
-        HRESULT hr = S_OK;
-        hr = setProperties(outarchive,
-                CUPDATECALLBACK(updatecallback)->propnames,
-                CUPDATECALLBACK(updatecallback)->propvalues);
-        if (hr == S_OK)
+        HRESULT hr = setOptions(outarchive, optionNames, optionValues);
+        optionNames.Clear();
+        optionValues.Clear();
+        if (FAILED(hr))
+            return hr;
+
             hr = outarchive->UpdateItems(outstream,
                     CUPDATECALLBACK(updatecallback)->items.Size(), updatecallback);
-        if (hr == S_OK) {
-            CUPDATECALLBACK(updatecallback)->propnames.Clear();
-            CUPDATECALLBACK(updatecallback)->propvalues.Clear();
             CUPDATECALLBACK(updatecallback)->items.Clear();
-        }
         return hr;
     };
 
@@ -1135,42 +1135,34 @@ namespace sevenzip {
             CUPDATECALLBACK(updatecallback)->items.Add(pathname);
     };
 
-    void Oarchive::Impl::addStringProperty(const wchar_t* name, const wchar_t* value) {
-        DEBUGLOG(this << " Oarchive::addStringProperty " << name << " " << (value ? value : L"NULL"));
-        if (updatecallback) {
+    void Oarchive::Impl::addStringOption(const wchar_t* name, const wchar_t* value) {
+        DEBUGLOG(this << " Oarchive::addStringOption " << name << " " << (value ? value : L"NULL"));
             NWindows::NCOM::CPropVariant prop = L"";
             if (value)            
                 prop = value;
-            CUPDATECALLBACK(updatecallback)->propnames.Add(name);
-            CUPDATECALLBACK(updatecallback)->propvalues.Add(prop);
-        }
+        optionNames.Add(name);
+        optionValues.Add(prop);
     };
 
-   void Oarchive::Impl::addBoolProperty(const wchar_t* name, bool value) {
-        DEBUGLOG(this << " Oarchive::addBoolProperty " << name << " " << value);
-        if (updatecallback) {
+   void Oarchive::Impl::addBoolOption(const wchar_t* name, bool value) {
+        DEBUGLOG(this << " Oarchive::addBoolOption " << name << " " << value);
             NWindows::NCOM::CPropVariant prop = value;
-            CUPDATECALLBACK(updatecallback)->propnames.Add(name);
-            CUPDATECALLBACK(updatecallback)->propvalues.Add(prop);
-        }
+        optionNames.Add(name);
+        optionValues.Add(prop);
     };
 
-   void Oarchive::Impl::addIntProperty(const wchar_t* name, UInt32 value) {
-        DEBUGLOG(this << " Oarchive::addIntProperty " << name << " " << value);
-        if (updatecallback) {
+   void Oarchive::Impl::addIntOption(const wchar_t* name, UInt32 value) {
+        DEBUGLOG(this << " Oarchive::addIntOption " << name << " " << value);
             NWindows::NCOM::CPropVariant prop = value;
-            CUPDATECALLBACK(updatecallback)->propnames.Add(name);
-            CUPDATECALLBACK(updatecallback)->propvalues.Add(prop);
-        }
+        optionNames.Add(name);
+        optionValues.Add(prop);
     };
 
-   void Oarchive::Impl::addWideProperty(const wchar_t* name, UInt64 value) {
-        DEBUGLOG(this << " Oarchive::addWideProperty " << name << " " << value);
-        if (updatecallback) {
+   void Oarchive::Impl::addWideOption(const wchar_t* name, UInt64 value) {
+        DEBUGLOG(this << " Oarchive::addWideOption " << name << " " << value);
             NWindows::NCOM::CPropVariant prop = value;
-            CUPDATECALLBACK(updatecallback)->propnames.Add(name);
-            CUPDATECALLBACK(updatecallback)->propvalues.Add(prop);
-        }
+        optionNames.Add(name);
+        optionValues.Add(prop);
     };
 
     // library

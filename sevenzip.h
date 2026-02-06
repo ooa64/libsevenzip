@@ -213,10 +213,10 @@ namespace sevenzip {
         void close();
 
         void addItem(const wchar_t* pathname);
-        void addStringProperty(const wchar_t* name, const wchar_t* value);
-        void addBoolProperty(const wchar_t* name, bool value);
-        void addIntProperty(const wchar_t* name, UInt32 value);
-        void addWideProperty(const wchar_t* name, UInt64 value);
+        void addStringOption(const wchar_t* name, const wchar_t* value);
+        void addBoolOption(const wchar_t* name, bool value);
+        void addIntOption(const wchar_t* name, UInt32 value);
+        void addWideOption(const wchar_t* name, UInt64 value);
 
         HRESULT update();
 
