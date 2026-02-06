@@ -223,7 +223,7 @@ namespace sevenzip {
             valuesArray[i] = values[i];
             // DEBUGLOG("setOptions " << i << " " << names[i].Ptr() << " = " << values[i].vt << "/" << values[i].ulVal);
         }
-        return setter->SetProperties(namesArray.ConstData(), valuesArray, names.Size());
+        return setter->SetProperties((const wchar_t *const *)&namesArray[0], valuesArray, names.Size());
     };
 
     // streams
