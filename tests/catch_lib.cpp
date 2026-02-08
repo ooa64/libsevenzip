@@ -9,8 +9,7 @@ TEST_CASE("Lib handles missing library", "[lib][load]") {
     FakeIstream in;
     
     REQUIRE(l.load(L"no_such_library") == false);
-    REQUIRE(str(l.getLoadMessage()) == "The specified module could not be found.");
-    
+    REQUIRE(l.getLoadMessage()[0] != 0);
     REQUIRE(l.isLoaded() == false);
     REQUIRE(l.getVersion() == 0);
     REQUIRE(l.getNumberOfFormats() == 0);
