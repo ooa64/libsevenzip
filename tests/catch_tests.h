@@ -27,6 +27,20 @@ inline int run_cmd(const std::string& cmd) {
     return std::system(cmd.c_str());
 }
 
+inline std::string str(const wchar_t* wstr) {
+    std::string str;
+    while (*wstr) {
+        wchar_t wc = *wstr++;
+        if (wc <= 0x7F) {
+            str.push_back(static_cast<char>(wc));
+        } else {
+            // Non-ASCII character, replace with '?'
+            str.push_back('?');
+        }
+    }
+    return str;
+}
+
 inline std::string quote(const std::string& path) {
     return "\"" + path + "\"";
 }
@@ -116,11 +130,16 @@ inline bool write_text_file(const std::string& path, const std::string& content)
     return out.good();
 }
 
-inline std::string create_7z_archive(const std::string& exe, const std::string& base) {
-    std::string input = base + "/sample.txt";
-    std::string archive = base + "/sample.7z";
+inline std::string create_7z_archive(
+        const std::string& exe,
+        const std::string& base,
+        const std::string& type = "7z",
+        const std::string& args = "") {
 
-    if (!write_text_file(input, "hello libsevenzip")) {
+    std::string input = base + "/sample.txt";
+    std::string archive = base + "/sample." + type;
+
+    if (!write_text_file(input, "libsevenzip sample content")) {
         return {};
     }
 
@@ -128,7 +147,9 @@ inline std::string create_7z_archive(const std::string& exe, const std::string& 
         remove_file(archive);
     }
 
-    std::string cmd = exe + " a -t7z -y " + quote(archive) + " " + quote(input);
+    std::string cmd = exe + " a -y " + args + 
+            quote(archive) + " " + quote(input);
+
     int rc = run_cmd(cmd + " " QUITE);
     if (rc != 0 || !path_exists(archive)) {
         return std::string();
@@ -147,15 +168,16 @@ struct FakeIstream : public sevenzip::Istream {
         processed = 0;
         return read_ok ? S_OK : S_FALSE;
     }
-    virtual void Close() override {
-    }
     virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64& /*position*/) override {
         return seek_ok ? S_OK : S_FALSE;
+    }
+    virtual void Close() override {
     }
 };
 
 struct FakeOstream : public sevenzip::Ostream {
     bool open_ok = true;
+    bool seek_ok = true;
     bool write_ok = true;
     virtual HRESULT Open(const wchar_t* /*filename*/) override {
         return open_ok ? S_OK : S_FALSE;
@@ -164,16 +186,27 @@ struct FakeOstream : public sevenzip::Ostream {
         processed = 0;
         return write_ok ? S_OK : S_FALSE;
     }
+    virtual HRESULT Seek(Int64 /*offset*/, UInt32 /*origin*/, UInt64& /*position*/) override {
+        return seek_ok ? S_OK : S_FALSE;
+    }
     virtual void Close() override {
     }
 };
 
 struct FileIstream : public sevenzip::Istream {
     std::ifstream stream;
+    std::string base;
     bool preopened = false;
 
-    bool openPath(const std::string& path) {
-        stream.open(path.c_str(), std::ios::binary);
+    FileIstream() = default;
+    FileIstream(const std::string& base) : base(base) {};
+
+    std::string fullname(const std::string& filename) {
+        return base.empty() ? filename : base + "/" + filename;
+    }
+
+    bool openPath(const std::string& filename) {
+        stream.open(fullname(filename).c_str(), std::ios::binary);
         preopened = stream.is_open();
         return preopened;
     }
@@ -182,7 +215,7 @@ struct FileIstream : public sevenzip::Istream {
         if (preopened) {
             return S_FALSE;
         }
-        stream.open(sevenzip::toBytes(filename), std::ios::binary);
+        stream.open(fullname(sevenzip::toBytes(filename)).c_str(), std::ios::binary);
         return sevenzip::getResult(stream.is_open());
     }
 
@@ -204,7 +237,7 @@ struct FileIstream : public sevenzip::Istream {
     }
 
     UInt64 GetSize(const wchar_t* filename) override {
-        std::string p = sevenzip::toBytes(filename);
+        std::string p = fullname(sevenzip::toBytes(filename));
         if (!path_exists(p)) {
             return 0;
         }
@@ -212,23 +245,30 @@ struct FileIstream : public sevenzip::Istream {
     }
 
     bool IsDir(const wchar_t* filename) override {
-        std::string p = sevenzip::toBytes(filename);
+        std::string p = fullname(sevenzip::toBytes(filename));
         return is_dir(p);
     }
 
     Istream* Clone() const override {
-        return new FileIstream();
+        return new FileIstream(base);
     }
 };
 
 struct FileOstream : public sevenzip::Ostream {
     std::fstream stream;
+    std::string base;
     bool preopened = false;
-    std::string path;
 
-    bool openPath(const std::string& path) {
-        this->path = path;
-        stream.open(path.c_str(), std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+    FileOstream() = default;
+    FileOstream(const std::string& base) : base(base) {};
+
+    std::string fullname(const std::string& filename) {
+        return base.empty() ? filename : base + "/" + filename;
+    }
+
+    bool openPath(const std::string& filename) {
+        stream.open(fullname(filename).c_str(),
+                std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
         preopened = stream.is_open();
         return preopened;
     }
@@ -237,8 +277,8 @@ struct FileOstream : public sevenzip::Ostream {
         if (preopened) {
             return S_FALSE;
         }
-        path = sevenzip::toBytes(filename);
-        stream.open(path.c_str(), std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+        stream.open(fullname(sevenzip::toBytes(filename)).c_str(),
+                std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
         return sevenzip::getResult(stream.is_open());
     }
 
@@ -259,22 +299,8 @@ struct FileOstream : public sevenzip::Ostream {
         return sevenzip::getResult(stream.good());
     }
 
-    HRESULT SetSize(UInt64 size) override {
-#ifdef _WIN32
-        (void)size; // Unused parameter
-        return S_FALSE; // Not implemented on Windows
-#else        
-        stream.flush();
-        if (path.empty()) {
-            return S_FALSE;
-        }
-        int rc = ::truncate(path.c_str(), static_cast<off_t>(size));
-        return sevenzip::getResult(rc == 0);
-#endif
-    }
-
     Ostream* Clone() const override {
-        return new FileOstream();
+        return new FileOstream(base);
     }
 };
 

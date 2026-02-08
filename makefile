@@ -154,7 +154,7 @@ tests/tests: tests/catch_*.cpp libsevenzip.a
 tests: all catch2 tests/tests
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
-		./tests/tests
+		./tests/tests $(TESTFLAGS)
 
 $O/sevenzip_impl.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip_impl.cpp
 

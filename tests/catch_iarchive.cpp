@@ -1,7 +1,4 @@
 #include <catch2/catch.hpp>
-
-#include <string>
-
 #include "catch_tests.h"
 
 using namespace sevenzip;
@@ -9,18 +6,18 @@ using namespace sevenzip_test;
 
 TEST_CASE("Iarchive::open handles invalid streams", "[iarchive]") {
     HRESULT hr;
-    sevenzip::Lib l; // not loaded
+    Lib l; // not loaded
 
     {
         FakeIstream in;
-        sevenzip::Iarchive ar;
+        Iarchive ar;
         hr = ar.open(l, in, L"file.7z");
         REQUIRE(hr == S_FALSE);
     }
 
     {
         FakeIstream in;
-        sevenzip::Iarchive ar;
+        Iarchive ar;
         in.open_ok = false;
         hr = ar.open(l, in, L"file.7z");
         REQUIRE(hr == S_FALSE);
@@ -28,7 +25,7 @@ TEST_CASE("Iarchive::open handles invalid streams", "[iarchive]") {
 
     {
         FakeIstream in;
-        sevenzip::Iarchive ar;
+        Iarchive ar;
         in.open_ok = true;
         in.seek_ok = true;
         hr = ar.open(l, in, L"file.7z");
@@ -37,7 +34,7 @@ TEST_CASE("Iarchive::open handles invalid streams", "[iarchive]") {
 
     {
         FakeIstream in;
-        sevenzip::Iarchive ar;
+        Iarchive ar;
         in.open_ok = false;
         hr = ar.open(l, in, L"file.7z");
         REQUIRE(hr == S_FALSE);
@@ -57,27 +54,36 @@ TEST_CASE("Open archive created by 7z", "[iarchive]") {
         return;
     }
 
+    std::string type;
+
+    SECTION("7z format") {type = "7z";}
+    SECTION("bz2 format") {type = "bz2";}
+    SECTION("gz format") {type = "gz";}
+    SECTION("tar format") {type = "tar";}
+    SECTION("wim format") {type = "wim";}
+    SECTION("xz format") {type = "xz";}
+    SECTION("zip format") {type = "zip";}
+
     std::string base = get_base_dir("iarchive");
-    std::string archive = create_7z_archive(exe, base);
+    std::string archive = create_7z_archive(exe, base, type);
     if (archive.empty()) {
-        WARN("failed to create test archive using 7z executable");
+        WARN("failed to create '" << type << "' test archive using 7z executable");
         return;
     }
 
-    Iarchive ar;
-    FileIstream stream;
+    {
+        Iarchive ar;
+        FileIstream in;
 
-    wchar_t wArchive[1024];
-    fromBytes(wArchive, 1024, archive.c_str());
+        HRESULT hr = ar.open(lib, in, fromBytes(archive.c_str()));
+        REQUIRE(hr == S_OK);
 
-    HRESULT hr = ar.open(lib, stream, wArchive);
-    REQUIRE(hr == S_OK);
+        int count = ar.getNumberOfItems();
+        REQUIRE(count >= 1);
 
-    int count = ar.getNumberOfItems();
-    REQUIRE(count > 0);
+        const wchar_t* path0 = ar.getItemPath(0);
+        REQUIRE(path0[0] != 0);
 
-    const wchar_t* path0 = ar.getItemPath(0);
-    REQUIRE(path0 != nullptr);
-
-    ar.close();
+        ar.close();
+    }
 }

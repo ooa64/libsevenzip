@@ -108,7 +108,7 @@ examples_output: $(EXAMPLES) temps_dir
 	@for %%i in ($(EXAMPLES)) do echo %i
 
 tests: library catch2 $O\tests.exe
-	@$O\tests.exe
+	@$O\tests.exe $(TESTFLAGS)
 
 temps_dir:
 	-@rd /q/s temps > NUL 2>&1
