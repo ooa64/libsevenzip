@@ -11,6 +11,14 @@ if(NOT SEVENZIPSRC)
     set(SEVENZIPSRC "../7zip")
 endif()
 
+if(NOT SEVENZIPBIN)
+    set(SEVENZIPBIN $ENV{SEVENZIPBIN})
+endif()
+
+if(NOT SEVENZIPBIN)
+    set(SEVENZIPBIN "7z")
+endif()
+
 add_compile_definitions(PUBLIC PROJECT_VER_MAJOR=1)
 add_compile_definitions(PUBLIC PROJECT_VER_MINOR=1)
 # add_compile_definitions(UNICODE _UNICODE)

@@ -7,6 +7,10 @@ PROJECT_VER_MINOR = 1
 SEVENZIPSRC = ..\7zip
 !endif
 
+!ifndef SEVENZIPBIN
+SEVENZIPBIN = 7z
+!endif
+
 !ifdef UNICODE
 CFLAGS = $(CFLAGS) -DUNICODE -D_UNICODE
 !endif
@@ -103,7 +107,7 @@ examples: $(EXAMPLES) temps_dir
 examples_output: $(EXAMPLES) temps_dir
 	@for %%i in ($(EXAMPLES)) do echo %i
 
-tests: library $O\tests.exe
+tests: library catch2 $O\tests.exe
 	@$O\tests.exe
 
 temps_dir:
@@ -121,8 +125,8 @@ temps_dir:
 	@(cd temps & 7z a example9.7z example.txt example >> NUL)
 	@(cd temps & del example.txt & del /q example)
 
-$O\tests.exe: tests\catch_*.cpp libsevenzip.a
-	$(CXX) $(CXXFLAGS) -o $@ $^
+$O\tests.exe: tests\catch_*.cpp
+	$(CXX) $(CXXFLAGS) -Fe$O\tests.exe $** $(LIBS)
 
 $O\example.exe:  $E\example.cpp  sevenzip.h library
 $O\example0.exe: $E\example0.cpp sevenzip.h library
@@ -179,9 +183,6 @@ catch2\catch.hpp:
 
 {examples}.cpp{$O}.exe:
 	$(CXX) $(CXXFLAGS) -Fe$O\ $< $(LIBS)
-
-{tests}.cpp{$O}.exe:
-	$(CXX) $(CXXFLAGS) -Fe$O\ $** $(LIBS)
 
 .SUFFIXES:
 .SUFFIXES:.cpp

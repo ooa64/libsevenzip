@@ -1,12 +1,22 @@
 #pragma once
 
+#include <errno.h>
+#include <sys/stat.h>
+
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#define QUITE ">nul 2>&1"
+#define mkdir(_d_,_m_) (_mkdir(_d_))
+#else
+#include <unistd.h>
+#define QUITE "> /dev/null 2>&1"
+#endif
+
 #include <cstdlib>
 #include <cstdio>
 #include <fstream>
 #include <string>
-#include <errno.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <vector>
 
 #include "sevenzip.h"
@@ -22,16 +32,17 @@ inline std::string quote(const std::string& path) {
 }
 
 inline std::string find_7z_executable() {
-    const char* env = std::getenv("SEVENZIP_EXE");
+    const char* env = std::getenv("SEVENZIPBIN");
     if (env && *env) {
         std::string exe = env;
-        if (run_cmd(exe + " -h > /dev/null 2>&1") == 0) {
+        if (run_cmd(exe + " -h " QUITE) == 0) {
             return exe;
         }
+        return {};
     }
-    const std::vector<std::string> candidates = {"7z", "7za"};
+    const std::vector<std::string> candidates = {"7z", "7za", "7zz"};
     for (const auto& exe : candidates) {
-        if (run_cmd(exe + " -h > /dev/null 2>&1") == 0) {
+        if (run_cmd(exe + " -h " QUITE) == 0) {
             return exe;
         }
     }
@@ -59,7 +70,7 @@ inline bool ensure_dir(const std::string& path) {
                 current += "/";
             }
             current += part;
-            if (::mkdir(current.c_str(), 0755) != 0 && errno != EEXIST) {
+            if (mkdir(current.c_str(), 0755) != 0 && errno != EEXIST) {
                 return false;
             }
         }
@@ -78,7 +89,7 @@ inline bool is_dir(const std::string& path) {
     if (::stat(path.c_str(), &st) != 0) {
         return false;
     }
-    return S_ISDIR(st.st_mode);
+    return (st.st_mode & S_IFDIR) != 0;
 }
 
 inline unsigned long long file_size(const std::string& path) {
@@ -118,7 +129,7 @@ inline std::string create_7z_archive(const std::string& exe, const std::string& 
     }
 
     std::string cmd = exe + " a -t7z -y " + quote(archive) + " " + quote(input);
-    int rc = run_cmd(cmd + " > /dev/null 2>&1");
+    int rc = run_cmd(cmd + " " QUITE);
     if (rc != 0 || !path_exists(archive)) {
         return std::string();
     }
@@ -249,12 +260,17 @@ struct FileOstream : public sevenzip::Ostream {
     }
 
     HRESULT SetSize(UInt64 size) override {
+#ifdef _WIN32
+        (void)size; // Unused parameter
+        return S_FALSE; // Not implemented on Windows
+#else        
         stream.flush();
         if (path.empty()) {
             return S_FALSE;
         }
         int rc = ::truncate(path.c_str(), static_cast<off_t>(size));
         return sevenzip::getResult(rc == 0);
+#endif
     }
 
     Ostream* Clone() const override {

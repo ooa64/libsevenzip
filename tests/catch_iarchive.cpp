@@ -47,13 +47,13 @@ TEST_CASE("Iarchive::open handles invalid streams", "[iarchive]") {
 TEST_CASE("Open archive created by 7z", "[iarchive]") {
     std::string exe = find_7z_executable();
     if (exe.empty()) {
-        WARN("7z executable not available in PATH or SEVENZIP_EXE");
+        WARN("7z executable not available in PATH or SEVENZIPBIN");
         return;
     }
 
     Lib lib;
     if (!lib.load(SEVENZIPDLL)) {
-        WARN("7z library not available; set LD_LIBRARY_PATH or place 7z.so alongside tests");
+        WARN("7z library not available; set (DY)LD_LIBRARY_PATH");
         return;
     }
 
