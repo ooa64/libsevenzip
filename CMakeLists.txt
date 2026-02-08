@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(sevenzip LANGUAGES C CXX)
 
+include(FetchContent)
+
 if(NOT SEVENZIPSRC)
     set(SEVENZIPSRC $ENV{SEVENZIPSRC})
 endif()
@@ -39,14 +41,19 @@ foreach(i RANGE 0 9)
     target_link_libraries(${target} PRIVATE sevenzip)
 endforeach()
 
-add_executable(tests
-    tests/tests.cpp
-    tests/test_lib.cpp
-    tests/test_iarchive.cpp
-    tests/test_oarchive.cpp
+FetchContent_Declare(Catch2 GIT_REPOSITORY https://github.com/catchorg/Catch2.git GIT_TAG v2.13.10)
+FetchContent_MakeAvailable(Catch2)
+
+add_executable(catch_tests
+    tests/catch_tests.cpp
+    tests/catch_lib.cpp
+    tests/catch_iarchive.cpp
+    tests/catch_oarchive.cpp
 )
-target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(tests PRIVATE sevenzip)
-add_test(NAME tests COMMAND tests)
+target_include_directories(catch_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(catch_tests PRIVATE sevenzip Catch2::Catch2)
+target_compile_features(catch_tests PRIVATE cxx_std_11)
+
+add_test(NAME catch_tests COMMAND catch_tests)
 
 enable_testing()

@@ -85,7 +85,7 @@ clean:
 
 cleanall: clean
 	-rm -f libsevenzip.a example[0-9H] example
-	-rm -fr C temps example[0-9H].dSYM example.dSYM
+	-rm -fr C temps catch2 example[0-9H].dSYM example.dSYM
 
 libsevenzip.a: $(OBJS)
 	ar rcs $@ $^
@@ -148,10 +148,10 @@ leaks: $(EXAMPLES) example_dir
 	    grep "^Process .* leak" <$O/leaks.lst; \
 	done
 
-tests/tests: tests/tests.cpp tests/test_*.cpp libsevenzip.a
+tests/tests: tests/catch_*.cpp libsevenzip.a
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-tests: tests/tests
+tests: all catch2 tests/tests
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SEVENZIPPATH) \
 		./tests/tests
@@ -171,6 +171,12 @@ $O/sevenzip.o: sevenzip.h sevenzip_compat.h sevenzip_impl.h sevenzip.cpp
 	cd $(SEVENZIPSRC)/CPP/7zip/UI/Console && make -f makefile.gcc $(SEVENZIPFLAGS) O=$(CURDIR)/$O/7zip
 	-test -f $O/7zip/7z && cp -p $O/7zip/7z 7z && chmod +x 7z
 	-test -f $O/7zip/lib/7z && cp -p $O/7zip/lib/7z 7z && chmod +x 7z
+
+catch2: catch2/catch.hpp
+catch2/catch.hpp:
+	-@rm -rf catch2 >> /dev/null
+	-@mkdir catch2
+	@curl -so catch2/catch.hpp https://raw.githubusercontent.com/catchorg/Catch2/v2.13.10/single_include/catch2/catch.hpp
 
 VPATH = examples:tests:$(SEVENZIPSRC)/CPP/Common:$(SEVENZIPSRC)/CPP/Windows
 

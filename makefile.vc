@@ -121,7 +121,8 @@ temps_dir:
 	@(cd temps & 7z a example9.7z example.txt example >> NUL)
 	@(cd temps & del example.txt & del /q example)
 
-$O\tests.exe: tests\tests.cpp tests\test_*.cpp
+$O\tests.exe: tests\catch_*.cpp libsevenzip.a
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 $O\example.exe:  $E\example.cpp  sevenzip.h library
 $O\example0.exe: $E\example0.cpp sevenzip.h library
@@ -160,6 +161,12 @@ $O\sevenzip.obj: sevenzip.cpp sevenzip.h sevenzip_compat.h sevenzip_impl.h
 	@cd $(SEVENZIPSRC)\CPP\7zip\UI\Console && nmake -f makefile MY_DYNAMIC_LINK=1 O=%CD%\$O\7z
 	@endlocal
 	@if exist $O\7z\7z.exe copy $O\7z\7z.exe .
+
+catch2: catch2\catch.hpp
+catch2\catch.hpp:
+	-@rd /q/s catch2 > NUL 2>&1
+	-@md catch2
+	@curl -so catch2\catch.hpp https://raw.githubusercontent.com/catchorg/Catch2/v2.13.10/single_include/catch2/catch.hpp
 
 {$(SEVENZIPSRC)\CPP\Common}.cpp{$O}.obj:
 	$(CXX) -c $(CXXFLAGS) -I$(SEVENZIPSRC) $<
