@@ -22,6 +22,7 @@ ifdef DEBUG
 else
 	R = libsevenzip$(PROJECT_VER_MAJOR).$(PROJECT_VER_MINOR)
 	O = outputs/release
+	CFLAGS += -DNDEBUG
 endif
 
 ifdef DEBUG_IMPL

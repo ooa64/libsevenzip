@@ -12,6 +12,8 @@
 #include <dlfcn.h>
 #endif
 
+#include "assert.h"
+
 #ifdef DEBUG_IMPL
 #   include <iostream>
 #   define DEBUGLOG(_x_) (std::wcerr << "DEBUG: " << _x_ << "\n")
@@ -160,6 +162,8 @@ namespace sevenzip {
     };
 
     static HRESULT getArchiveStringItemProperty(IInArchive* archive, int index, PROPID propId, UString& propValue) {
+        assert(archive);
+
         NWindows::NCOM::CPropVariant prop;
         HRESULT hr = archive->GetProperty(index, propId, &prop);
         if (hr != S_OK)
@@ -168,6 +172,8 @@ namespace sevenzip {
     };
 
     static HRESULT getArchiveBoolItemProperty(IInArchive* archive, int index, PROPID propId, bool& propValue) {
+        assert(archive);
+    
         NWindows::NCOM::CPropVariant prop;
         HRESULT hr = archive->GetProperty(index, propId, &prop);
         if (hr != S_OK)
@@ -182,6 +188,8 @@ namespace sevenzip {
     };
 
     static HRESULT getArchiveIntItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
+        assert(archive);
+
         NWindows::NCOM::CPropVariant prop;
         HRESULT hr = archive->GetProperty(index, propId, &prop);
         if (hr != S_OK)
@@ -190,6 +198,8 @@ namespace sevenzip {
     };
 
     static HRESULT getArchiveWideItemProperty(IInArchive* archive, int index, PROPID propId, UInt64& propValue) {
+        assert(archive);
+
         NWindows::NCOM::CPropVariant prop;
         HRESULT hr = archive->GetProperty(index, propId, &prop);
         if (hr != S_OK)
@@ -198,6 +208,8 @@ namespace sevenzip {
     };
 
     static HRESULT getArchiveTimeItemProperty(IInArchive* archive, int index, PROPID propId, UInt32& propValue) {
+        assert(archive);
+
         NWindows::NCOM::CPropVariant prop;
         HRESULT hr = archive->GetProperty(index, propId, &prop);
         if (hr != S_OK)
@@ -206,6 +218,9 @@ namespace sevenzip {
     };
 
     static HRESULT setOptions(IUnknown* archive, CObjectVector<UString>& names, CObjectVector<NWindows::NCOM::CPropVariant>& values) {
+        assert(archive);
+        assert(names.Size() == values.Size());
+    
         if (names.Size() == 0)
             return S_OK;
 
@@ -224,11 +239,11 @@ namespace sevenzip {
             // DEBUGLOG("setOptions " << i << " " << names[i].Ptr() << " = " << values[i].vt << "/" << values[i].ulVal);
         }
 
-        HRESULT rc = setter->SetProperties(&namesArray[0], valuesArray, names.Size());
+        hr = setter->SetProperties(&namesArray[0], valuesArray, names.Size());
 
         delete []valuesArray;
         
-        return rc;
+        return hr;
     };
 
     // streams
@@ -689,6 +704,7 @@ namespace sevenzip {
                 << (filename ? filename : L"NULL") << " "
                 << (password ? password : L"NULL") << " "
                 << formatIndex);
+        assert(istream);
 
         if (!libimpl || !libimpl->CreateObjectFunc)
             return S_FALSE;
@@ -875,6 +891,8 @@ namespace sevenzip {
     };
 
     UInt32 Iarchive::Impl::getItemMode(int index) {
+        if (!inarchive)
+            return 0;
         UInt32 mode;
         if (getArchiveIntItemProperty(inarchive, index, kpidPosixAttrib, mode) == S_OK)
             return mode;
@@ -885,6 +903,8 @@ namespace sevenzip {
     };
 
     UInt32 Iarchive::Impl::getItemAttr(int index) {
+        if (!inarchive)
+            return 0;
         UInt32 attr;
         if (getArchiveIntItemProperty(inarchive, index, kpidAttrib, attr) == S_OK)
             return (attr & 0x8000) ? attr & 0x7FFF : attr;
@@ -892,6 +912,8 @@ namespace sevenzip {
     };
 
     UInt32 Iarchive::Impl::getItemTime(int index) {
+        if (!inarchive)
+            return 0;
         UInt32 time;
         if (getArchiveTimeItemProperty(inarchive, index, kpidMTime, time) == S_OK)
             return time;
@@ -899,23 +921,27 @@ namespace sevenzip {
     };
 
     bool Iarchive::Impl::getItemIsDir(int index) {
-        bool isdir;
-        if (!inarchive || getArchiveBoolItemProperty(inarchive, index, kpidIsDir, isdir) != S_OK)
+        if (!inarchive)
             return false;
-        return isdir;
+        bool isdir;
+        if (getArchiveBoolItemProperty(inarchive, index, kpidIsDir, isdir) == S_OK)
+            return isdir;
+        return false;
     };
 
     int Iarchive::Impl::getNumberOfProperties() {
+        if (!inarchive)
+            return 0;
         UInt32 n;
-        if (inarchive && inarchive->GetNumberOfArchiveProperties(&n) == S_OK)
+        if (inarchive->GetNumberOfArchiveProperties(&n) == S_OK)
             return n;
         return 0;
     };
 
     HRESULT Iarchive::Impl::getPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
-        CMyComBSTR name;
         if (!inarchive)
-            return S_FALSE;
+            return E_FAIL;
+        CMyComBSTR name;
         HRESULT hr = inarchive->GetArchivePropertyInfo(propIndex, &name, &propId, &propType);
         if (hr != S_OK)
             return hr;
@@ -979,20 +1005,19 @@ namespace sevenzip {
     }
 
     int Iarchive::Impl::getNumberOfItemProperties() {
+        if (!inarchive)
+            return 0;
         UInt32 n;
-        if (inarchive && inarchive->GetNumberOfProperties(&n) == S_OK)
+        if (inarchive->GetNumberOfProperties(&n) == S_OK)
             return n;
         return 0;
     };
 
     HRESULT Iarchive::Impl::getItemPropertyInfo(int propIndex, PROPID& propId, VARTYPE& propType) {
-        CMyComBSTR name;
         if (!inarchive)
-            return S_FALSE;
-        HRESULT hr = inarchive->GetPropertyInfo(propIndex, &name, &propId, &propType);
-        if (hr != S_OK)
-            return hr;
-        return S_OK;
+            return E_FAIL;
+        CMyComBSTR name;
+        return inarchive->GetPropertyInfo(propIndex, &name, &propId, &propType);
     };
 
     HRESULT Iarchive::Impl::getStringItemProperty(int index, PROPID propId, const wchar_t*& propValue) {
@@ -1036,6 +1061,8 @@ namespace sevenzip {
     };
 
     void Iarchive::Impl::addStringOption(const wchar_t* name, const wchar_t* value) {
+        if (!name)
+            return;
         NWindows::NCOM::CPropVariant prop = L"";
         if (value)            
             prop = value;
@@ -1044,18 +1071,24 @@ namespace sevenzip {
     };
 
    void Iarchive::Impl::addBoolOption(const wchar_t* name, bool value) {
+        if (!name)
+            return;
         NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
 
    void Iarchive::Impl::addIntOption(const wchar_t* name, UInt32 value) {
+        if (!name)
+            return;
         NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
 
    void Iarchive::Impl::addWideOption(const wchar_t* name, UInt64 value) {
+        if (!name)
+            return;
         NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
@@ -1077,6 +1110,8 @@ namespace sevenzip {
                 << " " << (filename ? filename : L"NULL")
                 << " " << (password ? password : L"NULL")
                 << " " << formatIndex);
+        assert(istream);
+        assert(ostream);
 
         if (!libimpl || !libimpl->CreateObjectFunc)
             return S_FALSE;
@@ -1118,12 +1153,11 @@ namespace sevenzip {
     HRESULT Oarchive::Impl::update() {
         DEBUGLOG(this << " Oarchive::update");
 
-        if (!outstream)
-            return S_FALSE;
         if (!outarchive)
             return S_FALSE;
-        if (!updatecallback)
-            return S_FALSE;
+
+        assert(outstream);
+        assert(updatecallback);
 
         HRESULT hr = setOptions(outarchive, optionNames, optionValues);
         optionNames.Clear();
@@ -1144,6 +1178,8 @@ namespace sevenzip {
     };
 
     void Oarchive::Impl::addStringOption(const wchar_t* name, const wchar_t* value) {
+        if (!name)
+            return;
         NWindows::NCOM::CPropVariant prop = L"";
         if (value)            
             prop = value;
@@ -1152,18 +1188,24 @@ namespace sevenzip {
     };
 
    void Oarchive::Impl::addBoolOption(const wchar_t* name, bool value) {
+        if (!name)
+            return;
         NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
-
+    
    void Oarchive::Impl::addIntOption(const wchar_t* name, UInt32 value) {
+        if (!name)
+            return;
         NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
     };
 
    void Oarchive::Impl::addWideOption(const wchar_t* name, UInt64 value) {
+        if (!name)
+            return;
         NWindows::NCOM::CPropVariant prop = value;
         optionNames.Add(name);
         optionValues.Add(prop);
@@ -1382,6 +1424,8 @@ namespace sevenzip {
     };
 
     int Lib::Impl::getFormatBySignature(IInStream* stream, const wchar_t* ext) {
+        assert(stream);
+
         if (!GetHandlerProperty2)
             return -1;
         UInt64 pos = 0, end;
