@@ -15,13 +15,13 @@ jobs:
         include:
           - os: ubuntu-latest
             build_cmd: make
-            test_cmd: ./tests/tests
+            test_cmd: env LD_LIBRARY_PATH=. ./example l example
           - os: macos-latest
             build_cmd: make
-            test_cmd: ./tests/tests
+            test_cmd: env DYLD_LIBRARY_PATH=. ./example l example
           - os: windows-latest
             build_cmd: nmake -f makefile.vc
-            test_cmd: .\outputs\release\tests.exe
+            test_cmd: outputs\release\example.exe l outputs\release\example.exe
     
     name: Quick (${{ matrix.os }})
     
@@ -41,11 +41,30 @@ jobs:
       if: runner.os == 'Windows'
       uses: microsoft/setup-msbuild@v2
 
+    - name: Setup 7-Zip (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install -y 7zip
+
+    - name: Setup 7-Zip (MacOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install sevenzip
+        find /opt/homebrew/Cellar/sevenzip -name 7z.so -exec cp {} libsevenzip/ \; || true
+        find /usr/local/Cellar/sevenzip -name 7z.so -exec cp {} libsevenzip/ \; || true        
+
+    - name: Setup 7-Zip (Windows)
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        choco install 7zip -yes
+        copy "C:\Program Files\7-Zip\7z.dll" libsevenzip\
+
     - name: Build (Unix)
       if: runner.os != 'Windows'
       working-directory: libsevenzip
       run: |
-        ${{ matrix.build_cmd }} tests SEVENZIPSRC=../7zip
+        ${{ matrix.build_cmd }} example
 
     - name: Build (Windows)
       if: runner.os == 'Windows'
@@ -53,7 +72,7 @@ jobs:
       working-directory: libsevenzip
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-        ${{ matrix.build_cmd }} tests SEVENZIPSRC=..\7zip
+        ${{ matrix.build_cmd }} example
 
     - name: Run tests
       working-directory: libsevenzip

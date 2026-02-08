@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -40,18 +40,25 @@ jobs:
       if: matrix.compiler == 'gcc'
       working-directory: libsevenzip
       run: |
-        make 7zip 7z release example SEVENZIPSRC=../7zip
+        make 7zip 7z release examples
 
     - name: Build with Make (Clang)
       if: matrix.compiler == 'clang'
       working-directory: libsevenzip
       run: |
-        make 7zip 7z release example CC=clang CXX=clang++ SEVENZIPSRC=../7zip
+        make 7zip 7z release examples CC=clang CXX=clang++
 
-    - name: Run tests
+    - name: Run tests (GCC)
+      if: matrix.compiler == 'gcc'
       working-directory: libsevenzip
       run: |
-        env LD_LIBRARY_PATH=. ./example l example
+        make tests
+
+    - name: Run tests (Clang)
+      if: matrix.compiler == 'clang'
+      working-directory: libsevenzip
+      run: |
+        make tests CC=clang CXX=clang++
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -92,9 +99,7 @@ jobs:
     - name: Configure CMake
       working-directory: libsevenzip
       run: |
-        cmake -B build -G Ninja \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-          -DSEVENZIPSRC=../7zip
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Build
       working-directory: libsevenzip
@@ -145,12 +150,12 @@ jobs:
     - name: Build with Make
       working-directory: libsevenzip
       run: |
-        make release example SEVENZIPSRC=../7zip SEVENZIPBIN=7zz
+        make release examples SEVENZIPBIN=7zz
 
     - name: Run tests
       working-directory: libsevenzip
       run: |
-        env DYLD_LIBRARY_PATH=. ./example l example
+        make tests SEVENZIPBIN=7zz
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -190,11 +195,7 @@ jobs:
     - name: Configure CMake
       working-directory: libsevenzip
       run: |
-        pwd
-        ls -la
-        cmake -B build -G Ninja \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-          -DSEVENZIPSRC=../7zip
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Build
       working-directory: libsevenzip
@@ -252,13 +253,13 @@ jobs:
       working-directory: libsevenzip
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.platform }}
-        nmake -f makefile.vc release example SEVENZIPSRC=..\7zip
+        nmake -f makefile.vc release examples
 
     - name: Run tests
       shell: cmd
       working-directory: libsevenzip
       run: |
-        outputs\release\example.exe l outputs\release\example.exe
+        nmake -f makefile.vc tests
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
