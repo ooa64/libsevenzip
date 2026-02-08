@@ -164,8 +164,9 @@ namespace sevenzip {
 
     private:
 
-        CMyComPtr<ISequentialOutStream> outstream;
         IInArchive* archive;
+        CMyComPtr<ISequentialOutStream> outstream;
+
         Ostream *ostream;
         UString password;
         bool passworddefined;

@@ -440,9 +440,9 @@ namespace sevenzip {
 
 
     CExtractCallback::CExtractCallback(Ostream* ostream, IInArchive* archive, const wchar_t* password) :
+            archive(archive),
             outstream(nullptr),
             ostream(ostream),
-            archive(archive),
             password(password ? password : L""),
             passworddefined(password != nullptr),
             subsequent(false),
