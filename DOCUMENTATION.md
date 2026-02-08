@@ -583,19 +583,18 @@ HRESULT update();
 ##### Property Setters
 
 ```cpp
-HRESULT setStringProperty(const wchar_t* name, const wchar_t* value);
-HRESULT setBoolProperty(const wchar_t* name, bool value);
-HRESULT setIntProperty(const wchar_t* name, UInt32 value);
-HRESULT setWideProperty(const wchar_t* name, UInt64 value);
-HRESULT setEmptyProperty(const wchar_t* name);
+void addStringOption(const wchar_t* name, const wchar_t* value);
+void addBoolOption(const wchar_t* name, bool value);
+void addIntOption(const wchar_t* name, UInt32 value);
+void addWideOption(const wchar_t* name, UInt64 value);
 ```
-- **Purpose:** Set compression and archive properties
+- **Purpose:** Set compression and archive properties before calling `update()`
 - **Common Properties:**
   - `"x"`: Compression level (0-9)
   - `"s"`: Solid mode (true/false)
   - `"m"`: Compression method ("lzma")
   - `"mt"`: Number of threads
-- **Returns:** `S_OK` on success, error code otherwise
+- **Note:** These methods accumulate options that are applied when `update()` is called
 
 ---
 
@@ -908,6 +907,74 @@ Platform-specific types are defined for compatibility:
 - `HRESULT`: `Int32`
 - `PROPID`: `UInt32`
 - `VARTYPE`: `UInt16`
+
+---
+
+## Memory Management
+
+### Resource Ownership
+
+The library manages memory for internal structures automatically. However, understanding resource ownership is important:
+
+- **Stream objects** (`Istream`, `Ostream`): Owned by caller
+  - Library does not delete user-implemented streams
+  - Caller is responsible for cleanup
+
+- **Archive objects** (`Iarchive`, `Oarchive`): Self-contained
+  - Memory automatically released by destructors
+  - Safe to use as stack variables
+
+- **String returns** from library methods:
+  - Result pointers may point to static buffers
+  - Should be copied if needed for long-term storage
+  - Not valid after next call to same method
+
+### Best Practices
+
+```cpp
+// Good: Stack-based objects for automatic cleanup
+{
+    sevenzip::Lib lib;
+    sevenzip::Iarchive archive;
+    
+    lib.load(SEVENZIPDLL);
+    archive.open(lib, istream, L"test.7z");
+    
+    // Archive automatically cleaned up here
+}
+
+// Good: Proper stream management
+MyIstream istream;
+MyOstream ostream;
+sevenzip::Oarchive archive;
+
+if (archive.open(lib, istream, ostream, L"output.7z") == S_OK) {
+    // Add properties (v1.1+ safely manages internal arrays)
+    archive.addIntOption(L"x", 5);
+    archive.addBoolOption(L"mt", true);
+    
+    // Update properly cleans up property buffers
+    archive.update();
+}
+```
+
+---
+
+## Implementation Details
+
+### Internal Architecture
+
+The library wraps the 7-Zip C++ API through a thin abstraction layer:
+
+- **`CInStream` / `COutStream`**: Internal COM wrappers around user `Istream` / `Ostream` implementations
+- **`COpenCallback` / `CExtractCallback` / `CUpdateCallback`**: Internal callback handlers for archive operations
+- **`Lib::Impl`**: Platform-specific DLL/SO loading and format enumeration
+
+### Thread Safety
+
+- Library is **not thread-safe**: Each thread should use separate Lib/Iarchive/Oarchive instances
+- 7-Zip DLL itself may support multi-threaded compression within a single archive operation
+- This is controlled via the `"mt"` property during archive creation
 
 ---
 
