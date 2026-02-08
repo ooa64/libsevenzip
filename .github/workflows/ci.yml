@@ -259,6 +259,7 @@ jobs:
       shell: cmd
       working-directory: libsevenzip
       run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.platform }}
         nmake -f makefile.vc tests
         
     - name: Upload artifacts

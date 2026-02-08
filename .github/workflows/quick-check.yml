@@ -44,7 +44,8 @@ jobs:
     - name: Setup 7-Zip (Ubuntu)
       if: runner.os == 'Linux'
       run: |
-        sudo apt-get install -y 7zip
+        find /usr -name 7z.so || true
+        ldd /usr/lib64/7z.so
 
     - name: Setup 7-Zip (MacOS)
       if: runner.os == 'macOS'
