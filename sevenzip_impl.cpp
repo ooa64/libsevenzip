@@ -226,8 +226,6 @@ namespace sevenzip {
 
         CMyComPtr<ISetProperties> setter;
         HRESULT hr = archive->QueryInterface(IID_ISetProperties, (void **)&setter);
-        if (hr == E_NOINTERFACE)
-            return S_FALSE;
         if (hr != S_OK)
             return hr;
 
